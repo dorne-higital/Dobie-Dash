@@ -18,6 +18,7 @@ export type ObstacleType =
   | 'owl'
   | 'bin'
   | 'fox'
+  | 'parcel'
 
 export const OBSTACLE_TYPES: ObstacleType[] = [
   'hydrant',
@@ -33,6 +34,7 @@ export const OBSTACLE_TYPES: ObstacleType[] = [
   'owl',
   'bin',
   'fox',
+  'parcel',
 ]
 export type PatternType = 'single' | 'pair' | 'triple' | 'flier'
 export type ThemeKind = 'park' | 'city' | 'beach' | 'night'
@@ -80,6 +82,17 @@ export interface LampsTwist {
 
 export type TwistDef = WavesTwist | LampsTwist
 
+export type BossKind = 'mower' | 'van' | 'kingCrab' | 'foxPack'
+
+/** Gate chase: in the last `chase.window` points before the target, a boss chases you. */
+export interface ChaseDef {
+  boss: BossKind
+  name: string
+  /** Obstacle the boss adds to the mix during the chase (parcels, crabs, foxes). */
+  minion: ObstacleType | null
+  minionWeight: number
+}
+
 export interface WorldDef {
   id: string
   name: string
@@ -91,6 +104,9 @@ export interface WorldDef {
   obstacles: Partial<Record<ObstacleType, number>>
   patterns: Partial<Record<PatternType, number>>
   twist: TwistDef | null
+  chase: ChaseDef
+  /** Score target for the chase in the last world (later worlds take over in 1.1). */
+  gate: number | null
 }
 
 export interface PhysicsConfig {
@@ -151,6 +167,7 @@ export interface GameConfig {
   scoring: { unitsPerMetre: number; biscuit: number; smash: number }
   crash: { endDelay: number }
   worldTransition: { speedLerpSeconds: number; fadeSeconds: number }
+  chase: { window: number; enterSeconds: number; exitSeconds: number }
   spawner: SpawnerConfig
   meter: { blocks: number; fillDuringPower: boolean }
   powerups: {

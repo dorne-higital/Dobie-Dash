@@ -2,7 +2,13 @@
  * One run of the game as a deterministic simulation: no DOM, no canvas, no Vue.
  * The Engine drives it at a fixed 60 Hz and draws it; tests drive it directly.
  */
-import { playableWorlds, type GameConfig, type ObstacleDef, type ObstacleType } from './config'
+import {
+  playableWorlds,
+  type BossKind,
+  type GameConfig,
+  type ObstacleDef,
+  type ObstacleType,
+} from './config'
 import { dogBox, newDog, obstacleBox, overlaps, stepDog, type DogBody } from './physics'
 import {
   eatBiscuit,
@@ -15,7 +21,7 @@ import {
 } from './powerups'
 import { metres, score } from './scoring'
 import { findClearPlan, Spawner, type PatternObstacle } from './spawner'
-import { worldIndexForScore } from './worlds'
+import { gateTarget, worldIndexForScore } from './worlds'
 
 export interface Obstacle {
   id: number
@@ -57,6 +63,10 @@ export interface RunSummary {
   worldName: string
   seconds: number
   seed: number
+  /** Gate chases escaped this run. */
+  escapes: number
+  /** Boss that was chasing when you crashed, if any ("The mail van got you!"). */
+  caughtBy: string | null
 }
 
 /** The only events that leave the engine for Vue. */
@@ -65,6 +75,8 @@ export interface RunEvents {
   biscuit: { count: number; meter: number; gold: boolean }
   world: { index: number; id: string; name: string }
   power: PowerEvent
+  /** A gate chase started (active) or ended (escaped, or caught when the run crashed). */
+  chase: { active: boolean; boss: BossKind; name: string; escaped: boolean }
 }
 export type RunEvent = { [K in keyof RunEvents]: { type: K; data: RunEvents[K] } }[keyof RunEvents]
 
@@ -112,6 +124,12 @@ export class Run {
   private inWave = false
   private lastSlow = 1
   power: PowerState = newPowerState()
+  /** Gate chase in progress: the boss chasing, and the score that escapes it. */
+  chase: { boss: BossKind; name: string; target: number; since: number } | null = null
+  /** When the last chase ended (run time), so the boss can drop back on screen. */
+  chaseEnded: { boss: BossKind; at: number } | null = null
+  escapes = 0
+  private chased = new Set<number>()
   biscuitsEaten = 0
   smashes = 0
   score = 0
@@ -160,6 +178,8 @@ export class Run {
       worldName: this.world.name,
       seconds: Math.round(this.time * 10) / 10,
       seed: this.seed,
+      escapes: this.escapes,
+      caughtBy: this.chase?.name ?? null,
     }
   }
 
@@ -226,6 +246,10 @@ export class Run {
       worldsSoFar: this.worlds.slice(0, this.worldIndex + 1),
       speed: this.speed,
       nextSpeed: this.worlds[this.worldIndex + 1]?.speed,
+      minion:
+        this.chase && this.world.chase.minion
+          ? { type: this.world.chase.minion, weight: this.world.chase.minionWeight }
+          : undefined,
     })
     if (batch) {
       for (const o of batch.obstacles) {
@@ -320,11 +344,32 @@ export class Run {
     this.score =
       this.scoreOffset +
       score({ dist: this.dist, biscuits: this.biscuitsEaten, smashes: this.smashes }, this.cfg)
+    this.updateChase()
     const wi = worldIndexForScore(this.score, this.worlds)
     if (wi > this.worldIndex) {
       this.worldIndex = wi
       this.emit('world', { index: wi, id: this.world.id, name: this.world.name })
     }
+  }
+
+  /** Starts a boss chase in the last stretch before a target; passing the target escapes it. */
+  private updateChase() {
+    const c = this.chase
+    if (c && this.score >= c.target) {
+      this.chase = null
+      this.chaseEnded = { boss: c.boss, at: this.time }
+      this.escapes++
+      this.emit('chase', { active: false, boss: c.boss, name: c.name, escaped: true })
+      return
+    }
+    if (c) return
+    const target = gateTarget(this.worldIndex, this.worlds)
+    if (target === null || this.chased.has(target)) return
+    if (this.score < target - this.cfg.chase.window || this.score >= target) return
+    this.chased.add(target)
+    const def = this.world.chase
+    this.chase = { boss: def.boss, name: def.name, target, since: this.time }
+    this.emit('chase', { active: true, boss: def.boss, name: def.name, escaped: false })
   }
 
   /**

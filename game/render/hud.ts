@@ -70,13 +70,16 @@ export function drawHud(
     weight: 900,
   })
 
-  // World pill, filling toward the next target.
-  const label = `WORLD ${run.worldIndex + 1} · ${run.world.name.toUpperCase()}`
+  // World pill, filling toward the next target. During a chase it counts down instead.
+  const chase = run.chase
+  const label = chase
+    ? `${chase.name.toUpperCase()} · ${Math.max(0, chase.target - run.score)} TO ESCAPE`
+    : `WORLD ${run.worldIndex + 1} · ${run.world.name.toUpperCase()}`
   c.font = `900 12px ${BODY_FONT}`
   const lw = c.measureText(label).width + 22
   const lx = L.W / 2 - lw / 2
   const ly = top + 66
-  c.fillStyle = PANEL
+  c.fillStyle = chase ? 'rgba(170,30,45,.75)' : PANEL
   rr(c, lx, ly, lw, 22, 11)
   c.fill()
   const f = worldProgress(run.score, run.worldIndex, run.worlds)

@@ -3,10 +3,11 @@
  * offscreen canvases at load. Each game frame is then just drawImage calls.
  */
 import { DOBIE, pup, type Accessories, type Dog } from '../art/dobie'
-import { OBSTACLE_TYPES, type ObstacleType, type ThemeKind } from '../config'
+import { OBSTACLE_TYPES, type BossKind, type ObstacleType, type ThemeKind } from '../config'
 import { buildTheme, cloud, type Frame as ViewFrame, type ThemeCache } from './backgrounds'
 import { bone, drawBiscuit, drawObstacle, OBSTACLE_ANIM } from './obstacles'
 import { makeCanvas, type Ctx } from './draw'
+import { BOSS_BOX, BOSS_FRAMES, BOSS_PERIOD, drawBoss } from './bosses'
 
 /** A pre-rendered image whose origin (ox, oy) is the anchor point in logical units. */
 export interface Sprite {
@@ -90,6 +91,7 @@ export class SpriteCache {
   readonly hudBone: Sprite
   readonly cloud: Sprite
   private themes = new Map<ThemeKind, ThemeCache>()
+  private bosses = new Map<BossKind, Sprite[]>()
   private themeKey = ''
 
   constructor(scale: number) {
@@ -113,6 +115,23 @@ export class SpriteCache {
     this.cloud = bake(100, 70, 25, 40, scale * 1.6, (c) =>
       cloud(c, 0, 0, 1, 'rgba(255,255,255,.85)'),
     )
+  }
+
+  /** Boss frames, baked on first use (each boss is ~2.5 MB at 2×), so only bake one ahead. */
+  boss(kind: BossKind): Sprite[] {
+    let frames = this.bosses.get(kind)
+    if (!frames) {
+      const { w, h, ox, oy } = BOSS_BOX
+      frames = Array.from({ length: BOSS_FRAMES }, (_, k) =>
+        bake(w, h, ox, oy, this.scale, (c) => drawBoss(c, kind, (k / BOSS_FRAMES) * BOSS_PERIOD)),
+      )
+      this.bosses.set(kind, frames)
+    }
+    return frames
+  }
+
+  trimBosses(keep: BossKind[]) {
+    for (const k of [...this.bosses.keys()]) if (!keep.includes(k)) this.bosses.delete(k)
   }
 
   /** Background caches depend on the viewport; they're built on first use per world. */

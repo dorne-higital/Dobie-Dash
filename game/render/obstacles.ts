@@ -253,6 +253,19 @@ export function drawObstacle(c: Ctx, type: ObstacleType, x: number, y: number, t
     dot(c, x + 26, y - 3, 3, '#1d1824')
     c.fillStyle = '#e8e2d4'
     c.fillRect(x + 26, y - 54, 8, 6)
+  } else if (type === 'parcel') {
+    // A cardboard parcel thrown by the mail van.
+    rr(c, x + 1, y - 26, 28, 26, 3)
+    c.fillStyle = '#c98f52'
+    c.fill()
+    c.fillStyle = '#b07a42'
+    c.fillRect(x + 1, y - 26, 28, 5)
+    c.fillStyle = '#e8c27a'
+    c.fillRect(x + 12, y - 26, 6, 26)
+    c.fillStyle = '#ffffff'
+    c.fillRect(x + 20, y - 14, 7, 5)
+    c.fillStyle = '#e5484d'
+    c.fillRect(x + 3, y - 12, 7, 3)
   } else if (type === 'fox') {
     const r = t * 16
     const leg = (lx: number, a: number) => {
@@ -301,6 +314,7 @@ export const OBSTACLE_ANIM: Record<ObstacleType, { period: number; frames: numbe
   owl: { period: (Math.PI * 2) / 14, frames: 6 },
   bin: { period: 0, frames: 1 },
   fox: { period: (Math.PI * 2) / 16, frames: 8 },
+  parcel: { period: 0, frames: 1 },
 }
 
 export function bone(c: Ctx, x: number, y: number, s: number, fill: string, edge: string) {

@@ -197,6 +197,8 @@ export interface SpawnerState {
   speed: number
   /** Next world's speed, if any: patterns must stay clearable through a speed-up. */
   nextSpeed?: number
+  /** During a gate chase, the boss's minion joins the mix (parcels, crabs, foxes). */
+  minion?: { type: ObstacleType; weight: number }
 }
 
 export class Spawner {
@@ -318,6 +320,9 @@ export class Spawner {
         pool[k] = (pool[k] ?? 0) + v * scale
       }
     }
+    const m = s.minion
+    if (m && !(ground && this.cfg.obstacles[m.type].fly))
+      pool[m.type] = (pool[m.type] ?? 0) + m.weight
     return pool
   }
 

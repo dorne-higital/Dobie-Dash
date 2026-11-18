@@ -83,6 +83,7 @@ export class Engine {
     const next = this.run.worlds[this.run.worldIndex + 1]
     if (next) this.renderer.prepareTheme(next.theme)
     this.renderer.prepareTwist(this.run.world.twist ?? next?.twist ?? null)
+    this.renderer.prepareBoss(this.run.world.chase.boss)
     this.acc = 0
     this.paused = false
     this.loop()
@@ -226,6 +227,7 @@ export class Engine {
       if (e.type === 'world') {
         const w = run.worlds[e.data.index]!
         this.renderer.showWorld(w.theme, e.data.index, w.name, this.cfg.worldTransition.fadeSeconds)
+        this.renderer.prepareBoss(w.chase.boss)
         const next = run.worlds[e.data.index + 1]
         if (next) {
           this.renderer.prepareTheme(next.theme)
@@ -236,6 +238,9 @@ export class Engine {
         const [a, b] = POWER_BANNER[e.data.kind]
         this.renderer.showPower(a, b, this.cfg.powerups[e.data.kind].color)
         fb?.play('power')
+      } else if (e.type === 'chase') {
+        this.renderer.showChase(e.data.name, e.data.active)
+        fb?.play(e.data.active ? 'power' : 'success')
       } else if (e.type === 'run:end') {
         this.best = Math.max(this.best, e.data.score)
       }

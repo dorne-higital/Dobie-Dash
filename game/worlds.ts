@@ -7,10 +7,15 @@ export function worldIndexForScore(score: number, worlds: WorldDef[]) {
   return i
 }
 
-/** How far through the current world (0..1) toward the next target; null in the last world. */
+/** The score target ahead of this world: the next world's start, or the last world's gate. */
+export function gateTarget(index: number, all: WorldDef[]): number | null {
+  return all[index + 1]?.at ?? all[index]?.gate ?? null
+}
+
+/** How far through the current world (0..1) toward its target; null when there's none. */
 export function worldProgress(score: number, index: number, all: WorldDef[]) {
   const cur = all[index]
-  const next = all[index + 1]
-  if (!cur || !next) return null
-  return Math.max(0, Math.min(1, (score - cur.at) / (next.at - cur.at)))
+  const target = gateTarget(index, all)
+  if (!cur || target === null) return null
+  return Math.max(0, Math.min(1, (score - cur.at) / (target - cur.at)))
 }

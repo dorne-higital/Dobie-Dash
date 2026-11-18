@@ -3,10 +3,11 @@
  * Positions are interpolated between the last two fixed steps (alpha) so motion stays
  * smooth on 120 Hz ProMotion screens and when a frame runs long.
  */
-import type { LampsTwist, ThemeKind, TwistDef } from '../config'
+import type { BossKind, LampsTwist, ThemeKind, TwistDef } from '../config'
 import type { Fx, Run } from '../run'
 import { clamp, dot, rr, sparkle, text, BODY_FONT, TAU, type Ctx } from './draw'
 import { drawTheme } from './backgrounds'
+import { BOSS_BOX, BOSS_FRAMES, BOSS_PERIOD } from './bosses'
 import {
   bakeDarkness,
   bakeWaves,
@@ -59,6 +60,8 @@ export class Renderer {
   sprites: SpriteCache
   private parts: Particle[] = []
   private banner: Banner | null = null
+  /** Banners wait their turn so a power-up never hides a world change. */
+  private bannerQueue: Banner[] = []
   private shake = 0
   private flash = 0
   private squash = 0
@@ -95,6 +98,22 @@ export class Renderer {
     return this.dark
   }
 
+  /** Bake this world's boss ahead of its chase, dropping any others. */
+  prepareBoss(kind: BossKind) {
+    this.sprites.trimBosses([kind])
+    this.sprites.boss(kind)
+  }
+
+  /** Big banner for a chase starting or being escaped. */
+  showChase(name: string, active: boolean) {
+    this.bannerQueue.unshift(
+      active
+        ? { a: 'RUN!', b: `${name} is after you`, col: '#ff5a5a', t: 0 }
+        : { a: 'ESCAPED!', b: `You lost ${name.replace(/^The /, 'the ')}`, col: '#3ee08f', t: 0 },
+    )
+    if (this.banner && this.banner.t < 1.6) this.banner.t = 1.6
+  }
+
   prepareTwist(tw: TwistDef | null) {
     if (tw?.kind === 'lamps') this.darkness(tw)
   }
@@ -102,6 +121,7 @@ export class Renderer {
   reset(theme: ThemeKind) {
     this.parts = []
     this.banner = null
+    this.bannerQueue = []
     this.shake = this.flash = this.squash = 0
     this.theme = theme
     this.prevTheme = null
@@ -121,11 +141,13 @@ export class Renderer {
       this.fade = fadeSeconds
     }
     this.flash = this.reduceMotion ? 0 : 0.6
-    this.banner = { a: `WORLD ${index + 1}`, b: name, col: '#ffd23f', t: 0 }
+    // A world change jumps the queue.
+    this.bannerQueue.unshift({ a: `WORLD ${index + 1}`, b: name, col: '#ffd23f', t: 0 })
+    if (this.banner && this.banner.t < 1.6) this.banner.t = 1.6
   }
 
   showPower(name: string, desc: string, col: string) {
-    this.banner = { a: name, b: desc, col, t: 0 }
+    this.bannerQueue.push({ a: name, b: desc, col, t: 0 })
   }
 
   /** Turns simulation cues into particles and screen effects. */
@@ -240,6 +262,7 @@ export class Renderer {
       this.banner.t += frameDt
       if (this.banner.t > 2) this.banner = null
     }
+    if (!this.banner && this.bannerQueue.length) this.banner = this.bannerQueue.shift()!
     this.flash = Math.max(0, this.flash - frameDt * 2)
     this.shake = Math.max(0, this.shake - frameDt * 30)
     this.squash = Math.max(0, this.squash - frameDt * 6)
@@ -294,6 +317,17 @@ export class Renderer {
         c.ellipse(x + o.def.w / 2, GY + 2, o.def.w * 0.55, 4, 0, 0, TAU)
         c.fill()
       }
+      if (o.type === 'parcel' && x > W * 0.68) {
+        // Thrown by the mail van: still falling while it's far ahead (the hitbox is on the
+        // ground all along, but it's nowhere near Dobie yet).
+        const up = (x - W * 0.68) * 0.9
+        c.save()
+        c.translate(x + o.def.w / 2, GY - up - o.def.h / 2)
+        c.rotate(up * 0.02)
+        drawSprite(c, spr, -o.def.w / 2, o.def.h / 2)
+        c.restore()
+        continue
+      }
       drawSprite(c, spr, x, GY - fly)
     }
 
@@ -316,6 +350,7 @@ export class Renderer {
       if (b.gold) drawGoldSparkle(c, x, y, t)
     }
 
+    this.drawBoss(run, t)
     this.drawDog(run, dogY, t)
 
     // Particles.
@@ -341,6 +376,27 @@ export class Renderer {
     })
     if (this.banner) drawBanner(c, this.banner, W, GY)
     if (stats) this.drawStats(stats)
+  }
+
+  /** The chasing boss: rushes in from the left, lunges, then drops back once escaped. */
+  private drawBoss(run: Run, t: number) {
+    const C = run.cfg.chase
+    const home = run.cfg.view.dogX - 150
+    const out = -BOSS_BOX.w
+    let x: number
+    let kind: BossKind
+    if (run.chase) {
+      const k = clamp((run.time - run.chase.since) / C.enterSeconds, 0, 1)
+      x = out + (home - out) * (1 - Math.pow(1 - k, 3)) + Math.sin(t * 2.2) * 8 * k
+      kind = run.chase.boss
+    } else if (run.chaseEnded && run.time - run.chaseEnded.at < C.exitSeconds) {
+      const k = (run.time - run.chaseEnded.at) / C.exitSeconds
+      x = home + (out - home) * k * k
+      kind = run.chaseEnded.boss
+    } else return
+    const frames = this.sprites.boss(kind)
+    const f = Math.floor(((t % BOSS_PERIOD) / BOSS_PERIOD) * BOSS_FRAMES) % BOSS_FRAMES
+    drawSprite(this.c, frames[f]!, x, this.view.GY)
   }
 
   private drawDog(run: Run, dogY: number, t: number) {

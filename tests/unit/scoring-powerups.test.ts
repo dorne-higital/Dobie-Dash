@@ -37,7 +37,8 @@ describe('worlds', () => {
   it('world pill fills toward the next target', () => {
     expect(worldProgress(750, 0, worlds)).toBeCloseTo(0.5)
     expect(worldProgress(1500 + 1250, 1, worlds)).toBeCloseTo(0.5)
-    expect(worldProgress(9000, 3, worlds)).toBeNull()
+    // The last world fills toward its gate (12,000) instead.
+    expect(worldProgress(9000, 3, worlds)).toBeCloseTo((9000 - 7500) / (12000 - 7500))
   })
   it('a run starts in Bark Park and changes world at each score target', () => {
     const c = loadGameConfig()
@@ -58,6 +59,64 @@ describe('worlds', () => {
     c.worlds.slice(1).forEach((w, i) => expect(at[i]).toBeGreaterThanOrEqual(w.at))
     expect(run.speed).toBe(c.worlds[3]!.speed)
   }, 30_000)
+})
+
+describe('gate chases', () => {
+  it('a boss chases you in the last 300 points before each target, and you escape it', () => {
+    const c = loadGameConfig()
+    const run = new Run(c, 3, 600, { autoplay: true, invincible: true })
+    const log: string[] = []
+    while (run.time < 420 && run.escapes < 4) {
+      run.update()
+      for (const e of run.events.splice(0))
+        if (e.type === 'chase') {
+          const target = e.data.active ? run.chase!.target : 0
+          if (e.data.active) {
+            expect(run.score).toBeGreaterThanOrEqual(target - c.chase.window)
+            expect(run.score).toBeLessThan(target)
+          }
+          log.push(`${e.data.boss}:${e.data.active ? 'on' : 'escaped'}`)
+        }
+    }
+    expect(log).toEqual([
+      'mower:on',
+      'mower:escaped',
+      'van:on',
+      'van:escaped',
+      'kingCrab:on',
+      'kingCrab:escaped',
+      'foxPack:on',
+      'foxPack:escaped',
+    ])
+    expect(run.summary().escapes).toBe(4)
+  }, 30_000)
+
+  it("the boss's minions only join in during its chase", () => {
+    const c = loadGameConfig()
+    const run = new Run(c, 5, 600, { autoplay: true, invincible: true, startWorld: 1 })
+    let parcelsOutside = 0
+    let parcelsDuring = 0
+    const seen = new Set<number>()
+    while (run.time < 200 && run.worldIndex === 1) {
+      run.update()
+      for (const o of run.obstacles)
+        if (o.type === 'parcel' && !seen.has(o.id)) {
+          seen.add(o.id)
+          if (run.chase) parcelsDuring++
+          else parcelsOutside++
+        }
+    }
+    expect(parcelsDuring).toBeGreaterThan(0)
+    expect(parcelsOutside).toBe(0)
+  }, 30_000)
+
+  it('crashing during a chase says who got you', () => {
+    const c = loadGameConfig()
+    const run = new Run(c, 1, 600, { startWorld: 1 })
+    run.chase = { boss: 'van', name: 'The mail van', target: 4000, since: 0 }
+    while (run.state === 'running') run.update()
+    expect(run.summary().caughtBy).toBe('The mail van')
+  })
 })
 
 describe('testing start world', () => {

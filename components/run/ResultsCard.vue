@@ -16,6 +16,7 @@ function tapAnywhere() {
   <div class="backdrop" @pointerdown.stop @click="tapAnywhere">
     <div class="card" role="dialog" aria-modal="true" aria-labelledby="ruff" @click.stop>
       <h2 id="ruff">RUFF!</h2>
+      <p v-if="result.caughtBy" class="caught">{{ result.caughtBy }} got you!</p>
       <div class="score">{{ result.score.toLocaleString() }}</div>
       <div v-if="newBest" class="badge">New best!</div>
       <div v-else class="best">Best {{ best.toLocaleString() }}</div>
@@ -32,6 +33,10 @@ function tapAnywhere() {
           <dt>World</dt>
           <dd>{{ result.world + 1 }} · {{ result.worldName }}</dd>
         </div>
+        <div v-if="result.escapes">
+          <dt>Escaped</dt>
+          <dd>{{ result.escapes }} {{ result.escapes === 1 ? 'chase' : 'chases' }}</dd>
+        </div>
       </dl>
       <UiButton big :disabled="!ready" @click="emit('again')">Play again</UiButton>
       <UiButton variant="ghost" @click="emit('home')">Home</UiButton>
@@ -41,6 +46,11 @@ function tapAnywhere() {
 </template>
 
 <style scoped>
+.caught {
+  margin: -4px 0 6px;
+  font-weight: 900;
+  color: var(--collar, #e5484d);
+}
 .backdrop {
   position: absolute;
   inset: 0;
