@@ -1,44 +1,170 @@
 <script setup lang="ts">
+/**
+ * Home hub: your dog runs through your furthest world behind the title. Tap anywhere
+ * above the tab bar to run. The free chest card sits just above the bar.
+ */
+import { loadGameConfig } from '~/game/config'
+import { freeChestReady, openFreeChest, type Reward } from '~/logic/missions'
+
 definePageMeta({ layout: 'hub' })
 
-// `/?sheet` shows the baked sprite sheet under the hero (handy for checking the art port).
 const route = useRoute()
+const router = useRouter()
+const player = usePlayerStore()
+const look = useLook()
+const now = useNow()
 const showSheet = computed(() => 'sheet' in route.query)
+
+const worlds = loadGameConfig().worlds
+const theme = computed(() => worlds[Math.min(player.player.bestWorld, worlds.length - 1)]!.theme)
+
+const chestReady = computed(() => freeChestReady(player, now.value))
+const chestIn = computed(() => {
+  const ms = Math.max(0, player.missions.freeChestAt - now.value.getTime())
+  const h = Math.floor(ms / 3600_000)
+  const m = Math.ceil((ms % 3600_000) / 60_000)
+  return h ? `${h}h ${m}m` : `${m}m`
+})
+const reward = ref<Reward | null>(null)
+
+function openChest() {
+  reward.value = openFreeChest(player, new Date())
+}
+
+function run() {
+  router.push('/run')
+}
 </script>
 
 <template>
-  <section class="home">
-    <h1 class="logo">Dobie <span>Dash</span></h1>
-    <HubRunningDobie :sheet="showSheet" />
-    <NuxtLink to="/run" class="play">Tap to run</NuxtLink>
+  <section class="home" @click="run">
+    <HubRunningDobie class="bg" :sheet="showSheet" :look="look" :theme="theme" />
+    <div class="title">
+      <h1 class="logo">Dobie <span>Dash</span></h1>
+      <p v-if="player.dog" class="hi">{{ player.dog.name }} is ready</p>
+    </div>
+    <p class="tap">Tap anywhere to run</p>
+    <div class="cards" @click.stop>
+      <button v-if="chestReady" type="button" class="card ready" @click="openChest">
+        <span class="ic" aria-hidden="true">🎁</span>
+        <span><b>Free chest</b><small>Ready to open</small></span>
+      </button>
+      <div v-else class="card">
+        <span class="ic" aria-hidden="true">🎁</span>
+        <span
+          ><b>Free chest</b><small>Ready in {{ chestIn }}</small></span
+        >
+      </div>
+      <NuxtLink to="/worlds" class="card">
+        <span class="ic" aria-hidden="true">🏁</span>
+        <span
+          ><b>Best {{ player.best.toLocaleString() }}</b
+          ><small>{{ worlds[player.player.bestWorld]?.name }}</small></span
+        >
+      </NuxtLink>
+    </div>
+    <HubRewardSheet v-if="reward" title="Free chest" :reward="reward" @close="reward = null" />
   </section>
 </template>
 
 <style scoped>
 .home {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
-  padding-top: 12px;
+  cursor: pointer;
+  overflow: hidden;
+}
+.bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.title {
+  position: relative;
+  margin-top: calc(var(--safe-top) + 84px);
+  text-align: center;
 }
 .logo {
   margin: 0;
-  font-size: 56px;
+  font-size: 58px;
   line-height: 1;
-  color: var(--fg);
+  color: #fff;
+  -webkit-text-stroke: 7px var(--plum);
+  paint-order: stroke fill;
 }
 .logo span {
   color: var(--pink);
 }
-.play {
-  background: var(--pink);
-  color: #fff;
-  text-decoration: none;
-  font-family: var(--display);
-  font-size: 26px;
-  padding: 14px 36px;
+.hi {
+  margin: 6px 0 0;
+  font-weight: 900;
+  color: var(--plum);
+  background: rgba(255, 255, 255, 0.8);
   border-radius: 999px;
-  box-shadow: 0 6px 0 #c22a76;
+  padding: 2px 12px;
+  display: inline-block;
+}
+.tap {
+  position: relative;
+  margin: auto 0 12px;
+  font-family: var(--display);
+  font-size: 24px;
+  color: #fff;
+  -webkit-text-stroke: 5px var(--plum);
+  paint-order: stroke fill;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tap {
+    animation: none;
+  }
+}
+@keyframes pulse {
+  50% {
+    transform: scale(1.06);
+  }
+}
+.cards {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  padding: 0 16px calc(var(--tabbar-h) + var(--safe-bottom) + 14px);
+  cursor: default;
+}
+.card {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  text-decoration: none;
+  text-align: left;
+  font: inherit;
+}
+.card.ready {
+  background: var(--gold);
+  border-color: #e0b100;
+  cursor: pointer;
+}
+.card .ic {
+  font-size: 24px;
+}
+.card b {
+  display: block;
+  font-size: 14px;
+}
+.card small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
 }
 </style>

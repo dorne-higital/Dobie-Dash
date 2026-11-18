@@ -1,14 +1,19 @@
 <script setup lang="ts">
 const player = usePlayerStore()
+const look = useLook()
 </script>
 
 <template>
   <header class="topbar">
-    <NuxtLink to="/profile/stats" class="pill" aria-label="Profile">
-      <span class="avatar" aria-hidden="true">🐶</span>
-      <span>Best {{ player.best.toLocaleString() }}</span>
+    <NuxtLink to="/profile/stats" class="avatar" aria-label="Your profile">
+      <DogView :look="look" mode="head" />
     </NuxtLink>
-    <span class="pill" aria-label="Biscuits">🦴 {{ player.biscuits.toLocaleString() }}</span>
+    <NuxtLink to="/closet/store" class="pill" aria-label="Biscuits, open the store">
+      <span class="ic" aria-hidden="true">🍪</span>{{ player.biscuits.toLocaleString() }}
+    </NuxtLink>
+    <NuxtLink to="/closet/store" class="pill" aria-label="Golden Bones, open the store">
+      <span class="ic" aria-hidden="true">🦴</span>{{ player.bones.toLocaleString() }}
+    </NuxtLink>
     <NuxtLink to="/settings" class="gear" aria-label="Settings">⚙︎</NuxtLink>
   </header>
 </template>
@@ -19,6 +24,15 @@ const player = usePlayerStore()
   align-items: center;
   gap: 8px;
   padding: calc(var(--safe-top) + 10px) 16px 8px;
+}
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--pink);
+  overflow: hidden;
+  flex: none;
 }
 .pill {
   display: inline-flex;
@@ -32,9 +46,10 @@ const player = usePlayerStore()
   font-size: 14px;
   color: var(--fg);
   text-decoration: none;
+  font-variant-numeric: tabular-nums;
 }
-.avatar {
-  font-size: 16px;
+.ic {
+  font-size: 15px;
 }
 .gear {
   margin-left: auto;

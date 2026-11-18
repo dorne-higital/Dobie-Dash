@@ -1,8 +1,17 @@
 <script setup lang="ts">
 const route = useRoute()
+const badges = useBadges()
+
+function badge(key: string): string | null {
+  const b = badges.value
+  if (key === 'missions' && b.missions) return String(b.missions)
+  if (key === 'closet' && b.closet) return ''
+  if (key === 'league' && b.league) return ''
+  return null
+}
 
 const tabs = [
-  { key: 'closet', label: 'Closet', to: '/closet/looks', icon: '👕' },
+  { key: 'closet', label: 'Closet', to: '/closet/dog', icon: '👕' },
   { key: 'worlds', label: 'Worlds', to: '/worlds', icon: '🗺️' },
   { key: 'run', label: 'Run', to: '/', icon: '🐾' },
   { key: 'league', label: 'League', to: '/league/league', icon: '🏆' },
@@ -25,7 +34,10 @@ function isActive(key: string) {
       :class="{ active: isActive(t.key), run: t.key === 'run' }"
       :aria-current="isActive(t.key) ? 'page' : undefined"
     >
-      <span class="icon" aria-hidden="true">{{ t.icon }}</span>
+      <span class="icon" aria-hidden="true"
+        >{{ t.icon
+        }}<span v-if="badge(t.key) !== null" class="badge">{{ badge(t.key) }}</span></span
+      >
       <span class="label">{{ t.label }}</span>
     </NuxtLink>
   </nav>
@@ -58,8 +70,29 @@ function isActive(key: string) {
   font-weight: 900;
 }
 .tab .icon {
+  position: relative;
   font-size: 20px;
   line-height: 1;
+}
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  min-width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--collar);
+  border: 2px solid var(--surface);
+  color: #fff;
+  font: 900 10px/1 var(--body);
+  display: grid;
+  place-items: center;
+  box-sizing: content-box;
+}
+.badge:not(:empty) {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 2px;
 }
 .tab.active {
   color: var(--pink);

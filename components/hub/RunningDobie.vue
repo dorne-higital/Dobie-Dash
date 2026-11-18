@@ -4,9 +4,14 @@
  * With `sheet`, it also lays out every baked frame so the cache can be eyeballed.
  */
 import { drawTheme } from '~/game/render/backgrounds'
+import type { ThemeKind } from '~/game/config'
 import { drawSprite, runFrame, SpriteCache, type Sprite } from '~/game/render/sprites'
+import type { Look } from '~/logic/look'
 
-const props = defineProps<{ sheet?: boolean }>()
+const props = withDefaults(
+  defineProps<{ sheet?: boolean; look?: Look | null; theme?: ThemeKind }>(),
+  { look: null, theme: 'park' },
+)
 const hero = ref<HTMLCanvasElement | null>(null)
 const sheetCv = ref<HTMLCanvasElement | null>(null)
 
@@ -22,7 +27,7 @@ function setup(cv: HTMLCanvasElement) {
   cv.height = Math.max(1, Math.round(r.height * dpr))
   const S = cv.width / 600
   if (!cache || Math.abs(S - lastScale) > 0.01) {
-    cache = new SpriteCache(S)
+    cache = new SpriteCache(S, props.look ?? undefined)
     lastScale = S
   }
   const H = cv.height / S
@@ -67,6 +72,14 @@ onMounted(async () => {
 
   onResize = () => (view = setup(cv))
   window.addEventListener('resize', onResize)
+  watch(
+    () => props.look,
+    () => {
+      cache = null
+      view = setup(cv)
+    },
+    { deep: true },
+  )
 
   let dist = 0
   let runPhase = 0
@@ -78,7 +91,7 @@ onMounted(async () => {
     runPhase += dt * 9
     const c = cache!
     ctx.setTransform(view.S, 0, 0, view.S, 0, 0)
-    const th = c.theme('park', { W: view.W, H: view.H, GY: view.GY })
+    const th = c.theme(props.theme, { W: view.W, H: view.H, GY: view.GY })
     drawTheme(ctx, th, dist, c.cloud)
     ctx.fillStyle = 'rgba(0,0,0,.16)'
     ctx.beginPath()
@@ -109,12 +122,12 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 12px;
   width: 100%;
+  height: 100%;
 }
 .hero {
   display: block;
   width: 100%;
-  height: 220px;
-  border-radius: 24px;
+  height: 100%;
   background: #bfe8ff;
 }
 .sheet {
