@@ -1,8 +1,9 @@
 # Codemagic builds the iOS app on their Macs and uploads it to TestFlight.
 # Same setup as Footballdle. Steps are in ios/README.md.
 workflows:
-  ios-testflight:
-    name: iOS → TestFlight
+  # Test builds: Google's test ads, so tapping ads on your own phone is safe.
+  ios-testflight: &ios
+    name: iOS → TestFlight (test ads)
     max_build_duration: 45
     instance_type: mac_mini_m2
     integrations:
@@ -10,15 +11,12 @@ workflows:
       # Must match its name in Codemagic exactly, including the "Foodballdle" typo.
       app_store_connect: Foodballdle ASC
     environment:
+      groups: []
       ios_signing:
         distribution_type: app_store
         bundle_identifier: uk.co.danhorne.dobiedash
-      # Real AdMob ids are kept out of the repo. When they exist, add them in Codemagic
-      # (Teams > Global variables, group "dobiedash": ADMOB_APP_ID, ADMOB_REWARDED_ID,
-      # ADMOB_INTERSTITIAL_ID) and uncomment the two lines below. Without them the build
-      # uses Google's test ads.
-      # groups:
-      #   - dobiedash
+      # Real AdMob ids live in Codemagic (app > Environment variables, group "dobiedash"),
+      # never in the repo. Only the release workflow below uses them.
       vars:
         XCODE_PROJECT: ios/App/App.xcodeproj
         XCODE_SCHEME: App
@@ -61,3 +59,21 @@ workflows:
       app_store_connect:
         auth: integration
         submit_to_testflight: false
+
+  # The App Store build: same steps, real AdMob ids from the "dobiedash" group.
+  ios-release:
+    <<: *ios
+    name: iOS → App Store (real ads)
+    environment:
+      groups:
+        - dobiedash
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: uk.co.danhorne.dobiedash
+      vars:
+        XCODE_PROJECT: ios/App/App.xcodeproj
+        XCODE_SCHEME: App
+        APP_STORE_APPLE_ID: 6836275397
+        REVENUECAT_APPLE_KEY: appl_bNBgRvCTrCViRnSJbYzYvyZWTVB
+      node: 24
+      xcode: 26.5

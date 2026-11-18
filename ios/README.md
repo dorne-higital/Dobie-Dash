@@ -40,38 +40,25 @@ npm run cap:sync   # nuxt generate + copy into the iOS project (Codemagic runs t
 6. **TestFlight**: App Store Connect → Dobie Dash → TestFlight → Internal Testing → add yourself,
    then install from the TestFlight app.
 
-## M4 setup (once)
+## M4 setup (done 2026-11-18, except where noted)
 
-The RevenueCat public key is in `codemagic.yaml` (it ships inside the app anyway). Real AdMob
-ids live in Codemagic, never in the repo: **Teams → Global variables and secrets**, group
-`dobiedash`, then uncomment `groups` in `codemagic.yaml`:
-
-| Variable                | From                                                       |
-| ----------------------- | ---------------------------------------------------------- |
-| `ADMOB_APP_ID`          | AdMob → Apps → Dobie Dash → App settings, `ca-app-pub-…~…` |
-| `ADMOB_REWARDED_ID`     | AdMob → Ad units → Rewarded, `ca-app-pub-…/…`              |
-| `ADMOB_INTERSTITIAL_ID` | AdMob → Ad units → Interstitial                            |
-
-Until then the build uses Google's test ads.
-
-Done so far: all 20 in-app purchases (price, availability, display name; review screenshots
-still to add), RevenueCat project "Dobie Dash" with the App Store app using Footballdle's
-In-App Purchase key.
-
-1. **App Store Connect → Dobie Dash → Monetization → In-App Purchases**: create every product
-   in `content/store.json` with id `uk.co.danhorne.dobiedash.<id>` (8 from the plan, plus
-   `breeds.all` and the 11 `breed.<breed>` ones), type and price as listed, a display name and
-   a review screenshot. `npm run storekit` lists them all in `ios/App/DobieDash.storekit`.
-2. **Game Center** (Services tab): leaderboards `uk.co.danhorne.dobiedash.best` (all-time,
-   high score) and `uk.co.danhorne.dobiedash.weekly` (recurring, resets Monday 00:00), and the
-   30 achievements `uk.co.danhorne.dobiedash.trophy.<trophy>.<bronze|silver|gold>` (names from
-   `content/trophies.json`).
-3. **RevenueCat**: new App Store app with bundle id `uk.co.danhorne.dobiedash`, the same
-   In-App Purchase key as Footballdle, import the products. Copy the `appl_` key to Codemagic.
-4. **AdMob**: add the iOS app, then a Rewarded and an Interstitial ad unit. Copy the ids to
-   Codemagic. Add `app-ads.txt` to danhorne.co.uk before launch.
-5. **Sandbox tester**: App Store Connect → Users and Access → Sandbox → Testers. On the
-   iPhone, Settings → Developer (or App Store) → Sandbox Account.
+- **Two Codemagic workflows.** "iOS → TestFlight (test ads)" uses Google's test ads, so tapping
+  ads on your own phone is safe. "iOS → App Store (real ads)" reads the real AdMob ids from the
+  Codemagic app's environment group `dobiedash` (ADMOB_APP_ID, ADMOB_REWARDED_ID,
+  ADMOB_INTERSTITIAL_ID). Real ids are never in the repo.
+- **In-app purchases:** all 20 in `content/store.json` exist in App Store Connect with price,
+  availability and display name. Still to add: a review screenshot for each (M6).
+- **RevenueCat:** project "Dobie Dash", App Store app using Footballdle's In-App Purchase key.
+  The public SDK key is in `codemagic.yaml`.
+- **AdMob:** app "Dobie Dash" (iOS) with a Rewarded and a "Between runs" interstitial unit. Once
+  the app is on the App Store, link the store listing in AdMob and add `app-ads.txt` to
+  danhorne.co.uk.
+- **Game Center:** leaderboards `uk.co.danhorne.dobiedash.best` (classic, high to low) and
+  `.weekly` (recurring, every 7 days from Monday 00:00). Achievements: Marathon bronze, silver
+  and gold done; the other 27 (`uk.co.danhorne.dobiedash.trophy.<trophy>.<medal>`, 10/25/50
+  points, images made from the trophy icons) still to add.
+- **Sandbox tester:** App Store Connect → Users and Access → Sandbox → Testers. On the iPhone,
+  Settings → Developer (or App Store) → Sandbox Account.
 
 ## Still to do later
 
