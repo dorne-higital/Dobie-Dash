@@ -54,9 +54,9 @@ npm run cap:sync   # nuxt generate + copy into the iOS project (Codemagic runs t
   the app is on the App Store, link the store listing in AdMob and add `app-ads.txt` to
   danhorne.co.uk.
 - **Game Center:** leaderboards `uk.co.danhorne.dobiedash.best` (classic, high to low) and
-  `.weekly` (recurring, every 7 days from Monday 00:00). Achievements: Marathon bronze, silver
-  and gold done; the other 27 (`uk.co.danhorne.dobiedash.trophy.<trophy>.<medal>`, 10/25/50
-  points, images made from the trophy icons) still to add.
+  `.weekly` (recurring, every 7 days from Monday 00:00). All 30
+  achievements (`uk.co.danhorne.dobiedash.trophy.<trophy>.<bronze|silver|gold>`, 10/25/50
+  points, UK wording, medal images) are set up.
 - **Sandbox tester:** App Store Connect → Users and Access → Sandbox → Testers. On the iPhone,
   Settings → Developer (or App Store) → Sandbox Account.
 
