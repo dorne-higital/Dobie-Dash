@@ -88,7 +88,7 @@ The hub's content is also JSON:
 | `content/trophies.json`         | 10 trophies with bronze / silver / gold thresholds                                                                                                       |
 | `content/store.json`            | App Store products (ids are `uk.co.danhorne.dobiedash.` + id), what each gives, starter offer after run 10, between-run ad rules, reminder times         |
 | `content/gamecenter.json`       | leaderboard ids (all-time, weekly) and the achievement id pattern (trophy × bronze/silver/gold)                                                          |
-| `content/site.json`             | the App Store link for the desktop panel (null hides it)                                                                                                 |
+| `content/site.json`             | the App Store link for the desktop panel (null hides it), `sound` (off: no sound or Settings toggles), the currency guide words                          |
 | `content/worlds.json`           | also the Worlds tab text, worlds 5–8 (locked), and the tutorial's steps and words                                                                        | The config is loaded through `services/config`, so Remote Config can later override |
 | it without an App Store update. |
 

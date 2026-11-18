@@ -11,7 +11,7 @@ function badge(key: string): string | null {
 }
 
 const tabs = [
-  { key: 'closet', label: 'Closet', to: '/closet/dog', icon: '👕' },
+  { key: 'closet', label: 'Wardrobe', to: '/closet/dog', icon: '👕' },
   { key: 'worlds', label: 'Worlds', to: '/worlds', icon: '🗺️' },
   { key: 'run', label: 'Run', to: '/', icon: '🐾' },
   { key: 'league', label: 'League', to: '/league/world', icon: '🏆' },

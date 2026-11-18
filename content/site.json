@@ -5,5 +5,31 @@
     "title": "Get Dobie Dash on your iPhone",
     "text": "Game Center leaderboards, haptics and your progress saved to iCloud.",
     "cta": "Download on the App Store"
+  },
+  "sound": false,
+  "currencies": {
+    "title": "What are biscuits and bones for?",
+    "items": [
+      {
+        "icon": "🍪",
+        "name": "Biscuits",
+        "text": "Collected in every run. Spend them on collars, outfits and trails in the Wardrobe, or on Keep running? (50, then 100, then 200 in one run). You also get them from missions, your daily streak and chests."
+      },
+      {
+        "icon": "🦴",
+        "name": "Golden Bones",
+        "text": "The rare one. Unlock new breeds (80 each) and the fanciest items, like the Crown, Super Cape and Rainbow trail. Found in chests and on day 7 of your streak."
+      },
+      {
+        "icon": "✨",
+        "name": "Golden biscuits",
+        "text": "Rare shiny biscuits in a run. Grab one for instant Zoomies: a speed boost that smashes through everything."
+      },
+      {
+        "icon": "🏁",
+        "name": "Reaching worlds",
+        "text": "Some trails can't be bought. They unlock the first time you reach their world."
+      }
+    ]
   }
 }

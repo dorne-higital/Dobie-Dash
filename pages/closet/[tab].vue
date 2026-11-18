@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Closet: My dog (the dog maker), Outfits, Trails, Collars and the Store (M4).
+ * Wardrobe (route /closet): My dog (the dog maker), Outfits, Trails, Collars and the Store (M4).
  * Tap an item to try it on. Owned items equip at once; anything else shows a buy bar
  * with its price, or how to unlock it.
  */
@@ -102,7 +102,7 @@ function status(it: ItemDef) {
 
 <template>
   <section class="closet">
-    <h1>Closet</h1>
+    <h1>Wardrobe</h1>
     <UiSegmented base="/closet" :tabs="TABS" :current="tab" />
 
     <DogMaker v-if="tab === 'dog'" cta="Save my dog" @saved="flash('Saved!')" />
@@ -180,7 +180,11 @@ h1 {
   font-size: 34px;
 }
 .preview {
-  position: relative;
+  /* Stays in view while you scroll the items, so you can see what you try on. */
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  box-shadow: 0 10px 20px -16px rgba(42, 21, 48, 0.6);
   height: 150px;
   border-radius: 24px;
   background: linear-gradient(#c8ecff, #eaf8ff 70%, #9fd78a 70%);

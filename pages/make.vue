@@ -12,7 +12,7 @@ function done() {
 <template>
   <section class="make">
     <h1>Make your dog</h1>
-    <p class="sub">Make one like yours at home. You can change it any time in the Closet.</p>
+    <p class="sub">Make one like yours at home. You can change it any time in the Wardrobe.</p>
     <DogMaker cta="Let's go!" @saved="done" />
   </section>
 </template>

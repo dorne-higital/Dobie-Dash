@@ -1,4 +1,5 @@
 import { migrate, pickSave, SAVE_VERSION, type Save, type SaveV1 } from '~/logic/save'
+import site from '~/content/site.json'
 import { playerState } from '~/stores/player'
 
 /**
@@ -36,8 +37,9 @@ export default defineNuxtPlugin(async () => {
 
   const apply = () => {
     haptics.setEnabled(settings.haptics)
-    audio.setSfx(settings.sfx)
-    audio.setMusic(settings.music)
+    // Sound is switched off for the whole app (content/site.json "sound"); no toggles in Settings.
+    audio.setSfx(site.sound && settings.sfx)
+    audio.setMusic(site.sound && settings.music)
   }
   apply()
 

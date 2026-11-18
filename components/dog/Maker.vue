@@ -201,7 +201,11 @@ function save() {
   gap: 14px;
 }
 .preview {
-  position: relative;
+  /* Stays in view while you scroll the options, so each change shows straight away. */
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  box-shadow: 0 10px 20px -16px rgba(42, 21, 48, 0.6);
   height: 180px;
   border-radius: 24px;
   background: radial-gradient(circle at 50% 70%, #fff 0%, #f1e6fb 70%);

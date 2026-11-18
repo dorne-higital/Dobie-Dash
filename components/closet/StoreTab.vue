@@ -44,6 +44,7 @@ async function tap(id: string) {
     <p v-if="!native && !dev" class="note">
       Purchases are made in the iPhone app. Everything you buy there is saved to iCloud.
     </p>
+    <HubCurrencyGuide />
     <section v-for="g in groups" :key="g.title">
       <h2>{{ g.title }}</h2>
       <ul>
