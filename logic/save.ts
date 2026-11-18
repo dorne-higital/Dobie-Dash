@@ -7,7 +7,7 @@
  */
 import type { EarStyle, EyeColour, TailStyle } from '~/game/art/dobie'
 
-export const SAVE_VERSION = 2
+export const SAVE_VERSION = 3
 
 export type Slot = 'collar' | 'hat' | 'eyes' | 'neck' | 'back' | 'trail'
 export const SLOTS: Slot[] = ['collar', 'hat', 'eyes', 'neck', 'back', 'trail']
@@ -53,8 +53,16 @@ export interface SettingsSave {
   showFps: boolean
 }
 
-export interface SaveV2 {
-  v: 2
+export interface SaveV3 {
+  v: 3
+  /** Epoch ms of the last write, for picking between this phone's save and iCloud's. */
+  savedAt: number
+  /** Non-consumable App Store products whose rewards have been given (once each). */
+  purchases: { delivered: string[] }
+  /** App launches, runs since the last between-run ad, and whether ATT was asked. */
+  ads: { sessions: number; runsSinceAd: number; attAsked: boolean }
+  /** First day played (local date) and whether notification permission was asked. */
+  notify: { firstDay: string | null; asked: boolean }
   player: { name: string; best: number; bestWorld: number }
   wallet: { biscuits: number; bones: number }
   /** null until the player has made a dog (the dog maker is the first screen). */
@@ -82,7 +90,9 @@ export interface SaveV2 {
   settings: SettingsSave
 }
 
-export type Save = SaveV2
+export type Save = SaveV3
+/** v2 is v3 without savedAt, purchases, ads and notify (M3). */
+export type SaveV2 = Omit<SaveV3, 'v' | 'savedAt' | 'purchases' | 'ads' | 'notify'> & { v: 2 }
 
 export function emptyStats(): Stats {
   return {
@@ -102,7 +112,11 @@ export function emptyStats(): Stats {
 
 export function defaultSave(): Save {
   return {
-    v: 2,
+    v: 3,
+    savedAt: 0,
+    purchases: { delivered: [] },
+    ads: { sessions: 0, runsSinceAd: 0, attAsked: false },
+    notify: { firstDay: null, asked: false },
     player: { name: '', best: 0, bestWorld: 0 },
     wallet: { biscuits: 0, bones: 0 },
     dog: null,
@@ -167,7 +181,19 @@ const MIGRATIONS: Record<number, (s: AnySave) => AnySave> = {
       }
     }
     Object.assign(next.settings, s.settings ?? {})
-    return next as unknown as AnySave
+    // v1 → v2: next is already the full current shape; mark it v2 so the v2 step runs.
+    return { ...next, v: 2 } as unknown as AnySave
+  },
+  2: (raw) => {
+    const d = defaultSave()
+    return {
+      ...raw,
+      v: 3,
+      savedAt: 0,
+      purchases: d.purchases,
+      ads: d.ads,
+      notify: d.notify,
+    } as unknown as AnySave
   },
 }
 
@@ -204,5 +230,8 @@ function fillDefaults(s: Save): Save {
     settings: { ...d.settings, ...s.settings },
     owned: [...(s.owned ?? [])],
     trophies: { ...s.trophies },
+    purchases: { delivered: [...(s.purchases?.delivered ?? [])] },
+    ads: { ...d.ads, ...s.ads },
+    notify: { ...d.notify, ...s.notify },
   }
 }

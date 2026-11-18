@@ -91,7 +91,11 @@ export function worldRewards(world: number): ItemDef[] {
 // ---- breeds ----------------------------------------------------------------------------
 
 export function ownsBreed(w: Wardrobe, breed: string): boolean {
-  return BREED_PRICING.free.includes(breed) || w.owned.includes(`breed:${breed}`)
+  return (
+    BREED_PRICING.free.includes(breed) ||
+    w.owned.includes(`breed:${breed}`) ||
+    w.owned.includes('breed:all')
+  )
 }
 
 export function buyBreed(w: Wardrobe, breed: string): BuyResult {

@@ -3,9 +3,12 @@
   "breeds": {
     "free": ["doberman"],
     "bones": 80,
-    "iap": "dobiedash.breed",
-    "gbp": "£0.99",
-    "bundle": { "iap": "dobiedash.breeds.all", "gbp": "£4.99" }
+    "iap": "breed.{breed}",
+    "gbp": "\u00a30.99",
+    "bundle": {
+      "iap": "breeds.all",
+      "gbp": "\u00a34.99"
+    }
   },
   "items": [
     {
@@ -13,148 +16,218 @@
       "slot": "collar",
       "name": "Red Collar",
       "default": true,
-      "art": { "collar": "#e5484d" }
+      "art": {
+        "collar": "#e5484d"
+      }
     },
     {
       "id": "collar:blue",
       "slot": "collar",
       "name": "Blue Collar",
       "price": 150,
-      "art": { "collar": "#3a86f0" }
+      "art": {
+        "collar": "#3a86f0"
+      }
     },
     {
       "id": "collar:green",
       "slot": "collar",
       "name": "Green Collar",
       "price": 150,
-      "art": { "collar": "#3ec26b" }
+      "art": {
+        "collar": "#3ec26b"
+      }
     },
     {
       "id": "collar:pink",
       "slot": "collar",
       "name": "Pink Collar",
       "price": 250,
-      "art": { "collar": "#ff4fa0" }
+      "art": {
+        "collar": "#ff4fa0"
+      }
     },
     {
       "id": "collar:purple",
       "slot": "collar",
       "name": "Purple Collar",
       "price": 250,
-      "art": { "collar": "#8a5cf6" }
+      "art": {
+        "collar": "#8a5cf6"
+      }
     },
     {
       "id": "collar:gold",
       "slot": "collar",
       "name": "Gold Collar",
-      "iap": "dobiedash.collar.gold",
-      "gbp": "£0.99",
-      "art": { "gold": true }
+      "iap": "collar.gold",
+      "gbp": "\u00a30.99",
+      "art": {
+        "gold": true
+      }
     },
     {
       "id": "neck:bandana",
       "slot": "neck",
       "name": "Bandana",
       "price": 400,
-      "art": { "neck": "bandana" }
+      "art": {
+        "neck": "bandana"
+      }
     },
     {
       "id": "neck:bowtie",
       "slot": "neck",
       "name": "Bow Tie",
       "price": 600,
-      "art": { "neck": "bowtie" }
+      "art": {
+        "neck": "bowtie"
+      }
     },
     {
       "id": "eyes:specs",
       "slot": "eyes",
       "name": "Specs",
       "price": 500,
-      "art": { "eyes": "specs" }
+      "art": {
+        "eyes": "specs"
+      }
     },
     {
       "id": "eyes:shades",
       "slot": "eyes",
       "name": "Shades",
       "price": 800,
-      "art": { "eyes": "shades" }
+      "art": {
+        "eyes": "shades"
+      }
     },
     {
       "id": "hat:party",
       "slot": "hat",
       "name": "Party Hat",
       "price": 700,
-      "art": { "hat": "party" }
+      "art": {
+        "hat": "party"
+      }
     },
     {
       "id": "hat:beanie",
       "slot": "hat",
       "name": "Beanie",
       "price": 700,
-      "art": { "hat": "beanie" }
+      "art": {
+        "hat": "beanie"
+      }
     },
-    { "id": "hat:crown", "slot": "hat", "name": "Crown", "bones": 60, "art": { "hat": "crown" } },
+    {
+      "id": "hat:crown",
+      "slot": "hat",
+      "name": "Crown",
+      "bones": 60,
+      "art": {
+        "hat": "crown"
+      }
+    },
     {
       "id": "back:cape",
       "slot": "back",
       "name": "Super Cape",
       "bones": 45,
-      "art": { "back": "cape" }
+      "art": {
+        "back": "cape"
+      }
     },
     {
       "id": "trail:dust",
       "slot": "trail",
       "name": "Dust",
       "default": true,
-      "art": { "trail": "dust" }
+      "art": {
+        "trail": "dust"
+      }
     },
     {
       "id": "trail:paws",
       "slot": "trail",
       "name": "Paw Prints",
       "price": 300,
-      "art": { "trail": "paws" }
+      "art": {
+        "trail": "paws"
+      }
     },
     {
       "id": "trail:hearts",
       "slot": "trail",
       "name": "Hearts",
       "price": 500,
-      "art": { "trail": "hearts" }
+      "art": {
+        "trail": "hearts"
+      }
     },
     {
       "id": "trail:confetti",
       "slot": "trail",
       "name": "Confetti",
-      "unlock": { "world": 1 },
-      "art": { "trail": "confetti" }
+      "unlock": {
+        "world": 1
+      },
+      "art": {
+        "trail": "confetti"
+      }
     },
     {
       "id": "trail:bubbles",
       "slot": "trail",
       "name": "Bubbles",
-      "unlock": { "world": 2 },
-      "art": { "trail": "bubbles" }
+      "unlock": {
+        "world": 2
+      },
+      "art": {
+        "trail": "bubbles"
+      }
     },
     {
       "id": "trail:stars",
       "slot": "trail",
       "name": "Shooting Stars",
-      "unlock": { "world": 3 },
-      "art": { "trail": "stars" }
+      "unlock": {
+        "world": 3
+      },
+      "art": {
+        "trail": "stars"
+      }
     },
     {
       "id": "trail:rainbow",
       "slot": "trail",
       "name": "Rainbow",
       "bones": 30,
-      "art": { "trail": "rainbow" }
+      "art": {
+        "trail": "rainbow"
+      }
     }
   ],
   "stickers": [
-    { "id": "sticker:mower", "boss": "mower", "name": "The Mower" },
-    { "id": "sticker:van", "boss": "van", "name": "The Mail Van" },
-    { "id": "sticker:kingCrab", "boss": "kingCrab", "name": "King Crab" },
-    { "id": "sticker:foxPack", "boss": "foxPack", "name": "The Fox Pack" }
+    {
+      "id": "sticker:mower",
+      "boss": "mower",
+      "name": "The Mower"
+    },
+    {
+      "id": "sticker:van",
+      "boss": "van",
+      "name": "The Mail Van"
+    },
+    {
+      "id": "sticker:kingCrab",
+      "boss": "kingCrab",
+      "name": "King Crab"
+    },
+    {
+      "id": "sticker:foxPack",
+      "boss": "foxPack",
+      "name": "The Fox Pack"
+    }
   ]
 }
