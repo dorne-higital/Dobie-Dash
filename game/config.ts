@@ -194,6 +194,11 @@ export interface GameConfig {
    */
   continue: { countdown: number; prices: number[]; grace: number; clearAhead: number }
   worldTransition: { speedLerpSeconds: number; fadeSeconds: number }
+  /**
+   * After the last world's gate the run carries on for ever, getting faster: speed rises by
+   * `perThousand` for every 1,000 points past the gate, up to `maxSpeed`.
+   */
+  endless: { perThousand: number; maxSpeed: number }
   chase: { window: number; enterSeconds: number; exitSeconds: number }
   spawner: SpawnerConfig
   meter: { blocks: number; fillDuringPower: boolean }

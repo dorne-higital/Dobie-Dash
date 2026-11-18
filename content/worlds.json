@@ -53,6 +53,10 @@
     "grace": 2,
     "clearAhead": 420
   },
+  "endless": {
+    "perThousand": 15,
+    "maxSpeed": 560
+  },
   "worldTransition": {
     "speedLerpSeconds": 1.0,
     "fadeSeconds": 0.8

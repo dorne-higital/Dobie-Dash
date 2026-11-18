@@ -209,6 +209,18 @@ export class Run {
     } else if (t.doubled && ++t.count >= T.doubleClears) this.tutorialStep('biscuits')
   }
 
+  /**
+   * The speed to run at: the world's own, except past the last world's gate, where it
+   * keeps climbing with score (content/worlds.json "endless").
+   */
+  targetSpeed(score = this.score): number {
+    const w = this.world
+    if (this.worldIndex < this.worlds.length - 1 || w.gate == null || score <= w.gate)
+      return w.speed
+    const e = this.cfg.endless
+    return Math.min(e.maxSpeed, w.speed + (e.perThousand * (score - w.gate)) / 1000)
+  }
+
   get world() {
     return this.worlds[this.worldIndex]!
   }
@@ -279,8 +291,8 @@ export class Run {
     this.step++
     this.time += dt
 
-    // Ease toward the current world's speed after a world change.
-    const target = this.world.speed
+    // Ease toward the current world's speed after a world change (or the endless ramp).
+    const target = this.targetSpeed()
     if (this.speed !== target) {
       const prev = this.worlds[Math.max(0, this.worldIndex - 1)]!.speed
       const rate = Math.abs(target - prev) / this.cfg.worldTransition.speedLerpSeconds || 1e9
@@ -313,7 +325,9 @@ export class Run {
       world: this.world,
       worldsSoFar: this.worlds.slice(0, this.worldIndex + 1),
       speed: this.speed,
-      nextSpeed: this.worlds[this.worldIndex + 1]?.speed,
+      // Patterns must stay clearable at the speed they may meet: the next world's, or a
+      // little further up the endless ramp (500 points is far more than a pattern's life).
+      nextSpeed: this.worlds[this.worldIndex + 1]?.speed ?? this.targetSpeed(this.score + 500),
       tutorial: this.tutorialActive ? (this.tutorial!.step as TutorialStep) : null,
       minion:
         this.chase && this.world.chase.minion

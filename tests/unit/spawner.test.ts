@@ -165,6 +165,29 @@ describe('fairness end to end', () => {
     }
   }, 60_000)
 
+  it('past the last gate the run keeps going and speeds up, and stays fair', () => {
+    const cfg = noPowers()
+    const last = cfg.worlds.length - 1
+    const gate = cfg.worlds[last]!.gate!
+    for (let seed = 1; seed <= 4; seed++) {
+      const run = new Run(cfg, seed, W, { autoplay: true, startWorld: last })
+      let i = 0
+      while (run.state === 'running' && run.score < gate + 4000 && i++ < 600 * 60) run.update()
+      expect({ seed, state: run.state }).toEqual({ seed, state: 'running' })
+      expect(run.score).toBeGreaterThanOrEqual(gate + 4000)
+      expect(run.worldIndex).toBe(last)
+      expect(run.speed).toBeGreaterThan(cfg.worlds[last]!.speed + 40)
+      expect(run.speed).toBeLessThanOrEqual(cfg.endless.maxSpeed)
+    }
+  }, 60_000)
+
+  it('the endless ramp stops at maxSpeed', () => {
+    const cfg = noPowers()
+    const run = new Run(cfg, 1, W, { startWorld: cfg.worlds.length - 1 })
+    expect(run.targetSpeed(1e9)).toBe(cfg.endless.maxSpeed)
+    expect(run.targetSpeed(0)).toBe(cfg.worlds.at(-1)!.speed)
+  })
+
   it('a player who never taps crashes on the first obstacle', () => {
     const run = new Run(noPowers(), 5, W)
     for (let i = 0; i < 30 * 60 && run.state === 'running'; i++) run.update()

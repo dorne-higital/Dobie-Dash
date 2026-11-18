@@ -57,7 +57,9 @@ describe('worlds', () => {
     }
     expect(seen).toEqual(['City Streets', 'Sunny Beach', 'Midnight Run'])
     c.worlds.slice(1).forEach((w, i) => expect(at[i]).toBeGreaterThanOrEqual(w.at))
-    expect(run.speed).toBe(c.worlds[3]!.speed)
+    // At Midnight Run's speed, or above it once past the last gate (the endless ramp).
+    expect(run.speed).toBeGreaterThanOrEqual(c.worlds[3]!.speed)
+    expect(run.speed).toBeCloseTo(run.targetSpeed(), 0)
   }, 30_000)
 })
 
