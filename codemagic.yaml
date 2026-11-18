@@ -17,7 +17,7 @@ workflows:
         XCODE_PROJECT: ios/App/App.xcodeproj
         XCODE_SCHEME: App
         # Numeric "Apple ID" from App Store Connect → Dobie Dash → App Information
-        APP_STORE_APPLE_ID: 0000000000
+        APP_STORE_APPLE_ID: 6836275397
       node: 24
       xcode: 26.5
     # No triggering block: builds are started by hand so free minutes aren't used on every push.
