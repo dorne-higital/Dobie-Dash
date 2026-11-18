@@ -257,6 +257,7 @@ export const BREEDS: Record<string, Breed> = {
     coats: [
       ['Black spots', PAT.spots(WH, '#2b2731')],
       ['Liver spots', PAT.spots(WH, '#7a4a2a')],
+      ['Lemon spots', PAT.spots(WH, '#c99a4a')],
     ],
   },
   frenchie: {

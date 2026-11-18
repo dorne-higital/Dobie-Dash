@@ -23,7 +23,12 @@ withDefaults(defineProps<{ variant?: 'primary' | 'secondary' | 'ghost'; big?: bo
   touch-action: manipulation;
   transition: transform 0.08s;
 }
-.btn:active {
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+}
+.btn:active:not(:disabled) {
   transform: translateY(3px);
 }
 .btn:focus-visible {
