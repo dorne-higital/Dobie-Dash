@@ -42,17 +42,21 @@ npm run cap:sync   # nuxt generate + copy into the iOS project (Codemagic runs t
 
 ## M4 setup (once)
 
-Keys live in Codemagic, never in the repo: **Teams → Global variables and secrets**, group
-`dobiedash` (the build expects the group to exist):
+The RevenueCat public key is in `codemagic.yaml` (it ships inside the app anyway). Real AdMob
+ids live in Codemagic, never in the repo: **Teams → Global variables and secrets**, group
+`dobiedash`, then uncomment `groups` in `codemagic.yaml`:
 
-| Variable                | From                                                         |
-| ----------------------- | ------------------------------------------------------------ |
-| `REVENUECAT_APPLE_KEY`  | RevenueCat → Dobie Dash (App Store app) → API keys, `appl_…` |
-| `ADMOB_APP_ID`          | AdMob → Apps → Dobie Dash → App settings, `ca-app-pub-…~…`   |
-| `ADMOB_REWARDED_ID`     | AdMob → Ad units → Rewarded, `ca-app-pub-…/…`                |
-| `ADMOB_INTERSTITIAL_ID` | AdMob → Ad units → Interstitial                              |
+| Variable                | From                                                       |
+| ----------------------- | ---------------------------------------------------------- |
+| `ADMOB_APP_ID`          | AdMob → Apps → Dobie Dash → App settings, `ca-app-pub-…~…` |
+| `ADMOB_REWARDED_ID`     | AdMob → Ad units → Rewarded, `ca-app-pub-…/…`              |
+| `ADMOB_INTERSTITIAL_ID` | AdMob → Ad units → Interstitial                            |
 
-Leave the three AdMob ones out and the build uses Google's test ads.
+Until then the build uses Google's test ads.
+
+Done so far: all 20 in-app purchases (price, availability, display name; review screenshots
+still to add), RevenueCat project "Dobie Dash" with the App Store app using Footballdle's
+In-App Purchase key.
 
 1. **App Store Connect → Dobie Dash → Monetization → In-App Purchases**: create every product
    in `content/store.json` with id `uk.co.danhorne.dobiedash.<id>` (8 from the plan, plus

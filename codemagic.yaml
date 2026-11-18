@@ -13,19 +13,19 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: uk.co.danhorne.dobiedash
-      # Keys kept out of the repo (Codemagic → Teams → Global variables, group "dobiedash"):
-      #   REVENUECAT_APPLE_KEY   RevenueCat → Dobie Dash → API keys (starts appl_)
-      #   ADMOB_APP_ID           AdMob → App settings (ca-app-pub-…~…)
-      #   ADMOB_REWARDED_ID      AdMob → Ad units → Rewarded (ca-app-pub-…/…)
-      #   ADMOB_INTERSTITIAL_ID  AdMob → Ad units → Interstitial
-      # Leave the AdMob ones out to build with Google's test ads.
-      groups:
-        - dobiedash
+      # Real AdMob ids are kept out of the repo. When they exist, add them in Codemagic
+      # (Teams > Global variables, group "dobiedash": ADMOB_APP_ID, ADMOB_REWARDED_ID,
+      # ADMOB_INTERSTITIAL_ID) and uncomment the two lines below. Without them the build
+      # uses Google's test ads.
+      # groups:
+      #   - dobiedash
       vars:
         XCODE_PROJECT: ios/App/App.xcodeproj
         XCODE_SCHEME: App
         # Numeric "Apple ID" from App Store Connect → Dobie Dash → App Information
         APP_STORE_APPLE_ID: 6836275397
+        # RevenueCat public SDK key (meant to ship inside the app, like Footballdle's)
+        REVENUECAT_APPLE_KEY: appl_bNBgRvCTrCViRnSJbYzYvyZWTVB
       node: 24
       xcode: 26.5
     # No triggering block: builds are started by hand so free minutes aren't used on every push.
