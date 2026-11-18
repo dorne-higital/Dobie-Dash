@@ -9,9 +9,24 @@ const props = withDefaults(
     /** Things this run unlocked or earned (item names, medals). */
     earned?: string[]
     dogName?: string
+    /** Offer "watch an ad to double your biscuits" (real runs only). */
+    canDouble?: boolean
   }>(),
-  { earned: () => [], dogName: 'Dobie' },
+  { earned: () => [], dogName: 'Dobie', canDouble: false },
 )
+const player = usePlayerStore()
+const { rewarded } = useAds()
+const doubled = ref(false)
+const doubling = ref(false)
+async function double() {
+  if (doubling.value || doubled.value) return
+  doubling.value = true
+  if (await rewarded('doubleBiscuits')) {
+    player.wallet.biscuits += props.result.biscuits
+    doubled.value = true
+  }
+  doubling.value = false
+}
 const emit = defineEmits<{ again: []; home: [] }>()
 
 const shared = ref('')
@@ -71,6 +86,16 @@ function tapAnywhere() {
       <ul v-if="earned.length" class="earned">
         <li v-for="e in earned" :key="e">🎉 {{ e }}</li>
       </ul>
+      <UiButton
+        v-if="canDouble && result.biscuits > 0 && !doubled"
+        variant="secondary"
+        :disabled="doubling"
+        @click="double"
+        >{{
+          doubling ? 'Ad playing…' : `▶ Watch an ad: double your 🍪 ${result.biscuits}`
+        }}</UiButton
+      >
+      <p v-if="doubled" class="doubled">🍪 +{{ result.biscuits }} doubled!</p>
       <UiButton big :disabled="!ready" @click="emit('again')">Play again</UiButton>
       <div class="row">
         <UiButton variant="ghost" @click="emit('home')">Home</UiButton>
@@ -90,6 +115,11 @@ function tapAnywhere() {
   background: #fff4c4;
   font-weight: 900;
   font-size: 14px;
+}
+.doubled {
+  margin: 0;
+  font-weight: 900;
+  color: #18a597;
 }
 .row {
   display: flex;

@@ -27,8 +27,14 @@ const chestIn = computed(() => {
 })
 const reward = ref<Reward | null>(null)
 
-function openChest() {
-  reward.value = openFreeChest(player, new Date())
+// The 4-hour chest opens with a rewarded ad.
+const { rewarded } = useAds()
+const opening = ref(false)
+async function openChest() {
+  if (opening.value) return
+  opening.value = true
+  if (await rewarded('freeChest')) reward.value = openFreeChest(player, new Date())
+  opening.value = false
 }
 
 function run() {
@@ -47,7 +53,10 @@ function run() {
     <div class="cards" @click.stop>
       <button v-if="chestReady" type="button" class="card ready" @click="openChest">
         <span class="ic" aria-hidden="true">🎁</span>
-        <span><b>Free chest</b><small>Ready to open</small></span>
+        <span
+          ><b>Free chest</b
+          ><small>{{ opening ? 'Ad playing…' : '▶ Watch an ad to open' }}</small></span
+        >
       </button>
       <div v-else class="card">
         <span class="ic" aria-hidden="true">🎁</span>

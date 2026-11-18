@@ -15,7 +15,7 @@ definePageMeta({ layout: 'run' })
 
 const route = useRoute()
 const router = useRouter()
-const { config, haptics, audio, analytics, ads } = useServices()
+const { config, haptics, audio, analytics } = useServices()
 const player = usePlayerStore()
 const settings = useSettingsStore()
 
@@ -102,8 +102,9 @@ function resume() {
   engine?.resume()
 }
 
+const adRules = useAds()
 async function continueWithAd() {
-  const { rewarded } = await ads.showRewarded('continue')
+  const rewarded = await adRules.rewarded('continue')
   if (phase.value !== 'continue') return
   if (rewarded) keepRunning('ad')
   else continueSheet.value?.adFinished()
@@ -158,7 +159,7 @@ onMounted(async () => {
     safeTop: safeProbe.value?.offsetHeight ?? 0,
     hudInsetLeft: 52,
   })
-  engine.on('run:end', (r) => {
+  engine.on('run:end', async (r) => {
     earned.value = []
     newBest.value = false
     if (startWorld === undefined) {
@@ -170,6 +171,7 @@ onMounted(async () => {
         ),
         ...got.medals.map((m) => `${MEDALS[m.medal]} medal: ${m.trophy.name}`),
       ]
+      if (!bot) await adRules.betweenRuns({ newBest: got.newBest })
       if (!bot && shouldOfferStarter(player)) {
         player.flags.starterSeen = true
         showStarter.value = true
@@ -253,6 +255,7 @@ onBeforeUnmount(() => {
       :new-best="newBest"
       :earned="earned"
       :dog-name="player.dog?.name"
+      :can-double="startWorld === undefined && !bot"
       @again="start"
       @home="goHome"
     />
