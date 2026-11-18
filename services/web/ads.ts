@@ -1,14 +1,13 @@
 import type { AdsService } from '../types'
 
-/** Fake rewarded ads: always ready, "plays" for a second, always rewards. */
+/** Web: no ad network. Rewarded "ads" play for a second and always reward. */
 export function createWebAds(): AdsService {
   return {
-    async isRewardedReady() {
-      return true
-    },
+    async requestTracking() {},
     async showRewarded() {
       await new Promise((r) => setTimeout(r, 1000))
       return { rewarded: true }
     },
+    async showInterstitial() {},
   }
 }

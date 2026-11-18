@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "leaderboards": {
+    "allTime": "uk.co.danhorne.dobiedash.best",
+    "weekly": "uk.co.danhorne.dobiedash.weekly"
+  },
+  "achievementId": "uk.co.danhorne.dobiedash.trophy.{trophy}.{medal}",
+  "medals": ["bronze", "silver", "gold"]
+}

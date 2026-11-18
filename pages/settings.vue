@@ -8,11 +8,13 @@ const version = useRuntimeConfig().public.appVersion
 
 async function restore() {
   restoring.value = true
-  const ids = await iap.restore().catch(() => [])
+  const ids = await iap.restore().catch(() => null)
   restoring.value = false
-  restoreMsg.value = ids.length
-    ? `Restored ${ids.length} purchase${ids.length === 1 ? '' : 's'}.`
-    : 'Nothing to restore yet. The Store opens soon.'
+  restoreMsg.value = !ids
+    ? 'Restore works in the iPhone app.'
+    : ids.length
+      ? `Restored ${ids.length} purchase${ids.length === 1 ? '' : 's'}.`
+      : 'Nothing to restore.'
 }
 </script>
 

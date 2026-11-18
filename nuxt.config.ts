@@ -11,8 +11,16 @@ export default defineNuxtConfig({
 
   devtools: { enabled: false },
 
+  // Read at build time. Real keys and ad units come from Codemagic env vars; the ad
+  // defaults are Google's public test units, so no real ids are in the repo.
   runtimeConfig: {
-    public: { appVersion: process.env.npm_package_version ?? '' },
+    public: {
+      appVersion: process.env.npm_package_version ?? '',
+      revenuecatKey: process.env.REVENUECAT_APPLE_KEY ?? '',
+      admobRewarded: process.env.ADMOB_REWARDED_ID || 'ca-app-pub-3940256099942544/1712485313',
+      admobInterstitial:
+        process.env.ADMOB_INTERSTITIAL_ID || 'ca-app-pub-3940256099942544/4411468910',
+    },
   },
 
   modules: ['@pinia/nuxt', '@nuxt/eslint'],

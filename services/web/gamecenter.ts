@@ -1,21 +1,25 @@
 import type { GameCenterService, LeaderboardEntry } from '../types'
 
-/** In-memory leaderboard so League screens have something to show. */
-export function createWebGameCenter(): GameCenterService {
-  const boards = new Map<string, number[]>()
+/**
+ * Web: Game Center only exists in the iPhone app. On the dev server an in-memory board
+ * stands in so the League screens can be built.
+ */
+export function createWebGameCenter(dev: boolean): GameCenterService {
+  const scores: { score: number; world: number }[] = []
   return {
     async signIn() {
-      return { playerId: 'local', name: 'You' }
+      return dev ? { playerId: 'local', name: 'You' } : null
     },
-    async submitScore(board, score) {
-      const list = boards.get(board) ?? []
-      list.push(score)
-      boards.set(board, list)
+    async submitScore(score, bestWorld) {
+      scores.push({ score, world: bestWorld })
     },
-    async topScores(board, limit = 10) {
-      const list = [...(boards.get(board) ?? [])].sort((a, b) => b - a).slice(0, limit)
-      return list.map<LeaderboardEntry>((score, i) => ({ name: 'You', score, rank: i + 1 }))
+    async board() {
+      return [...scores]
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10)
+        .map<LeaderboardEntry>((s, i) => ({ name: 'You', ...s, rank: i + 1, me: true }))
     },
-    async unlockAchievement() {},
+    async reportMedals() {},
+    async showLeaderboards() {},
   }
 }

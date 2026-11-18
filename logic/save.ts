@@ -235,3 +235,25 @@ function fillDefaults(s: Save): Save {
     notify: { ...d.notify, ...s.notify },
   }
 }
+
+/**
+ * Two copies of the save (this phone, iCloud): keep the one with more play in it, so a
+ * fresh install never overwrites real progress. Same play time: the newer write wins.
+ * Returns which side won, or null when there's nothing to load.
+ */
+export function pickSave(
+  local: Save | null,
+  cloud: Save | null,
+): { save: Save; from: 'local' | 'cloud' } | null {
+  if (!local && !cloud) return null
+  if (!cloud) return { save: local!, from: 'local' }
+  if (!local) return { save: cloud, from: 'cloud' }
+  const play = (s: Save) => s.stats.seconds + s.stats.runs
+  if (play(cloud) !== play(local))
+    return play(cloud) > play(local)
+      ? { save: cloud, from: 'cloud' }
+      : { save: local, from: 'local' }
+  return cloud.savedAt > local.savedAt
+    ? { save: cloud, from: 'cloud' }
+    : { save: local, from: 'local' }
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { defaultSave, migrate, SAVE_VERSION, type SaveV1 } from '~/logic/save'
+import { defaultSave, migrate, pickSave, SAVE_VERSION, type SaveV1 } from '~/logic/save'
 
 describe('save migrations', () => {
   it('a missing or broken save starts fresh at the current version', () => {
@@ -83,5 +83,34 @@ describe('save migrations', () => {
     const copy = structuredClone(v1)
     migrate(v1)
     expect(v1).toEqual(copy)
+  })
+})
+
+describe('iCloud: which save wins', () => {
+  const at = (seconds: number, runs: number, savedAt: number) => {
+    const s = defaultSave()
+    s.stats.seconds = seconds
+    s.stats.runs = runs
+    s.savedAt = savedAt
+    return s
+  }
+
+  it('a fresh install never overwrites progress in iCloud', () => {
+    const fresh = at(0, 0, 999)
+    const cloud = at(3600, 40, 100)
+    expect(pickSave(fresh, cloud)?.from).toBe('cloud')
+  })
+
+  it('the copy with more play wins, whichever is newer', () => {
+    expect(pickSave(at(500, 10, 1), at(400, 9, 2))?.from).toBe('local')
+    expect(pickSave(at(400, 9, 2), at(500, 10, 1))?.from).toBe('cloud')
+  })
+
+  it('same play: the newer write wins; missing copies fall back', () => {
+    expect(pickSave(at(10, 1, 5), at(10, 1, 6))?.from).toBe('cloud')
+    expect(pickSave(at(10, 1, 6), at(10, 1, 5))?.from).toBe('local')
+    expect(pickSave(at(1, 1, 1), null)?.from).toBe('local')
+    expect(pickSave(null, at(1, 1, 1))?.from).toBe('cloud')
+    expect(pickSave(null, null)).toBeNull()
   })
 })

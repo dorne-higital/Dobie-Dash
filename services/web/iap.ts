@@ -1,28 +1,26 @@
-import type { IapService, Product } from '../types'
+import { PRODUCTS } from '~/logic/store'
+import type { IapService } from '../types'
 
-const PRODUCTS: Product[] = [
-  { id: 'dobiedash.removeads', title: 'Remove Ads', price: '£2.99', type: 'non-consumable' },
-  { id: 'dobiedash.starter', title: 'Starter Pack', price: '£0.99', type: 'non-consumable' },
-  { id: 'dobiedash.biscuits.bag', title: 'Bag of Biscuits', price: '£1.99', type: 'consumable' },
-  { id: 'dobiedash.collar.gold', title: 'Gold Collar', price: '£0.99', type: 'non-consumable' },
-]
-
-/** Fake store: every purchase succeeds after a short delay. */
-export function createWebIap(): IapService {
-  const owned = new Set<string>()
+/**
+ * Web: no real purchases. The public site says to buy in the iPhone app; the dev server
+ * pretends every purchase succeeds so the Store can be built and tested in a browser.
+ */
+export function createWebIap(dev: boolean): IapService {
   return {
     async products() {
-      return PRODUCTS
+      return PRODUCTS.map((p) => ({ id: p.id, title: p.title, price: p.gbp }))
     },
     async purchase(id) {
-      await new Promise((r) => setTimeout(r, 300))
-      const p = PRODUCTS.find((x) => x.id === id)
-      if (!p) return { ok: false, id }
-      if (p.type === 'non-consumable') owned.add(id)
+      if (!dev) return { ok: false, id, cancelled: false, error: 'Purchases are in the iPhone app' }
+      await new Promise((r) => setTimeout(r, 400))
       return { ok: true, id }
     },
+    // The web can't ask the App Store, so the launch check is skipped (null).
+    async owned() {
+      return null
+    },
     async restore() {
-      return [...owned]
+      return null
     },
   }
 }

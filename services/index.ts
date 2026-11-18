@@ -6,6 +6,7 @@ import { createWebConfig } from './web/config'
 import { createWebGameCenter } from './web/gamecenter'
 import { createWebHaptics } from './web/haptics'
 import { createWebIap } from './web/iap'
+import { createWebNotify } from './web/notify'
 import { createWebSave } from './web/save'
 
 export type * from './types'
@@ -15,9 +16,10 @@ export function createWebServices(opts: { debug: boolean }): Services {
     save: createWebSave(),
     haptics: createWebHaptics(),
     audio: createWebAudio(),
-    iap: createWebIap(),
+    iap: createWebIap(opts.debug),
     ads: createWebAds(),
-    gamecenter: createWebGameCenter(),
+    gamecenter: createWebGameCenter(opts.debug),
+    notify: createWebNotify(),
     analytics: createWebAnalytics(opts.debug),
     config: createWebConfig(),
   }
