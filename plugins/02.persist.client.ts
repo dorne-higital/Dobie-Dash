@@ -3,7 +3,7 @@ import type { SettingsSave } from '~/stores/settings'
 
 /** Loads saved state into the stores and writes it back whenever it changes. */
 export default defineNuxtPlugin(async () => {
-  const { save, haptics } = useServices()
+  const { save, haptics, audio } = useServices()
   const player = usePlayerStore()
   const settings = useSettingsStore()
 
@@ -17,9 +17,13 @@ export default defineNuxtPlugin(async () => {
     settings.reduceMotion = true
 
   haptics.setEnabled(settings.haptics)
+  audio.setSfx(settings.sfx)
+  audio.setMusic(settings.music)
   player.$subscribe((_m, state) => save.save('player', state))
   settings.$subscribe((_m, state) => {
     haptics.setEnabled(state.haptics)
+    audio.setSfx(state.sfx)
+    audio.setMusic(state.music)
     save.save('settings', state)
   })
 })

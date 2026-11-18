@@ -5,14 +5,13 @@
  */
 import type { GameConfig, PowerKind } from './config'
 import { Emitter } from './events'
+import type { FeedbackCue, FeedbackPort } from './feedback'
 import { Renderer, type FrameStats, type View } from './render/renderer'
 import { randomSeed } from './rng'
-import { Run, type RunEvents } from './run'
+import { Run, type Fx, type RunEvents } from './run'
 import { worldProgress } from './worlds'
 
-export interface FeedbackPort {
-  play(kind: 'jump' | 'biscuit' | 'power' | 'crash' | 'success'): void
-}
+export type { FeedbackCue, FeedbackPort } from './feedback'
 
 export interface EngineOptions {
   /** Highest score so far, shown in the HUD. */
@@ -30,6 +29,19 @@ export interface EngineOptions {
   safeTop?: number
   /** CSS px kept clear on the left of the HUD for the pause button. */
   hudInsetLeft?: number
+}
+
+/** Sound/haptic cue for each simulation effect ('eat' picks biscuit or golden). */
+const FX_CUE: Partial<Record<Fx['type'], FeedbackCue>> = {
+  jump: 'jump',
+  double: 'double',
+  land: 'land',
+  smash: 'smash',
+  pop: 'shieldPop',
+  crash: 'crash',
+  splash: 'splash',
+  revive: 'revive',
+  nearMiss: 'nearMiss',
 }
 
 const POWER_BANNER: Record<PowerKind, [string, string]> = {
@@ -105,6 +117,7 @@ export class Engine {
     this.paused = true
     cancelAnimationFrame(this.raf)
     this.raf = 0
+    this.opts.feedback?.music?.(null, 1)
     this.draw(0) // leave a still frame behind the pause sheet
   }
 
@@ -145,6 +158,7 @@ export class Engine {
   }
 
   destroy() {
+    this.opts.feedback?.music?.(null, 1)
     this.destroyed = true
     cancelAnimationFrame(this.raf)
     this.ro?.disconnect()
@@ -222,6 +236,12 @@ export class Engine {
       steps++
     }
     if (steps === this.cfg.loop.maxStepsPerFrame) this.acc = 0 // too far behind: drop time
+    // Music follows the run: the world's loop, a little faster as the speed rises.
+    const playing = run.state === 'running'
+    this.opts.feedback?.music?.(
+      playing ? run.worldIndex : null,
+      Math.sqrt(run.scrollSpeed / run.world.speed),
+    )
     this.draw(dt)
   }
 
@@ -235,17 +255,15 @@ export class Engine {
     const fb = this.opts.feedback
     for (const fx of run.fx) {
       this.renderer.addFx(fx, run)
-      if (fx.type === 'jump' || fx.type === 'double') fb?.play('jump')
-      else if (fx.type === 'eat') fb?.play('biscuit')
-      else if (fx.type === 'splash') fb?.play('jump')
-      else if (fx.type === 'crash') fb?.play('crash')
-      else if (fx.type === 'nearMiss') {
+      const cue = FX_CUE[fx.type]
+      if (fx.type === 'eat') fb?.play(fx.gold ? 'golden' : 'biscuit')
+      else if (cue) fb?.play(cue)
+      if (fx.type === 'nearMiss') {
         const now = performance.now() / 1000
         if (now - this.lastSlowMo >= this.cfg.nearMiss.slowMoCooldown) {
           this.slowMo = this.cfg.nearMiss.slowMo
           this.lastSlowMo = now
         }
-        fb?.play('jump')
       }
     }
     run.fx.length = 0
@@ -259,14 +277,16 @@ export class Engine {
           this.renderer.prepareTheme(next.theme)
           this.renderer.prepareTwist(next.twist)
         }
-        fb?.play('success')
-      } else if (e.type === 'power' && e.data.active) {
-        const [a, b] = POWER_BANNER[e.data.kind]
-        this.renderer.showPower(a, b, this.cfg.powerups[e.data.kind].color)
-        fb?.play('power')
+        fb?.play('world')
+      } else if (e.type === 'power') {
+        if (e.data.active) {
+          const [a, b] = POWER_BANNER[e.data.kind]
+          this.renderer.showPower(a, b, this.cfg.powerups[e.data.kind].color)
+          fb?.play('powerOn')
+        } else if (e.data.kind !== 'shield') fb?.play('powerOff')
       } else if (e.type === 'chase') {
         this.renderer.showChase(e.data.name, e.data.active)
-        fb?.play(e.data.active ? 'power' : 'success')
+        fb?.play(e.data.active ? 'bossGrowl' : 'escape')
       } else if (e.type === 'run:end') {
         this.best = Math.max(this.best, e.data.score)
       }

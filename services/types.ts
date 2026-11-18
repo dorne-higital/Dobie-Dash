@@ -3,6 +3,7 @@
  * will provide native implementations (Game Center, StoreKit, AdMob, haptics, iCloud KV …).
  */
 import type { GameConfig } from '~/game/config'
+import type { FeedbackCue } from '~/game/feedback'
 
 export interface SaveService {
   load<T>(key: string): Promise<T | null>
@@ -14,6 +15,17 @@ export type HapticKind = 'jump' | 'biscuit' | 'power' | 'crash' | 'success'
 export interface HapticsService {
   play(kind: HapticKind): void
   setEnabled(on: boolean): void
+}
+
+export type SoundCue = FeedbackCue
+export interface AudioService {
+  /** Call from a user gesture: browsers only start audio after one. */
+  unlock(): void
+  play(cue: SoundCue): void
+  /** Loop for a world (null fades it out); tempo is a multiple of the loop's base tempo. */
+  music(world: number | null, tempo: number): void
+  setSfx(on: boolean): void
+  setMusic(on: boolean): void
 }
 
 export interface Product {
@@ -59,6 +71,7 @@ export interface ConfigService {
 export interface Services {
   save: SaveService
   haptics: HapticsService
+  audio: AudioService
   iap: IapService
   ads: AdsService
   gamecenter: GameCenterService

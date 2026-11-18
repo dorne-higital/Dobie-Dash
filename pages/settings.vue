@@ -8,8 +8,8 @@ const settings = useSettingsStore()
     <h1>Settings</h1>
     <div class="group">
       <UiToggle v-model="settings.haptics" label="Haptics" hint="Taps and thuds as you play" />
-      <UiToggle v-model="settings.sfx" label="Sound effects" hint="Arrives in M2" />
-      <UiToggle v-model="settings.music" label="Music" hint="Arrives in M2" />
+      <UiToggle v-model="settings.sfx" label="Sound effects" hint="Jumps, biscuits, barks" />
+      <UiToggle v-model="settings.music" label="Music" hint="A tune for each world" />
     </div>
     <div class="group">
       <UiToggle

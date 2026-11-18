@@ -3,14 +3,15 @@
  * Mounts the canvas engine full screen. Vue only listens to engine events and shows the
  * pause sheet and results card on top.
  */
-import { Engine } from '~/game/engine'
+import { Engine, type FeedbackCue, type FeedbackPort } from '~/game/engine'
+import type { HapticKind } from '~/services/types'
 import type { RunSummary } from '~/game/run'
 
 definePageMeta({ layout: 'run' })
 
 const route = useRoute()
 const router = useRouter()
-const { config, haptics, analytics, ads } = useServices()
+const { config, haptics, audio, analytics, ads } = useServices()
 const player = usePlayerStore()
 const settings = useSettingsStore()
 
@@ -30,6 +31,33 @@ const startWorld = Number(route.query.world) > 1 ? Number(route.query.world) - 1
 const showFps = import.meta.dev || 'fps' in route.query || settings.showFps
 
 let engine: Engine | null = null
+
+/** Haptic for each sound cue (none for the small stuff). */
+const HAPTIC: Partial<Record<FeedbackCue, HapticKind>> = {
+  jump: 'jump',
+  double: 'jump',
+  splash: 'jump',
+  nearMiss: 'jump',
+  biscuit: 'biscuit',
+  golden: 'power',
+  powerOn: 'power',
+  smash: 'power',
+  bossGrowl: 'power',
+  shieldPop: 'crash',
+  crash: 'crash',
+  world: 'success',
+  escape: 'success',
+  revive: 'success',
+}
+
+const feedback: FeedbackPort = {
+  play(cue) {
+    audio.play(cue)
+    const h = HAPTIC[cue]
+    if (h) haptics.play(h)
+  },
+  music: (world, tempo) => audio.music(world, tempo),
+}
 let botTimer: ReturnType<typeof setTimeout> | undefined
 
 function start() {
@@ -99,7 +127,7 @@ onMounted(async () => {
   if (!canvas.value) return
   engine = new Engine(canvas.value, config.game(), {
     best: player.best,
-    feedback: haptics,
+    feedback,
     showFps,
     reduceMotion: settings.reduceMotion,
     autoplay: bot,
