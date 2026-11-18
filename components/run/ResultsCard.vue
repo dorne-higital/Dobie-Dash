@@ -1,0 +1,139 @@
+<script setup lang="ts">
+import type { RunSummary } from '~/game/run'
+
+defineProps<{ result: RunSummary; best: number; newBest: boolean }>()
+const emit = defineEmits<{ again: []; home: [] }>()
+
+// Ignore taps for a moment so a panicked jump-tap doesn't skip the card.
+const ready = ref(false)
+onMounted(() => setTimeout(() => (ready.value = true), 600))
+function tapAnywhere() {
+  if (ready.value) emit('again')
+}
+</script>
+
+<template>
+  <div class="backdrop" @pointerdown.stop @click="tapAnywhere">
+    <div class="card" role="dialog" aria-modal="true" aria-labelledby="ruff" @click.stop>
+      <h2 id="ruff">RUFF!</h2>
+      <div class="score">{{ result.score.toLocaleString() }}</div>
+      <div v-if="newBest" class="badge">New best!</div>
+      <div v-else class="best">Best {{ best.toLocaleString() }}</div>
+      <dl class="stats">
+        <div>
+          <dt>Distance</dt>
+          <dd>{{ result.metres.toLocaleString() }} m</dd>
+        </div>
+        <div>
+          <dt>Biscuits</dt>
+          <dd>{{ result.biscuits }}</dd>
+        </div>
+        <div>
+          <dt>World</dt>
+          <dd>{{ result.world + 1 }} · {{ result.worldName }}</dd>
+        </div>
+      </dl>
+      <UiButton big :disabled="!ready" @click="emit('again')">Play again</UiButton>
+      <UiButton variant="ghost" @click="emit('home')">Home</UiButton>
+    </div>
+    <p class="hint">Tap anywhere to go again</p>
+  </div>
+</template>
+
+<style scoped>
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: rgba(20, 10, 30, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 16px;
+}
+.card {
+  width: min(340px, 100%);
+  background: var(--cream);
+  border-radius: 28px;
+  padding: 22px 22px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  text-align: center;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6);
+  animation: pop 0.35s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+@keyframes pop {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
+}
+h2 {
+  margin: 0;
+  font-size: 44px;
+  color: var(--collar);
+  -webkit-text-stroke: 2px var(--plum);
+}
+.score {
+  font-family: var(--display);
+  font-size: 56px;
+  line-height: 1;
+  color: var(--plum);
+  font-variant-numeric: tabular-nums;
+}
+.badge {
+  align-self: center;
+  background: var(--gold);
+  color: var(--plum);
+  font-weight: 900;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+.best {
+  color: var(--muted);
+  font-size: 14px;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 6px 0 8px;
+}
+.stats div {
+  background: #fff;
+  border-radius: 14px;
+  padding: 8px 4px;
+}
+dt {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 900;
+}
+dd {
+  margin: 2px 0 0;
+  font-weight: 900;
+  font-size: 14px;
+  color: var(--plum);
+}
+.hint {
+  margin: 0;
+  color: #fff;
+  font-weight: 900;
+  font-size: 14px;
+  opacity: 0.85;
+}
+</style>
