@@ -1,0 +1,208 @@
+/**
+ * The save file: one versioned JSON document (shape from the plan's "Save data"), stored
+ * through the save service so iCloud key-value sync can plug in later.
+ *
+ * Every change to the shape bumps SAVE_VERSION and adds a step to MIGRATIONS, keyed on the
+ * version it upgrades from. Old saves are walked forward one step at a time.
+ */
+import type { EarStyle, EyeColour, TailStyle } from '~/game/art/dobie'
+
+export const SAVE_VERSION = 2
+
+export type Slot = 'collar' | 'hat' | 'eyes' | 'neck' | 'back' | 'trail'
+export const SLOTS: Slot[] = ['collar', 'hat', 'eyes', 'neck', 'back', 'trail']
+
+export interface DogSave {
+  name: string
+  breed: string
+  coat: number
+  ears: EarStyle
+  tail: TailStyle
+  eyes: EyeColour
+}
+
+export interface MissionSlot {
+  id: string
+  /** Progress toward the goal. */
+  p: number
+  claimed: boolean
+}
+
+export interface Stats {
+  runs: number
+  metres: number
+  biscuits: number
+  smashes: number
+  nearMisses: number
+  escapes: number
+  jumps: number
+  powerups: number
+  continues: number
+  /** Obstacles cleared (jumped or run under), by obstacle type. */
+  cleared: Record<string, number>
+  /** Seconds played in runs. */
+  seconds: number
+}
+
+export interface SettingsSave {
+  music: boolean
+  sfx: boolean
+  haptics: boolean
+  reduceMotion: boolean
+  /** Frame-time overlay during runs (also on with `?fps`). */
+  showFps: boolean
+}
+
+export interface SaveV2 {
+  v: 2
+  player: { name: string; best: number; bestWorld: number }
+  wallet: { biscuits: number; bones: number }
+  /** null until the player has made a dog (the dog maker is the first screen). */
+  dog: DogSave | null
+  /** Item ids from content/items.json, breeds as "breed:<key>", stickers as "sticker:<boss>". */
+  owned: string[]
+  equipped: Record<Slot, string | null>
+  missions: {
+    /** Local date (YYYY-MM-DD) the daily missions were dealt for. */
+    day: string | null
+    daily: MissionSlot[]
+    dailyChestClaimed: boolean
+    /** Local date of the Monday the weekly goal belongs to. */
+    week: string | null
+    weekly: MissionSlot[]
+    /** Login streak: days collected on the 7-day track, and the last day collected. */
+    streak: { count: number; lastDay: string | null }
+    /** Epoch ms when the free chest is next ready. */
+    freeChestAt: number
+  }
+  /** Medal reached per trophy: 0 none, 1 bronze, 2 silver, 3 gold. */
+  trophies: Record<string, number>
+  stats: Stats
+  flags: { tutorialDone: boolean; removeAds: boolean; starterSeen: boolean }
+  settings: SettingsSave
+}
+
+export type Save = SaveV2
+
+export function emptyStats(): Stats {
+  return {
+    runs: 0,
+    metres: 0,
+    biscuits: 0,
+    smashes: 0,
+    nearMisses: 0,
+    escapes: 0,
+    jumps: 0,
+    powerups: 0,
+    continues: 0,
+    cleared: {},
+    seconds: 0,
+  }
+}
+
+export function defaultSave(): Save {
+  return {
+    v: 2,
+    player: { name: '', best: 0, bestWorld: 0 },
+    wallet: { biscuits: 0, bones: 0 },
+    dog: null,
+    owned: [],
+    equipped: { collar: null, hat: null, eyes: null, neck: null, back: null, trail: null },
+    missions: {
+      day: null,
+      daily: [],
+      dailyChestClaimed: false,
+      week: null,
+      weekly: [],
+      streak: { count: 0, lastDay: null },
+      freeChestAt: 0,
+    },
+    trophies: {},
+    stats: emptyStats(),
+    flags: { tutorialDone: false, removeAds: false, starterSeen: false },
+    settings: { music: true, sfx: true, haptics: true, reduceMotion: false, showFps: false },
+  }
+}
+
+/** Dobie: the free default dog, used for players who had a save before the dog maker. */
+export function dobie(): DogSave {
+  return { name: 'Dobie', breed: 'doberman', coat: 0, ears: 'down', tail: 'up', eyes: 'brown' }
+}
+
+/**
+ * v1 was two separate documents (M1–M2): `player` and `settings`. The loader passes them
+ * here as { v: 1, player, settings }.
+ */
+export interface SaveV1 {
+  v: 1
+  player?: {
+    best?: number
+    bestWorld?: number
+    biscuits?: number
+    stats?: { runs?: number; metres?: number; biscuits?: number; smashes?: number }
+  } | null
+  settings?: Partial<SettingsSave> | null
+}
+
+type AnySave = { v: number } & Record<string, unknown>
+
+const MIGRATIONS: Record<number, (s: AnySave) => AnySave> = {
+  1: (raw) => {
+    const s = raw as unknown as SaveV1
+    const next = defaultSave()
+    const p = s.player
+    if (p) {
+      next.player.best = p.best ?? 0
+      next.player.bestWorld = p.bestWorld ?? 0
+      next.wallet.biscuits = p.biscuits ?? 0
+      next.stats.runs = p.stats?.runs ?? 0
+      next.stats.metres = p.stats?.metres ?? 0
+      next.stats.biscuits = p.stats?.biscuits ?? 0
+      next.stats.smashes = p.stats?.smashes ?? 0
+      // They've already been playing as Dobie and know the controls.
+      if (next.stats.runs > 0) {
+        next.dog = dobie()
+        next.player.name = 'Dobie'
+        next.flags.tutorialDone = true
+      }
+    }
+    Object.assign(next.settings, s.settings ?? {})
+    return next as unknown as AnySave
+  },
+}
+
+/** Walks any older save forward to the current version, filling missing fields. */
+export function migrate(raw: unknown): Save {
+  if (!raw || typeof raw !== 'object' || typeof (raw as AnySave).v !== 'number')
+    return defaultSave()
+  let s = structuredClone(raw) as AnySave
+  if (s.v > SAVE_VERSION) return defaultSave() // from a newer app: don't guess
+  while (s.v < SAVE_VERSION) {
+    const step = MIGRATIONS[s.v]
+    if (!step) return defaultSave()
+    s = step(s)
+  }
+  return fillDefaults(s as unknown as Save)
+}
+
+/** Fields added within a version (or lost to a bad write) come back with defaults. */
+function fillDefaults(s: Save): Save {
+  const d = defaultSave()
+  return {
+    ...d,
+    ...s,
+    player: { ...d.player, ...s.player },
+    wallet: { ...d.wallet, ...s.wallet },
+    equipped: { ...d.equipped, ...s.equipped },
+    missions: {
+      ...d.missions,
+      ...s.missions,
+      streak: { ...d.missions.streak, ...s.missions?.streak },
+    },
+    stats: { ...d.stats, ...s.stats, cleared: { ...s.stats?.cleared } },
+    flags: { ...d.flags, ...s.flags },
+    settings: { ...d.settings, ...s.settings },
+    owned: [...(s.owned ?? [])],
+    trophies: { ...s.trophies },
+  }
+}
