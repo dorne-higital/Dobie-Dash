@@ -5,7 +5,9 @@
  */
 import { Engine, type FeedbackCue, type FeedbackPort } from '~/game/engine'
 import type { HapticKind } from '~/services/types'
+import { item, STICKERS } from '~/logic/items'
 import { lookFor } from '~/logic/look'
+import { MEDALS } from '~/logic/trophies'
 import type { RunSummary } from '~/game/run'
 
 definePageMeta({ layout: 'run' })
@@ -21,7 +23,16 @@ const safeProbe = ref<HTMLDivElement | null>(null)
 const phase = ref<'loading' | 'running' | 'paused' | 'continue' | 'results'>('loading')
 const result = ref<RunSummary | null>(null)
 const newBest = ref(false)
-const pauseInfo = ref({ score: 0, worldName: '', progress: null as number | null })
+const earned = ref<string[]>([])
+const tutorial = 'tutorial' in route.query
+const sticker = (id: string) => STICKERS.find((s) => s.id === id)?.name ?? id
+const pauseInfo = ref({
+  score: 0,
+  worldName: '',
+  progress: null as number | null,
+  nextWorld: null as string | null,
+  summary: null as RunSummary | null,
+})
 const offer = ref({ price: 0, countdown: 5, caughtBy: null as string | null })
 const runBiscuits = ref(0)
 const continueSheet = ref<{ adFinished: () => void } | null>(null)
@@ -139,7 +150,18 @@ onMounted(async () => {
     hudInsetLeft: 52,
   })
   engine.on('run:end', (r) => {
-    newBest.value = startWorld === undefined && player.recordRun(r).newBest
+    earned.value = []
+    newBest.value = false
+    if (startWorld === undefined && !tutorial) {
+      const got = player.recordRun(r)
+      newBest.value = got.newBest
+      earned.value = [
+        ...got.unlocked.map((id) =>
+          id.startsWith('sticker:') ? `${sticker(id)} sticker` : `${item(id)?.name} unlocked`,
+        ),
+        ...got.medals.map((m) => `${MEDALS[m.medal]} medal: ${m.trophy.name}`),
+      ]
+    }
     result.value = r
     phase.value = 'results'
     analytics.track('run_end', { score: r.score, world: r.world, seconds: r.seconds })
@@ -198,6 +220,8 @@ onBeforeUnmount(() => {
       :result="result"
       :best="player.best"
       :new-best="newBest"
+      :earned="earned"
+      :dog-name="player.dog?.name"
       @again="start"
       @home="goHome"
     />

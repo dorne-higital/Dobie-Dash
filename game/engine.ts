@@ -139,7 +139,10 @@ export class Engine {
       score: run.score,
       worldName: run.world.name,
       progress: worldProgress(run.score, run.worldIndex, run.worlds),
+      nextWorld: run.worlds[run.worldIndex + 1]?.name ?? null,
       caughtBy: run.chase?.name ?? null,
+      /** The run so far, as if it ended now (mission progress on the pause sheet). */
+      summary: run.summary(),
     }
   }
 

@@ -11,6 +11,10 @@ export default defineNuxtConfig({
 
   devtools: { enabled: false },
 
+  runtimeConfig: {
+    public: { appVersion: process.env.npm_package_version ?? '' },
+  },
+
   modules: ['@pinia/nuxt', '@nuxt/eslint'],
 
   css: [

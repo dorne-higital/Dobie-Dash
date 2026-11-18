@@ -1,8 +1,34 @@
 <script setup lang="ts">
 import type { RunSummary } from '~/game/run'
 
-defineProps<{ result: RunSummary; best: number; newBest: boolean }>()
+const props = withDefaults(
+  defineProps<{
+    result: RunSummary
+    best: number
+    newBest: boolean
+    /** Things this run unlocked or earned (item names, medals). */
+    earned?: string[]
+    dogName?: string
+  }>(),
+  { earned: () => [], dogName: 'Dobie' },
+)
 const emit = defineEmits<{ again: []; home: [] }>()
+
+const shared = ref('')
+async function share() {
+  const r = props.result
+  const text = `${props.dogName} just scored ${r.score.toLocaleString()} in Dobie Dash and reached ${r.worldName}! 🐾`
+  try {
+    if (navigator.share) {
+      await navigator.share({ text })
+      return
+    }
+    await navigator.clipboard.writeText(text)
+    shared.value = 'Copied to share!'
+  } catch {
+    /* share sheet closed */
+  }
+}
 
 // Ignore taps for a moment so a panicked jump-tap doesn't skip the card.
 const ready = ref(false)
@@ -42,14 +68,36 @@ function tapAnywhere() {
           <dd>{{ result.escapes }} {{ result.escapes === 1 ? 'chase' : 'chases' }}</dd>
         </div>
       </dl>
+      <ul v-if="earned.length" class="earned">
+        <li v-for="e in earned" :key="e">🎉 {{ e }}</li>
+      </ul>
       <UiButton big :disabled="!ready" @click="emit('again')">Play again</UiButton>
-      <UiButton variant="ghost" @click="emit('home')">Home</UiButton>
+      <div class="row">
+        <UiButton variant="ghost" @click="emit('home')">Home</UiButton>
+        <UiButton variant="secondary" @click="share">{{ shared || 'Share' }}</UiButton>
+      </div>
     </div>
     <p class="hint">Tap anywhere to go again</p>
   </div>
 </template>
 
 <style scoped>
+.earned {
+  list-style: none;
+  margin: 0 0 4px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: #fff4c4;
+  font-weight: 900;
+  font-size: 14px;
+}
+.row {
+  display: flex;
+  gap: 8px;
+}
+.row > * {
+  flex: 1;
+}
 .caught {
   margin: -4px 0 6px;
   font-weight: 900;
