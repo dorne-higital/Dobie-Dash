@@ -35,7 +35,7 @@ const MAX_DOUBLE_DELAY = 40
 
 /**
  * Finds the plan that clears `pattern` and lands soonest, or null if none exists.
- * Mirrors Engine.step: dog physics → pigeons drift → collide, with obstacles at
+ * Mirrors Engine.step: dog physics → movers drift → collide, with obstacles at
  * x0 − speed·dt·k − extra·dt·(k+1) on step k after spawning.
  */
 export function findClearPlan(
@@ -108,9 +108,12 @@ export function findClearPlan(
     }
   }
 
-  // Running underneath (e.g. a lone pigeon) needs no tap at all.
-  if (groundHitK === Infinity && ready <= xOverlapK)
-    return { jump: null, double: null, land: ready }
+  // Before `ready` the dog may still be in the air from the previous pattern, at any
+  // height, so nothing (a flier especially) may reach its column until it has landed.
+  if (xOverlapK < ready) return null
+
+  // Running underneath (e.g. a lone seagull) needs no tap at all.
+  if (groundHitK === Infinity) return { jump: null, double: null, land: ready }
 
   const latest = Math.min(groundHitK, passK + 1)
   const earliest = Math.max(ready, latest - 60)
@@ -235,8 +238,12 @@ export class Spawner {
 
     const check = (pat: PatternObstacle[]) => {
       const plan = findClearPlan(pat, this.cfg, { speed: s.speed, ready })
-      if (!plan || !s.nextSpeed || s.nextSpeed === s.speed) return plan
-      return findClearPlan(pat, this.cfg, { speed: s.nextSpeed, ready: 0 }) ? plan : null
+      if (!plan) return null
+      // The pattern may reach the dog at another speed: the one this world is ramping
+      // to, or the next world's if the score target is close. It must clear at those too.
+      for (const v of [s.world.speed, s.nextSpeed])
+        if (v && v !== s.speed && !findClearPlan(pat, this.cfg, { speed: v, ready: 0 })) return null
+      return plan
     }
     let kind: PatternType = intro ? 'single' : this.rng.weighted(s.world.patterns)
     let pattern = this.makePattern(kind, x0, s)
@@ -284,11 +291,16 @@ export class Spawner {
 
   private pool(s: SpawnerState, ground: boolean): Partial<Record<ObstacleType, number>> {
     const pool: Partial<Record<ObstacleType, number>> = {}
-    for (const w of s.worldsSoFar)
+    // Earlier worlds' obstacles stay in the mix, fading by carryOver per world back.
+    const last = s.worldsSoFar.length - 1
+    for (const [i, w] of s.worldsSoFar.entries()) {
+      const scale = Math.pow(this.cfg.spawner.carryOver, last - i)
+      if (!scale) continue
       for (const [k, v] of Object.entries(w.obstacles) as [ObstacleType, number][]) {
         if (ground && this.cfg.obstacles[k].fly) continue
-        pool[k] = (pool[k] ?? 0) + v
+        pool[k] = (pool[k] ?? 0) + v * scale
       }
+    }
     return pool
   }
 
@@ -318,14 +330,16 @@ export class Spawner {
     if (kind === 'flier') {
       // A low line under the bird: stay on the ground to eat it.
       for (let i = 0; i < 4; i++)
-        out.push({ wx: start - 30 + i * b.spacing, y: b.pigeonLineY, gold: false })
+        out.push({ wx: start - 30 + i * b.spacing, y: b.flierLineY, gold: false })
       return out
     }
+    if (!this.rng.chance(b.chance)) return out
     const r = this.rng.next()
     if (r < b.arcChance) {
       const mid = (start + end) / 2
       const golden = this.rng.chance(b.goldenArcChance)
-      for (let i = -3; i <= 3; i++) {
+      const half = Math.floor(b.arcCount / 2)
+      for (let i = -half; i <= half; i++) {
         const dx = i * b.spacing
         const h = Math.max(0, b.arcHeight * (1 - Math.pow(dx / b.arcHalfWidth, 2)))
         out.push({ wx: mid + dx, y: -h - b.arcLift, gold: golden && i === 0 })
@@ -344,7 +358,7 @@ export class Spawner {
   private breatherBiscuits(start: number, len: number): SpawnedBiscuit[] {
     const b = this.cfg.spawner.biscuits
     const out: SpawnedBiscuit[] = []
-    for (let x = 40; x < len - 40; x += b.spacing) {
+    for (let x = 40; x < len - 40; x += b.breatherSpacing) {
       const wave = (Math.sin((x / len) * Math.PI * 4) + 1) / 2
       out.push({ wx: start + x, y: b.lowY - wave * 70, gold: false })
     }

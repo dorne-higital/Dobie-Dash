@@ -154,8 +154,8 @@ describe('hitboxes', () => {
   it('a hydrant directly under a grounded dog overlaps', () => {
     expect(overlaps(dogBox(130, 0, hb), obstacleBox(130, cfg.obstacles.hydrant))).toBe(true)
   })
-  it('a pigeon passes over a grounded dog', () => {
-    expect(overlaps(dogBox(130, 0, hb), obstacleBox(130, cfg.obstacles.pigeon))).toBe(false)
+  it('a seagull passes over a grounded dog', () => {
+    expect(overlaps(dogBox(130, 0, hb), obstacleBox(130, cfg.obstacles.seagull))).toBe(false)
   })
   it('a dog at single-jump apex clears every ground obstacle', () => {
     const y = -apex(p.jumpVelocity, p.gravity)

@@ -3,7 +3,7 @@
  * offscreen canvases at load. Each game frame is then just drawImage calls.
  */
 import { DOBIE, pup, type Accessories, type Dog } from '../art/dobie'
-import type { ObstacleType, ThemeKind } from '../config'
+import { OBSTACLE_TYPES, type ObstacleType, type ThemeKind } from '../config'
 import { buildTheme, cloud, type Frame as ViewFrame, type ThemeCache } from './backgrounds'
 import { bone, drawBiscuit, drawObstacle, OBSTACLE_ANIM } from './obstacles'
 import { makeCanvas, type Ctx } from './draw'
@@ -80,8 +80,6 @@ export function jumpFrame(tilt: number) {
     if (Math.abs(JUMP_TILTS[i]! - tilt) < Math.abs(JUMP_TILTS[best]! - tilt)) best = i
   return best
 }
-
-const OBSTACLE_TYPES: ObstacleType[] = ['hydrant', 'cone', 'fence', 'cat', 'pigeon']
 
 export class SpriteCache {
   readonly scale: number

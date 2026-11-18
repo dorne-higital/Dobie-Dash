@@ -23,9 +23,14 @@ export interface Obstacle {
   def: ObstacleDef
   wx: number
   pwx: number
-  /** Animation phase offset (cat tail, pigeon wings). */
+  /** Animation phase offset (tails, wings, wheels). */
   ph: number
   dead: boolean
+  /**
+   * Spawned during Zoomies: spaced for Zoomies speed, so it stays smashable after
+   * Zoomies ends rather than becoming an unfair hit at the slower speed.
+   */
+  soft: boolean
   /** Knock-away motion once dead (screen-space, relative to wx/ground). */
   kx: number
   ky: number
@@ -107,6 +112,7 @@ export class Run {
   fx: Fx[] = []
   private pressed = false
   private taps = new Set<number>()
+  private tapSpeed = 0
   private nextId = 1
 
   constructor(cfg: GameConfig, seed: number, viewW: number, opts: RunOptions = {}) {
@@ -206,6 +212,7 @@ export class Run {
           pwx: o.wx,
           ph: this.spawner.rng.next() * Math.PI * 2,
           dead: false,
+          soft: this.power.zoomies > 0,
           kx: 0,
           ky: 0,
           kvx: 0,
@@ -231,7 +238,7 @@ export class Run {
       if (o.dead) continue
       if (o.def.extraSpeed) o.wx -= o.def.extraSpeed * dt
       if (!overlaps(db, obstacleBox(o.wx - this.dist, o.def))) continue
-      const outcome = this.opts.invincible ? 'smash' : resolveHit(this.power, this.cfg)
+      const outcome = this.opts.invincible || o.soft ? 'smash' : resolveHit(this.power, this.cfg)
       if (outcome === 'pass') continue
       if (outcome === 'crash') {
         this.state = 'crashed'
@@ -300,23 +307,48 @@ export class Run {
    * group of obstacles from the live state, using the same validator as the spawner.
    */
   private autoplay() {
+    // Taps planned at one speed go stale while a world change ramps the speed: replan.
+    if (this.dog.grounded && this.scrollSpeed !== this.tapSpeed) this.taps.clear()
     if (this.taps.size === 0 && this.dog.grounded) {
+      this.tapSpeed = this.scrollSpeed
       const dogX = this.cfg.view.dogX
       const hb = this.cfg.dog.hitbox
       const ahead = this.obstacles
         .filter((o) => !o.dead && o.wx - this.dist + o.def.w - o.def.inset > dogX + hb.x0)
         .sort((a, b) => a.wx - b.wx)
+      // Group by when things reach the dog, not by screen gap: a fox or skateboarder
+      // closes on whatever is in front of it.
+      const v = this.scrollSpeed
+      const arrive = (x: number, o: Obstacle) => (x - dogX) / (v + (o.def.extraSpeed ?? 0))
+      ahead.sort((a, b) => arrive(a.wx - this.dist, a) - arrive(b.wx - this.dist, b))
+      // Clusters: obstacles that reach the dog within 160 px of each other. Plan for as
+      // many clusters (inside 0.75 s) as two taps can clear, but never split a cluster.
       const group: PatternObstacle[] = []
+      const cuts: number[] = []
       let end = -Infinity
       for (const o of ahead) {
         const x = o.wx - this.dist
-        if (group.length && x - end > 160) break
+        const t = arrive(x, o)
+        if (group.length && t - end > 0.75) break
+        if (group.length && t - end > 160 / v) cuts.push(group.length)
         // Runs before this step's physics, so this step is the validator's step 0.
         group.push({ type: o.type, x })
-        end = x + o.def.w
+        end = Math.max(end, arrive(x + o.def.w, o))
       }
+      cuts.push(group.length)
       if (group.length && group[0]!.x - dogX < 520) {
-        const plan = findClearPlan(group, this.cfg, { speed: this.scrollSpeed, ready: 0 })
+        let plan = null
+        for (let i = cuts.length - 1; i >= 0 && !plan; i--)
+          plan = findClearPlan(group.slice(0, cuts[i]), this.cfg, { speed: v, ready: 0 })
+        // Last resort: clear what two taps can, but only commit once that jump is due,
+        // so waiting never throws away a better plan.
+        for (let n = group.length - 1; n > 0 && !plan; n--) {
+          const p = findClearPlan(group.slice(0, n), this.cfg, { speed: v, ready: 0 })
+          if (p) {
+            if ((p.jump ?? 0) <= 1) plan = p
+            break
+          }
+        }
         const base = this.step
         if (plan?.jump != null) this.taps.add(base + plan.jump)
         if (plan?.double != null) this.taps.add(base + plan.double)

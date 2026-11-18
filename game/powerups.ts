@@ -50,6 +50,7 @@ export function eatBiscuit(
   cfg: GameConfig,
 ): PowerEvent | null {
   if (gold) return activate(s, 'zoomies', cfg)
+  if (!cfg.meter.fillDuringPower && (s.zoomies > 0 || s.magnet > 0)) return null
   s.meter++
   if (s.meter < cfg.meter.blocks) return null
   s.meter = 0

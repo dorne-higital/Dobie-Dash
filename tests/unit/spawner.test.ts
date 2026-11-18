@@ -44,8 +44,14 @@ describe('validator', () => {
         expect(findClearPlan([{ type, x: 700 }], cfg, { speed: w.speed, ready: 0 })).not.toBeNull()
   })
 
-  it('a lone pigeon needs no tap', () => {
-    const plan = findClearPlan([{ type: 'pigeon', x: 700 }], cfg, { speed: 365, ready: 0 })
+  it('a flier reaching the dog while it may still be mid-jump is rejected', () => {
+    const owl = [{ type: 'owl' as ObstacleType, x: 300 }]
+    expect(findClearPlan(owl, cfg, { speed: 405, ready: 0 })).not.toBeNull()
+    expect(findClearPlan(owl, cfg, { speed: 405, ready: 40 })).toBeNull()
+  })
+
+  it('a lone seagull needs no tap', () => {
+    const plan = findClearPlan([{ type: 'seagull', x: 700 }], cfg, { speed: 365, ready: 0 })
     expect(plan).toEqual({ jump: null, double: null, land: 0 })
   })
 
@@ -69,11 +75,25 @@ describe('spawner', () => {
     expect(spawnFor(cfg, 43, 1, 60)).not.toEqual(a)
   })
 
-  it('Bark Park only uses hydrants and cones; City Streets adds fences and cats', () => {
-    const park = spawnFor(cfg, 7, 0, 120).flatMap((s) => s.batch.obstacles.map((o) => o.type))
-    expect(new Set(park)).toEqual(new Set(['hydrant', 'cone']))
-    const city = spawnFor(cfg, 7, 1, 240).flatMap((s) => s.batch.obstacles.map((o) => o.type))
-    expect(new Set(city)).toEqual(new Set(['hydrant', 'cone', 'fence', 'cat']))
+  it('each world adds its own obstacles, which make up about half of what spawns', () => {
+    for (const [i, w] of cfg.worlds.entries()) {
+      const seen = spawnFor(cfg, 7, i, 300).flatMap((s) => s.batch.obstacles.map((o) => o.type))
+      const own = Object.keys(w.obstacles)
+      for (const t of own) expect(seen, `${w.name} ${t}`).toContain(t)
+      const share = seen.filter((t) => own.includes(t)).length / seen.length
+      expect(share, w.name).toBeGreaterThan(0.4)
+      // Earlier worlds' obstacles stay in the mix.
+      if (i > 0) expect(share, w.name).toBeLessThan(1)
+    }
+  })
+
+  it('with carryOver 0 each world spawns only its own obstacles', () => {
+    const own = structuredClone(cfg)
+    own.spawner.carryOver = 0
+    const seen = new Set(
+      spawnFor(own, 7, 2, 240).flatMap((s) => s.batch.obstacles.map((o) => o.type)),
+    )
+    expect(seen).toEqual(new Set(Object.keys(own.worlds[2]!.obstacles)))
   })
 
   it('every obstacle pattern comes with a clearing plan of at most one jump + one double', () => {
@@ -103,7 +123,8 @@ describe('spawner', () => {
     breathers.forEach((b, i) => {
       expect(b.time).toBeGreaterThanOrEqual(45 * (i + 1))
       expect(b.time).toBeLessThan(45 * (i + 1) + 3)
-      expect(b.batch.biscuits.length).toBeGreaterThan(10)
+      const want = (3 * cfg.worlds[0]!.speed - 80) / cfg.spawner.biscuits.breatherSpacing
+      expect(b.batch.biscuits.length).toBeGreaterThanOrEqual(Math.floor(want))
     })
     // No obstacle inside the breather stretch.
     for (const br of breathers) {
@@ -121,7 +142,7 @@ describe('spawner', () => {
     let gold = 0
     for (let seed = 1; seed <= 60; seed++)
       for (const { batch } of spawnFor(cfg, seed, 1, 120)) {
-        if (batch.biscuits.length !== 7) continue
+        if (batch.biscuits.length !== cfg.spawner.biscuits.arcCount) continue
         arcs++
         if (batch.biscuits.some((b) => b.gold)) gold++
       }
@@ -134,29 +155,15 @@ describe('spawner', () => {
 describe('fairness end to end', () => {
   // A bot that only taps on the spawner's planned steps must survive in the real Run,
   // which proves the plans (and so every pattern) are clearable with the real physics.
-  it('a planned-tap bot survives 3 minutes across seeds (worlds 1–2)', () => {
+  it('a planned-tap bot survives 5 minutes through all four worlds', () => {
     const cfg = noPowers()
-    for (let seed = 1; seed <= 25; seed++) {
+    for (let seed = 1; seed <= 12; seed++) {
       const run = new Run(cfg, seed, W, { autoplay: true })
-      for (let i = 0; i < 180 * 60 && run.state === 'running'; i++) run.update()
-      expect({ seed, state: run.state, t: Math.round(run.time) }).toEqual({
-        seed,
-        state: 'running',
-        t: 180,
-      })
-      expect(run.worldIndex).toBe(1)
-    }
-  })
-
-  it('the bot also survives faster worlds when they are enabled', () => {
-    const base = noPowers()
-    for (const w of base.worlds) w.enabled = true
-    for (let seed = 1; seed <= 10; seed++) {
-      const run = new Run(base, seed, W, { autoplay: true })
       for (let i = 0; i < 300 * 60 && run.state === 'running'; i++) run.update()
       expect({ seed, state: run.state }).toEqual({ seed, state: 'running' })
+      expect(run.worldIndex).toBe(3)
     }
-  })
+  }, 60_000)
 
   it('a player who never taps crashes on the first obstacle', () => {
     const run = new Run(noPowers(), 5, W)

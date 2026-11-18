@@ -39,19 +39,41 @@ describe('worlds', () => {
     expect(worldProgress(1500 + 1250, 1, worlds)).toBeCloseTo(0.5)
     expect(worldProgress(9000, 3, worlds)).toBeNull()
   })
-  it('a run starts in Bark Park and reaches City Streets by score', () => {
+  it('a run starts in Bark Park and changes world at each score target', () => {
     const c = loadGameConfig()
     c.meter.blocks = 1e9
     const run = new Run(c, 11, 600, { autoplay: true })
     expect(run.world.name).toBe('Bark Park')
     const seen: string[] = []
-    while (run.state === 'running' && run.time < 120) {
+    const at: number[] = []
+    while (run.state === 'running' && run.time < 360) {
       run.update()
-      for (const e of run.events.splice(0)) if (e.type === 'world') seen.push(e.data.name)
+      for (const e of run.events.splice(0))
+        if (e.type === 'world') {
+          seen.push(e.data.name)
+          at.push(run.score)
+        }
     }
-    expect(seen).toEqual(['City Streets'])
-    expect(run.speed).toBe(330)
-  })
+    expect(seen).toEqual(['City Streets', 'Sunny Beach', 'Midnight Run'])
+    c.worlds.slice(1).forEach((w, i) => expect(at[i]).toBeGreaterThanOrEqual(w.at))
+    expect(run.speed).toBe(c.worlds[3]!.speed)
+  }, 30_000)
+})
+
+describe('pacing', () => {
+  it('a near-perfect run (the bot) reaches Midnight Run in roughly 3–4 minutes', () => {
+    const cfg = loadGameConfig()
+    const times: number[] = []
+    for (let seed = 1; seed <= 6; seed++) {
+      const run = new Run(cfg, seed, 600, { autoplay: true })
+      while (run.state === 'running' && run.worldIndex < 3 && run.time < 400) run.update()
+      times.push(run.time)
+    }
+    times.sort((a, b) => a - b)
+    const median = times[3]!
+    expect(median).toBeGreaterThan(160)
+    expect(median).toBeLessThan(260)
+  }, 60_000)
 })
 
 describe('power meter', () => {
@@ -64,6 +86,31 @@ describe('power meter', () => {
     expect(ev?.active).toBe(true)
     expect(s.meter).toBe(0)
   })
+
+  it('does not fill while Zoomies or Magnet is running', () => {
+    const s = newPowerState()
+    s.magnet = 3
+    eatBiscuit(s, false, new Rng(1), cfg)
+    expect(s.meter).toBe(0)
+    s.magnet = 0
+    eatBiscuit(s, false, new Rng(1), cfg)
+    expect(s.meter).toBe(1)
+  })
+
+  it('obstacles spawned during Zoomies stay smashable after it ends', () => {
+    const c = loadGameConfig()
+    c.meter.blocks = 1e9
+    let soft = 0
+    for (let seed = 1; seed <= 15; seed++) {
+      const run = new Run(c, seed, 600, { autoplay: true })
+      while (run.state === 'running' && run.time < 150) {
+        run.update()
+        if (run.power.zoomies === 0) for (const o of run.obstacles) if (o.soft && !o.dead) soft++
+      }
+      expect({ seed, state: run.state }).toEqual({ seed, state: 'running' })
+    }
+    expect(soft).toBeGreaterThan(0)
+  }, 30_000)
 
   it('a golden biscuit gives instant Zoomies without touching the meter', () => {
     const s = newPowerState()

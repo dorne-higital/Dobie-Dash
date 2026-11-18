@@ -20,9 +20,17 @@
     "coyoteTime": 0.08
   },
   "dog": {
-    "hitbox": { "x0": -20, "x1": 40, "y0": -56, "y1": -6 },
+    "hitbox": {
+      "x0": -20,
+      "x1": 40,
+      "y0": -56,
+      "y1": -6
+    },
     "biscuitReach": 32,
-    "mouth": { "x": 10, "y": -32 }
+    "mouth": {
+      "x": 10,
+      "y": -32
+    }
   },
   "scoring": {
     "unitsPerMetre": 10,
@@ -44,9 +52,13 @@
     "breatherEvery": 45,
     "breatherSeconds": 3,
     "pairGap": [40, 110],
+    "carryOver": 0.5,
     "validatorStep": 6,
     "biscuits": {
+      "chance": 0.25,
+      "arcCount": 5,
       "spacing": 30,
+      "breatherSpacing": 90,
       "arcChance": 0.55,
       "lowLineChance": 0.3,
       "arcHeight": 128,
@@ -57,23 +69,104 @@
       "lineAfter": 120,
       "highAfter": 150,
       "goldenArcChance": 0.08,
-      "pigeonLineY": -26
+      "flierLineY": -26
     }
   },
   "meter": {
-    "blocks": 8
+    "blocks": 8,
+    "fillDuringPower": false
   },
   "powerups": {
-    "zoomies": { "duration": 6, "speedMultiplier": 1.55, "graceAfter": 0.6, "color": "#FF4FA0" },
-    "magnet": { "duration": 8, "radius": 320, "pullSpeed": 900, "color": "#3A86F0" },
-    "shield": { "invulnerableAfterHit": 1.2, "color": "#2FD0C0" }
+    "zoomies": {
+      "duration": 6,
+      "speedMultiplier": 1.55,
+      "graceAfter": 0.6,
+      "color": "#FF4FA0"
+    },
+    "magnet": {
+      "duration": 8,
+      "radius": 320,
+      "pullSpeed": 900,
+      "color": "#3A86F0"
+    },
+    "shield": {
+      "invulnerableAfterHit": 1.2,
+      "color": "#2FD0C0"
+    }
   },
   "obstacles": {
-    "hydrant": { "w": 28, "h": 44, "inset": 4 },
-    "cone": { "w": 30, "h": 36, "inset": 6 },
-    "fence": { "w": 58, "h": 38, "inset": 3 },
-    "cat": { "w": 40, "h": 34, "inset": 5 },
-    "pigeon": { "w": 34, "h": 22, "inset": 3, "fly": 100, "extraSpeed": 70 }
+    "hydrant": {
+      "w": 28,
+      "h": 44,
+      "inset": 4
+    },
+    "cone": {
+      "w": 30,
+      "h": 36,
+      "inset": 6
+    },
+    "puddle": {
+      "w": 56,
+      "h": 10,
+      "inset": 6
+    },
+    "fence": {
+      "w": 58,
+      "h": 38,
+      "inset": 3
+    },
+    "cat": {
+      "w": 40,
+      "h": 34,
+      "inset": 5
+    },
+    "skateboarder": {
+      "w": 40,
+      "h": 50,
+      "inset": 5,
+      "extraSpeed": 90
+    },
+    "manhole": {
+      "w": 54,
+      "h": 10,
+      "inset": 6
+    },
+    "crab": {
+      "w": 38,
+      "h": 24,
+      "inset": 4,
+      "extraSpeed": 40
+    },
+    "sandcastle": {
+      "w": 50,
+      "h": 40,
+      "inset": 4
+    },
+    "seagull": {
+      "w": 36,
+      "h": 22,
+      "inset": 3,
+      "fly": 100,
+      "extraSpeed": 70
+    },
+    "owl": {
+      "w": 32,
+      "h": 28,
+      "inset": 3,
+      "fly": 92,
+      "extraSpeed": 50
+    },
+    "bin": {
+      "w": 32,
+      "h": 50,
+      "inset": 3
+    },
+    "fox": {
+      "w": 48,
+      "h": 30,
+      "inset": 5,
+      "extraSpeed": 110
+    }
   },
   "worlds": [
     {
@@ -84,8 +177,14 @@
       "gap": [1.2, 1.9],
       "enabled": true,
       "theme": "park",
-      "obstacles": { "hydrant": 2, "cone": 1 },
-      "patterns": { "single": 1 }
+      "obstacles": {
+        "hydrant": 2,
+        "cone": 1,
+        "puddle": 1
+      },
+      "patterns": {
+        "single": 1
+      }
     },
     {
       "id": "city-streets",
@@ -95,8 +194,16 @@
       "gap": [1.1, 1.8],
       "enabled": true,
       "theme": "city",
-      "obstacles": { "fence": 1, "cat": 1 },
-      "patterns": { "single": 3, "pair": 1 }
+      "obstacles": {
+        "fence": 1,
+        "cat": 1,
+        "skateboarder": 1,
+        "manhole": 1.2
+      },
+      "patterns": {
+        "single": 3,
+        "pair": 1
+      }
     },
     {
       "id": "sunny-beach",
@@ -104,10 +211,18 @@
       "at": 4000,
       "speed": 365,
       "gap": [1.0, 1.7],
-      "enabled": false,
+      "enabled": true,
       "theme": "beach",
-      "obstacles": { "pigeon": 1, "cat": 1 },
-      "patterns": { "single": 3, "pair": 1.2, "flier": 1 }
+      "obstacles": {
+        "crab": 1.2,
+        "sandcastle": 1,
+        "seagull": 1
+      },
+      "patterns": {
+        "single": 3,
+        "pair": 1.2,
+        "flier": 1
+      }
     },
     {
       "id": "midnight-run",
@@ -115,10 +230,19 @@
       "at": 7500,
       "speed": 405,
       "gap": [1.0, 1.6],
-      "enabled": false,
+      "enabled": true,
       "theme": "night",
-      "obstacles": { "fence": 1, "pigeon": 1 },
-      "patterns": { "single": 3, "pair": 1.5, "flier": 1, "triple": 0.6 }
+      "obstacles": {
+        "owl": 1,
+        "bin": 1,
+        "fox": 1.2
+      },
+      "patterns": {
+        "single": 3,
+        "pair": 1.5,
+        "flier": 1,
+        "triple": 0.6
+      }
     }
   ]
 }

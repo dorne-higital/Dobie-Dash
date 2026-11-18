@@ -4,7 +4,36 @@
  */
 import raw from '../content/worlds.json'
 
-export type ObstacleType = 'hydrant' | 'cone' | 'fence' | 'cat' | 'pigeon'
+export type ObstacleType =
+  | 'hydrant'
+  | 'cone'
+  | 'puddle'
+  | 'fence'
+  | 'cat'
+  | 'skateboarder'
+  | 'manhole'
+  | 'crab'
+  | 'sandcastle'
+  | 'seagull'
+  | 'owl'
+  | 'bin'
+  | 'fox'
+
+export const OBSTACLE_TYPES: ObstacleType[] = [
+  'hydrant',
+  'cone',
+  'puddle',
+  'fence',
+  'cat',
+  'skateboarder',
+  'manhole',
+  'crab',
+  'sandcastle',
+  'seagull',
+  'owl',
+  'bin',
+  'fox',
+]
 export type PatternType = 'single' | 'pair' | 'triple' | 'flier'
 export type ThemeKind = 'park' | 'city' | 'beach' | 'night'
 export type PowerKind = 'zoomies' | 'magnet' | 'shield'
@@ -45,7 +74,12 @@ export interface PhysicsConfig {
 }
 
 export interface BiscuitSpawnConfig {
+  /** Share of obstacle patterns that come with biscuits. */
+  chance: number
+  /** Biscuits in an arc (odd numbers keep a top biscuit for the golden one). */
+  arcCount: number
   spacing: number
+  breatherSpacing: number
   arcChance: number
   lowLineChance: number
   arcHeight: number
@@ -56,7 +90,7 @@ export interface BiscuitSpawnConfig {
   lineAfter: number
   highAfter: number
   goldenArcChance: number
-  pigeonLineY: number
+  flierLineY: number
 }
 
 export interface SpawnerConfig {
@@ -67,6 +101,8 @@ export interface SpawnerConfig {
   breatherEvery: number
   breatherSeconds: number
   pairGap: [number, number]
+  /** Weight earlier worlds' obstacles keep, per world back (0.5: last world ×0.5, the one before ×0.25). */
+  carryOver: number
   validatorStep: number
   biscuits: BiscuitSpawnConfig
 }
@@ -88,7 +124,7 @@ export interface GameConfig {
   crash: { endDelay: number }
   worldTransition: { speedLerpSeconds: number; fadeSeconds: number }
   spawner: SpawnerConfig
-  meter: { blocks: number }
+  meter: { blocks: number; fillDuringPower: boolean }
   powerups: {
     zoomies: { duration: number; speedMultiplier: number; graceAfter: number; color: string }
     magnet: { duration: number; radius: number; pullSpeed: number; color: string }
