@@ -3,11 +3,12 @@
 A one-tap endless runner for iPhone. Nuxt 4 single-page app (static, `ssr: false`) with a
 plain-TypeScript canvas engine. It will ship inside the same iOS container as Footballdle.
 
-**Status:** **M0** (set-up), **M1** (the run) and **M2** (worlds and power-ups) are done.
-All four worlds play: Bark Park, City Streets, Sunny Beach (waves) and Midnight Run (lit only
-by street lamps), each with its own obstacles and a boss chase before its target. Plus
-power-ups, near misses, "Keep running?", sound, music and haptics. The iOS app builds on
-Codemagic and uploads to TestFlight (see `ios/README.md`).
+**Status:** **M0–M3** are done. A new player makes a dog, learns in a three-step
+tutorial, then plays all four worlds (Bark Park, City Streets, Sunny Beach with waves,
+Midnight Run lit only by street lamps) with boss chases, power-ups and "Keep running?".
+Between runs there's the hub: Closet, Worlds, Missions with a login streak and chests,
+Profile with trophies, and Settings. The iOS app builds on Codemagic and uploads to
+TestFlight (see `ios/README.md`).
 
 ## Run it
 
@@ -76,9 +77,15 @@ reload; no code changes needed.
 | `continue`       | "Keep running?": 5 s countdown, prices 50 / 100 / 200 biscuits, 2 s grace, clears 420 ahead                          |
 | `view` / `loop`  | logical width 600, ground at 76%, pixel-ratio cap 2, 60 Hz fixed step                                                |
 
-`content/items.json`, `missions.json` and `trophies.json` hold starter data for the hub
-(M3). The config is loaded through `services/config`, so Remote Config can later override
-it without an App Store update.
+The hub's content is also JSON:
+
+| File                            | What it holds                                                                                                                                            |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content/items.json`            | collars, outfits and trails with biscuit / bone / App Store prices or world unlocks; boss stickers; breed pricing (Dobie free, others 80 bones or £0.99) |
+| `content/missions.json`         | the daily mission pool (3 a day), weekly goals, 7-day streak rewards, daily and free chests                                                              |
+| `content/trophies.json`         | 10 trophies with bronze / silver / gold thresholds                                                                                                       |
+| `content/worlds.json`           | also the Worlds tab text, worlds 5–8 (locked), and the tutorial's steps and words                                                                        | The config is loaded through `services/config`, so Remote Config can later override |
+| it without an App Store update. |
 
 ## How it fits together
 
@@ -116,30 +123,35 @@ pages/run.vue ── mounts ──▶ game/engine.ts  (canvas, rAF, input, 60 Hz
   versions in `plugins/01.services.client.ts`. See `ios/README.md`.
 - **Audio** (`services/web/audio.ts`) is synthesised with Web Audio: every sound effect and a
   placeholder loop per world, faster as the speed rises. Swap in a licensed pack later.
+- **Hub logic** lives in `logic/` as plain TypeScript (save + migrations, shop, missions,
+  trophies, the dog's look) and is unit-tested without Nuxt. Pinia stores wrap it; one save
+  document is written through the save service (`localStorage` now, iCloud later).
 - **Dev helpers:** `/?sheet` shows the baked sprite sheet under the home hero. `/run?bot`
   turns on autoplay. `?fps` turns on the overlay. `?world=N` starts in world N.
+  `/run?tutorial` replays the tutorial.
 
 ## Tests
 
-`tests/unit/` (58 tests):
+`tests/unit/` (92 tests):
 
-- **physics:** jump apex and air time, a single double jump, the jump buffer, coyote time,
-  hitboxes (seagulls pass over a grounded dog).
-- **spawner:** determinism, each world's own obstacles making up about half of its mix,
-  every pattern has a clearing plan, intro, breathers, golden arcs, fliers rejected while
-  the dog may be mid-jump, waves only on the beach with nothing inside them, and end to
-  end: a bot survives 5 minutes through all four worlds.
-- **scoring / power-ups:** score formula (with near misses), world changes at each target,
-  pacing (a near-perfect run reaches Midnight Run in roughly 3–4 minutes), meter, golden
-  biscuit, Zoomies / Magnet / Shield timers, Zoomies leftovers stay smashable, gate chases
-  in order, minions only during chases, continue prices 50 / 100 / 200 then the end,
-  revive clears the path, `?world` start, same-seed replay.
+- **physics, spawner, scoring / power-ups:** as before (fairness bot through all four
+  worlds, waves, chases, continues, near misses, pacing).
+- **save:** fresh, broken and newer-version saves, v1 → v2 migration, round trip with
+  defaults, no mutation.
+- **shop:** items.json sanity, buying with biscuits and bones, can't afford, not for sale
+  (App Store, world unlocks), defaults and unequip, try-on, Closet badge, breed unlocks.
+- **missions:** dealing 3 a day, local-midnight and Monday resets, "in one run" vs totals,
+  claiming once, weekly item rewards, daily chest after all three, free chest every 4 h,
+  the badge count, the streak (day 7 bones, pauses instead of resetting), trophies, and
+  first-time world rewards and boss stickers.
+- **tutorial:** jump → double → biscuits → done, no crash while learning, the double step
+  needs a double jump, crashes work again afterwards.
 
 ## What's next
 
-**M3 – The hub**: dog maker, Closet, missions, profile, save/iCloud, first-run tutorial.
-Then M4 StoreKit / AdMob / Game Center (real rewarded ads replace the fake one in
-"Keep running?"), M5 polish and beta, M6 launch.
+**M4 – Money and Game Center**: StoreKit products and the Store tab (biscuit bags, bones,
+Remove Ads, breeds at £0.99 and all breeds at £4.99), Restore purchases, AdMob rewarded
+ads (continue, chest, double), between-run ad rules, App Tracking Transparency, Game
+Center sign-in, leaderboards and achievements. Then M5 polish and beta, M6 launch.
 
-Still to confirm on a real phone: 60 fps on an older iPhone (`/run?bot&fps`), especially
-at world changes, in Midnight Run (the darkness layer) and during waves.
+Still to confirm on a real phone: 60 fps on an older iPhone (`/run?bot&fps`).

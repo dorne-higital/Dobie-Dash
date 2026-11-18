@@ -10,7 +10,10 @@ Plan: https://claude.ai/artifact/YZddbGmWVYAXZFiTbJv5hv (read it with the Artifa
 - **M1 The run**: code done and tested. 60 fps on an older iPhone not yet confirmed by Dan.
 - **M2 Worlds and power-ups**: done. Worlds 1–4 with twists (beach waves, lamp-lit night),
   gate chases, near misses, Keep running?, Web Audio sound/music. Bot reaches Midnight Run in ~3:10.
-- M3 hub, M4 money + Game Center, M5 polish + beta, M6 launch: not started.
+- **M3 The hub**: done. Save v2 + migrations, hub/tab bar/badges, dog maker (breeds are
+  unlocks: Dobie free, others 80 Golden Bones or £0.99 from M4), Closet, Worlds, Missions
+  (daily/weekly/streak/chests), Profile, pause/results/settings, first-run tutorial.
+- M4 money + Game Center, M5 polish + beta, M6 launch: not started.
 
 ## Commands
 
@@ -40,6 +43,16 @@ No local Xcode: iOS builds run on Codemagic (`codemagic.yaml`, steps in `ios/REA
   must go through it, and the end-to-end bot tests in `tests/unit/spawner.test.ts` must keep
   passing. Anything that changes speed (waves, Zoomies ending) needs its own fairness rule.
 - **Testing a world**: `/run?world=3` starts in that world (not recorded). `?bot` autoplays.
+  `/run?tutorial` plays the tutorial. `/?sheet` shows the sprite sheet.
+- **Save file**: one versioned document (`logic/save.ts`). Any shape change bumps
+  `SAVE_VERSION` and adds a migration keyed on the old `v`, with a test in
+  `tests/unit/save.test.ts`. Stored through the save service only (iCloud later).
+- **Hub logic is pure TS in `/logic`** (shop, missions, trophies, look), tested without
+  Nuxt; Pinia stores and pages wrap it. Pass `now` and randomness in, never read the clock
+  inside logic.
+- **Content**: items and breed prices in `content/items.json`, missions/streak/chests in
+  `content/missions.json`, trophies in `content/trophies.json`, tutorial words and world
+  blurbs in `content/worlds.json`.
 - **Art is drawn in code** and baked once into sprite caches (`game/render/sprites.ts`);
   per-frame drawing should be `drawImage` calls, not path drawing.
 - **Services** (`services/types.ts`) have web fakes; native ones are swapped in by
