@@ -22,6 +22,8 @@ const newBest = ref(false)
 const pauseInfo = ref({ score: 0, worldName: '', progress: null as number | null })
 
 const bot = 'bot' in route.query
+// Testing: `?world=3` starts in Sunny Beach. Such runs don't count towards best or stats.
+const startWorld = Number(route.query.world) > 1 ? Number(route.query.world) - 1 : undefined
 const showFps = import.meta.dev || 'fps' in route.query || settings.showFps
 
 let engine: Engine | null = null
@@ -75,11 +77,12 @@ onMounted(async () => {
     reduceMotion: settings.reduceMotion,
     autoplay: bot,
     invincible: bot,
+    startWorld,
     safeTop: safeProbe.value?.offsetHeight ?? 0,
     hudInsetLeft: 52,
   })
   engine.on('run:end', (r) => {
-    newBest.value = player.recordRun(r)
+    newBest.value = startWorld === undefined && player.recordRun(r)
     result.value = r
     phase.value = 'results'
     analytics.track('run_end', { score: r.score, world: r.world, seconds: r.seconds })

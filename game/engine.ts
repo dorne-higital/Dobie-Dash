@@ -24,6 +24,8 @@ export interface EngineOptions {
   /** Bot plays (dev: `?bot`). */
   autoplay?: boolean
   invincible?: boolean
+  /** Testing only: start in this world (0-based). */
+  startWorld?: number
   /** CSS px of the top safe area (status bar / Dynamic Island). */
   safeTop?: number
   /** CSS px kept clear on the left of the HUD for the pause button. */
@@ -75,9 +77,10 @@ export class Engine {
     this.run = new Run(this.cfg, seed, this.renderer.view.W, {
       autoplay: this.opts.autoplay,
       invincible: this.opts.invincible,
+      startWorld: this.opts.startWorld,
     })
     this.renderer.reset(this.run.world.theme)
-    const next = this.run.worlds[1]
+    const next = this.run.worlds[this.run.worldIndex + 1]
     if (next) this.renderer.prepareTheme(next.theme)
     this.acc = 0
     this.paused = false

@@ -81,6 +81,8 @@ export interface RunOptions {
   autoplay?: boolean
   /** Obstacles can't end the run (for `?bot` perf soaks). */
   invincible?: boolean
+  /** Testing only (`?world=3`): start in this world (0-based) with its score target banked. */
+  startWorld?: number
 }
 
 export class Run {
@@ -114,6 +116,7 @@ export class Run {
   private taps = new Set<number>()
   private tapSpeed = 0
   private nextId = 1
+  private scoreOffset = 0
 
   constructor(cfg: GameConfig, seed: number, viewW: number, opts: RunOptions = {}) {
     this.cfg = cfg
@@ -121,8 +124,11 @@ export class Run {
     this.opts = opts
     this.worlds = playableWorlds(cfg)
     this.dt = 1 / cfg.loop.hz
-    this.speed = this.worlds[0]!.speed
     this.spawner = new Spawner(cfg, seed, viewW)
+    const sw = Math.min(Math.max(0, opts.startWorld ?? 0), this.worlds.length - 1)
+    this.worldIndex = sw
+    this.scoreOffset = this.worlds[sw]!.at
+    this.speed = this.worlds[sw]!.speed
   }
 
   get world() {
@@ -291,10 +297,9 @@ export class Run {
     for (const e of tickPowers(this.power, dt, this.cfg)) this.emit('power', e)
 
     // Score and world.
-    this.score = score(
-      { dist: this.dist, biscuits: this.biscuitsEaten, smashes: this.smashes },
-      this.cfg,
-    )
+    this.score =
+      this.scoreOffset +
+      score({ dist: this.dist, biscuits: this.biscuitsEaten, smashes: this.smashes }, this.cfg)
     const wi = worldIndexForScore(this.score, this.worlds)
     if (wi > this.worldIndex) {
       this.worldIndex = wi

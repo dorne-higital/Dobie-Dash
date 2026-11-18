@@ -60,6 +60,18 @@ describe('worlds', () => {
   }, 30_000)
 })
 
+describe('testing start world', () => {
+  it('startWorld begins in that world with its target banked and no world event', () => {
+    const c = loadGameConfig()
+    const run = new Run(c, 1, 600, { startWorld: 3 })
+    expect(run.world.name).toBe('Midnight Run')
+    expect(run.speed).toBe(c.worlds[3]!.speed)
+    run.update()
+    expect(run.score).toBeGreaterThanOrEqual(c.worlds[3]!.at)
+    expect(run.events.some((e) => e.type === 'world')).toBe(false)
+  })
+})
+
 describe('pacing', () => {
   it('a near-perfect run (the bot) reaches Midnight Run in roughly 3–4 minutes', () => {
     const cfg = loadGameConfig()
