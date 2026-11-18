@@ -2,7 +2,7 @@
 /** Pause: resume, restart, quick settings and quit, plus progress to the next world and
  * how this run is going on today's missions. */
 import type { RunSummary } from '~/game/run'
-import { previewProgress } from '~/logic/missions'
+import { previewProgress, refresh } from '~/logic/missions'
 
 const props = defineProps<{
   score: number
@@ -15,6 +15,8 @@ defineEmits<{ resume: []; restart: []; quit: [] }>()
 
 const player = usePlayerStore()
 const settings = useSettingsStore()
+// Deal today's missions if no hub screen has yet (e.g. straight into a run after midnight).
+refresh(player, new Date())
 const missions = computed(() => (props.summary ? previewProgress(player, props.summary) : []))
 const showSettings = ref(false)
 </script>
