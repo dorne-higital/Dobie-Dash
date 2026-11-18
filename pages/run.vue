@@ -7,6 +7,7 @@ import { Engine, type FeedbackCue, type FeedbackPort } from '~/game/engine'
 import type { HapticKind } from '~/services/types'
 import { item, STICKERS } from '~/logic/items'
 import { lookFor } from '~/logic/look'
+import { shouldOfferStarter } from '~/logic/store'
 import { MEDALS } from '~/logic/trophies'
 import type { RunSummary } from '~/game/run'
 
@@ -24,6 +25,7 @@ const phase = ref<'loading' | 'running' | 'paused' | 'continue' | 'results'>('lo
 const result = ref<RunSummary | null>(null)
 const newBest = ref(false)
 const earned = ref<string[]>([])
+const showStarter = ref(false)
 const tutorial = 'tutorial' in route.query
 const coach = ref<{ title: string; text: string; step: number; oops: boolean } | null>(null)
 let coachTimer: ReturnType<typeof setTimeout> | undefined
@@ -168,6 +170,10 @@ onMounted(async () => {
         ),
         ...got.medals.map((m) => `${MEDALS[m.medal]} medal: ${m.trophy.name}`),
       ]
+      if (!bot && shouldOfferStarter(player)) {
+        player.flags.starterSeen = true
+        showStarter.value = true
+      }
     }
     result.value = r
     phase.value = 'results'
@@ -250,6 +256,7 @@ onBeforeUnmount(() => {
       @again="start"
       @home="goHome"
     />
+    <RunStarterOffer v-if="showStarter && phase === 'results'" @close="showStarter = false" />
   </div>
 </template>
 

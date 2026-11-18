@@ -62,6 +62,15 @@ function tap(it: ItemDef) {
   }
 }
 
+const purchases = usePurchases()
+async function buyIap(id: string) {
+  if (await purchases.buy(id, 'closet')) {
+    if (selected.value) player.equip(selected.value.id)
+    flash(`${selected.value?.name ?? 'It'} is yours!`)
+    tryOn.value = null
+  }
+}
+
 function flash(msg: string) {
   toast.value = msg
   setTimeout(() => (toast.value = ''), 1800)
@@ -144,24 +153,17 @@ function status(it: ItemDef) {
             }}
           </small>
         </template>
-        <small v-else-if="selOffer.kind === 'iap'"
-          >{{ selOffer.gbp }} in the Store, opening soon</small
-        >
+        <template v-else-if="selOffer.kind === 'iap'">
+          <UiButton :disabled="!!purchases.busy.value" @click="buyIap(selOffer.product)">
+            Buy for {{ purchases.price(selOffer.product) }}
+          </UiButton>
+          <small v-if="purchases.message.value">{{ purchases.message.value }}</small>
+        </template>
         <small v-else>Reach {{ worlds[selOffer.world]?.name }} in a run to unlock it</small>
       </div>
     </template>
 
-    <div v-else class="store">
-      <p class="lead">The Store opens soon with biscuit bags, Golden Bones and Remove Ads.</p>
-      <ul>
-        <li><span>🍪 Bag of biscuits · 2,000</span><b>£1.99</b></li>
-        <li><span>🍪 Barrel of biscuits · 12,000</span><b>£8.99</b></li>
-        <li><span>🦴 Bone pouch · 80</span><b>£1.99</b></li>
-        <li><span>🐕 Every breed</span><b>£4.99</b></li>
-        <li><span>🚫 Remove Ads</span><b>£2.99</b></li>
-      </ul>
-      <p class="small">Earn Golden Bones now from the 7-day streak, weekly goals and chests.</p>
-    </div>
+    <ClosetStoreTab v-else />
 
     <p v-if="toast" class="toast" role="status">{{ toast }}</p>
   </section>
@@ -262,35 +264,6 @@ h1 {
 }
 .buybar small {
   color: var(--muted);
-}
-.store ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.store li {
-  display: flex;
-  justify-content: space-between;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 12px 14px;
-  color: var(--muted);
-}
-.store li b {
-  color: var(--fg);
-}
-.lead,
-.small {
-  margin: 0;
-  color: var(--muted);
-}
-.small {
-  font-size: 13px;
-  margin-top: 10px;
 }
 .toast {
   position: fixed;

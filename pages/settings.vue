@@ -1,20 +1,11 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'hub' })
 const settings = useSettingsStore()
-const { iap } = useServices()
-const restoring = ref(false)
-const restoreMsg = ref('')
+const purchases = usePurchases()
 const version = useRuntimeConfig().public.appVersion
 
-async function restore() {
-  restoring.value = true
-  const ids = await iap.restore().catch(() => null)
-  restoring.value = false
-  restoreMsg.value = !ids
-    ? 'Restore works in the iPhone app.'
-    : ids.length
-      ? `Restored ${ids.length} purchase${ids.length === 1 ? '' : 's'}.`
-      : 'Nothing to restore.'
+function restore() {
+  void purchases.restore()
 }
 </script>
 
@@ -38,14 +29,14 @@ async function restore() {
         <span><b>How to play</b><small>Replay the three-step tutorial</small></span>
         <span aria-hidden="true">›</span>
       </NuxtLink>
-      <button type="button" class="row" :disabled="restoring" @click="restore">
+      <button type="button" class="row" :disabled="!!purchases.busy.value" @click="restore">
         <span
           ><b>Restore purchases</b
           ><small>{{
-            restoreMsg || 'Bought something on another phone? Get it back here.'
+            purchases.message.value || 'Bought something on another phone? Get it back here.'
           }}</small></span
         >
-        <span aria-hidden="true">{{ restoring ? '…' : '↻' }}</span>
+        <span aria-hidden="true">{{ purchases.busy.value === 'restore' ? '…' : '↻' }}</span>
       </button>
     </div>
     <div class="group">

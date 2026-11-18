@@ -8,6 +8,7 @@ import { BREEDS, EARS, EYES, TAILS, makeDog } from '~/game/art/dobie'
 import { BREED_PRICING } from '~/logic/items'
 import { dobie, type DogSave } from '~/logic/save'
 import { ownsBreed } from '~/logic/shop'
+import { breedProduct } from '~/logic/store'
 
 const props = withDefaults(defineProps<{ cta?: string }>(), { cta: 'Save' })
 const emit = defineEmits<{ saved: [dog: DogSave] }>()
@@ -49,6 +50,15 @@ function swatch(i: number) {
 
 function unlock() {
   player.buyBreed(draft.breed)
+}
+
+const purchases = usePurchases()
+onMounted(purchases.loadPrices)
+function buyBreedMoney() {
+  void purchases.buy(breedProduct(draft.breed), 'maker')
+}
+function buyAll() {
+  void purchases.buy('breeds.all', 'maker')
 }
 
 function save() {
@@ -167,9 +177,17 @@ function save() {
         <UiButton big :disabled="!canAfford" @click="unlock">
           Unlock for 🦴 {{ BREED_PRICING.bones }}
         </UiButton>
+        <div class="money">
+          <UiButton variant="secondary" :disabled="!!purchases.busy.value" @click="buyBreedMoney">
+            {{ purchases.price(breedProduct(draft.breed)) }}
+          </UiButton>
+          <UiButton variant="secondary" :disabled="!!purchases.busy.value" @click="buyAll">
+            Every breed {{ purchases.price('breeds.all') }}
+          </UiButton>
+        </div>
         <p class="hint">
           <template v-if="!canAfford">You have 🦴 {{ player.bones }}. </template>
-          Or {{ BREED_PRICING.gbp }} when the Store opens. Every breed runs the same.
+          {{ purchases.message.value || 'Every breed runs the same.' }}
         </p>
       </template>
     </div>
@@ -311,6 +329,14 @@ h3 {
   gap: 6px;
   padding: 10px 0 4px;
   background: linear-gradient(transparent, var(--bg) 30%);
+}
+.money {
+  display: flex;
+  gap: 8px;
+}
+.money > * {
+  flex: 1;
+  font-size: 15px;
 }
 .hint {
   margin: 0;
