@@ -369,5 +369,33 @@
       "twist": "Low gravity, long floaty jumps",
       "boss": "A UFO every 4,000 points"
     }
-  ]
+  ],
+  "tutorial": {
+    "jumpClears": 2,
+    "doubleClears": 2,
+    "gapScale": 1.7,
+    "biscuitLineSeconds": 2,
+    "coach": {
+      "jump": {
+        "title": "Tap to jump",
+        "text": "Tap anywhere just before you reach the obstacle."
+      },
+      "double": {
+        "title": "Tap again in the air",
+        "text": "A second tap mid-jump is a double jump. You'll need it for these."
+      },
+      "biscuits": {
+        "title": "Eat biscuits",
+        "text": "Each biscuit fills one block of the power meter. Fill all 8 for a power-up!"
+      },
+      "oops": {
+        "title": "Oops!",
+        "text": "No harm done while you learn. Tap a little earlier."
+      },
+      "done": {
+        "title": "You're ready!",
+        "text": "Now it counts. Run as far as you can!"
+      }
+    }
+  }
 }

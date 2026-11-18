@@ -9,6 +9,7 @@ import {
   type GameConfig,
   type ObstacleDef,
   type ObstacleType,
+  type TutorialStep,
 } from './config'
 import { dogBox, newDog, obstacleBox, overlaps, stepDog, type DogBody } from './physics'
 import {
@@ -89,6 +90,8 @@ export interface RunEvents {
   biscuit: { count: number; meter: number; gold: boolean }
   world: { index: number; id: string; name: string }
   power: PowerEvent
+  /** Tutorial: a new step started, the player bumped into something, or it's done. */
+  tutorial: { step: TutorialStep | 'done'; oops: boolean }
   /** Crashed with continues left: offer "Keep running?" at this biscuit price. */
   continue: { price: number; index: number; countdown: number }
   /** A gate chase started (active) or ended (escaped, or caught when the run crashed). */
@@ -112,6 +115,8 @@ export interface RunOptions {
   invincible?: boolean
   /** Testing only (`?world=3`): start in this world (0-based) with its score target banked. */
   startWorld?: number
+  /** First-run tutorial: jump, double jump, then biscuits; hits don't end the run until done. */
+  tutorial?: boolean
 }
 
 export class Run {
@@ -154,6 +159,8 @@ export class Run {
   golden = 0
   cleared: Partial<Record<ObstacleType, number>> = {}
   private chased = new Set<number>()
+  /** Tutorial progress (null when this isn't a tutorial run). */
+  tutorial: { step: TutorialStep | 'done'; count: number; doubled: boolean } | null = null
   biscuitsEaten = 0
   smashes = 0
   score = 0
@@ -177,6 +184,29 @@ export class Run {
     this.worldIndex = sw
     this.scoreOffset = this.worlds[sw]!.at
     this.speed = this.worlds[sw]!.speed
+    if (opts.tutorial) {
+      this.tutorial = { step: 'jump', count: 0, doubled: false }
+      this.emit('tutorial', { step: 'jump', oops: false })
+    }
+  }
+
+  private get tutorialActive() {
+    return !!this.tutorial && this.tutorial.step !== 'done'
+  }
+
+  private tutorialStep(step: TutorialStep | 'done') {
+    this.tutorial = { step, count: 0, doubled: false }
+    this.emit('tutorial', { step, oops: false })
+  }
+
+  /** An obstacle went past untouched: counts toward the jump and double-jump steps. */
+  private tutorialCleared() {
+    const t = this.tutorial
+    if (!t || t.step === 'done' || t.step === 'biscuits') return
+    const T = this.cfg.tutorial
+    if (t.step === 'jump') {
+      if (++t.count >= T.jumpClears) this.tutorialStep('double')
+    } else if (t.doubled && ++t.count >= T.doubleClears) this.tutorialStep('biscuits')
   }
 
   get world() {
@@ -284,6 +314,7 @@ export class Run {
       worldsSoFar: this.worlds.slice(0, this.worldIndex + 1),
       speed: this.speed,
       nextSpeed: this.worlds[this.worldIndex + 1]?.speed,
+      tutorial: this.tutorialActive ? (this.tutorial!.step as TutorialStep) : null,
       minion:
         this.chase && this.world.chase.minion
           ? { type: this.world.chase.minion, weight: this.world.chase.minionWeight }
@@ -320,6 +351,7 @@ export class Run {
     this.pressed = false
     if (r.jumped) {
       this.jumps++
+      if (r.jumped === 'double' && this.tutorial?.step === 'double') this.tutorial.doubled = true
       this.fx.push({ type: r.jumped === 'ground' ? 'jump' : 'double' })
     }
     if (r.landed && !r.jumped) this.fx.push({ type: 'land' })
@@ -333,6 +365,13 @@ export class Run {
       const ob = obstacleBox(o.wx - this.dist, o.def)
       if (!overlaps(db, ob)) {
         this.checkNearMiss(o, db, ob)
+        continue
+      }
+      if (this.tutorialActive) {
+        // Learning: bump it out of the way and try again.
+        this.knock(o)
+        this.fx.push({ type: 'pop', x: dogX + 8, y: this.dog.y - 36 })
+        this.emit('tutorial', { step: this.tutorial!.step, oops: true })
         continue
       }
       const outcome = this.opts.invincible || o.soft ? 'smash' : resolveHit(this.power, this.cfg)
@@ -381,6 +420,7 @@ export class Run {
         if (b.gold) this.golden++
         if (pe) {
           if (pe.active) this.powerupsUsed++
+          if (pe.active && this.tutorial?.step === 'biscuits') this.tutorialStep('done')
           this.emit('power', pe)
         }
         continue
@@ -421,6 +461,7 @@ export class Run {
     if (ob.x1 > db.x0) return // not reached yet
     o.passed = true
     this.cleared[o.type] = (this.cleared[o.type] ?? 0) + 1
+    this.tutorialCleared()
     if (o.minGap > this.cfg.nearMiss.gap || o.soft) return
     if (this.power.zoomies > 0 || this.power.grace > 0) return
     this.nearMisses++

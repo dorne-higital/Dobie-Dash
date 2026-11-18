@@ -205,6 +205,18 @@ export interface GameConfig {
   obstacles: Record<ObstacleType, ObstacleDef>
   worlds: WorldDef[]
   comingSoon: ComingSoonWorld[]
+  tutorial: TutorialConfig
+}
+
+export type TutorialStep = 'jump' | 'double' | 'biscuits'
+
+/** First-run tutorial: clears needed per step, spacing, and the coach's words. */
+export interface TutorialConfig {
+  jumpClears: number
+  doubleClears: number
+  gapScale: number
+  biscuitLineSeconds: number
+  coach: Record<TutorialStep | 'oops' | 'done', { title: string; text: string }>
 }
 
 /** Deep-ish clone so tests and remote overrides never mutate the bundled JSON. */

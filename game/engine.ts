@@ -29,6 +29,8 @@ export interface EngineOptions {
   look?: { dog: Dog; acc: Accessories; trail: TrailKind | null }
   /** Testing only: start in this world (0-based). */
   startWorld?: number
+  /** First-run tutorial run. */
+  tutorial?: boolean
   /** CSS px of the top safe area (status bar / Dynamic Island). */
   safeTop?: number
   /** CSS px kept clear on the left of the HUD for the pause button. */
@@ -97,6 +99,7 @@ export class Engine {
       autoplay: this.opts.autoplay,
       invincible: this.opts.invincible,
       startWorld: this.opts.startWorld,
+      tutorial: this.opts.tutorial,
     })
     this.renderer.reset(this.run.world.theme)
     const next = this.run.worlds[this.run.worldIndex + 1]
@@ -148,6 +151,11 @@ export class Engine {
 
   setBest(best: number) {
     this.best = best
+  }
+
+  /** Whether the next start() is a tutorial run. */
+  setTutorial(on: boolean) {
+    this.opts.tutorial = on
   }
 
   /** "Keep running?" accepted (ad watched or biscuits spent). */

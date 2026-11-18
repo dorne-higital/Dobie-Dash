@@ -7,7 +7,14 @@
  * has landed from the previous pattern. If no such plan exists the pattern is pushed back
  * or downgraded, so every run is always clearable.
  */
-import type { GameConfig, ObstacleType, PatternType, WavesTwist, WorldDef } from './config'
+import type {
+  GameConfig,
+  ObstacleType,
+  PatternType,
+  TutorialStep,
+  WavesTwist,
+  WorldDef,
+} from './config'
 import { newDog, obstacleBox, stepDog } from './physics'
 import { Rng } from './rng'
 
@@ -199,6 +206,8 @@ export interface SpawnerState {
   nextSpeed?: number
   /** During a gate chase, the boss's minion joins the mix (parcels, crabs, foxes). */
   minion?: { type: ObstacleType; weight: number }
+  /** First-run tutorial step: a scripted, gentler sequence. */
+  tutorial?: TutorialStep | null
 }
 
 export class Spawner {
@@ -234,8 +243,21 @@ export class Spawner {
     const spawnEdge = s.dist + this.viewW + sc.spawnAhead
     if (this.nextAt > spawnEdge) return null
 
+    const tut = s.tutorial ?? null
+    if (tut === 'biscuits') {
+      // Tutorial step 3: a long low line of biscuits and nothing to jump.
+      const len = this.cfg.tutorial.biscuitLineSeconds * s.speed
+      const b = this.cfg.spawner.biscuits
+      const biscuits: SpawnedBiscuit[] = []
+      for (let x = 20; x < len; x += b.spacing * 1.5)
+        biscuits.push({ wx: this.nextAt + x, y: b.lowY, gold: false })
+      this.nextAt += len
+      this.readyStep = 0
+      return { obstacles: [], biscuits, plan: null, pattern: 'breather' }
+    }
+
     // Breather: a stretch with no obstacles and lots of biscuits.
-    if (s.time >= this.nextBreather) {
+    if (!tut && s.time >= this.nextBreather) {
       this.nextBreather += sc.breatherEvery
       const len = sc.breatherSeconds * s.speed
       const biscuits = this.breatherBiscuits(this.nextAt, len)
@@ -244,7 +266,7 @@ export class Spawner {
     }
 
     const tw = s.world.twist
-    if (tw?.kind === 'waves') {
+    if (!tut && tw?.kind === 'waves') {
       if (this.waveWorld !== s.world.id) {
         this.waveWorld = s.world.id
         this.nextWave = s.time + this.rng.range(tw.every[0], tw.every[1])
@@ -270,12 +292,27 @@ export class Spawner {
         if (v && v !== s.speed && !findClearPlan(pat, this.cfg, { speed: v, ready: 0 })) return null
       return plan
     }
-    let kind: PatternType = intro ? 'single' : this.rng.weighted(s.world.patterns)
-    let pattern = this.makePattern(kind, x0, s)
-    let plan = check(pattern)
-    for (let tries = 0; !plan && tries < 3; tries++) {
+    let kind: PatternType = intro || tut ? 'single' : this.rng.weighted(s.world.patterns)
+    let pattern: PatternObstacle[]
+    let plan: ClearPlan | null
+    if (tut === 'double') {
+      // Tutorial step 2: only patterns that really need the double jump.
+      kind = 'pair'
+      const needsDouble = (p: ClearPlan | null) => (p && p.double !== null ? p : null)
+      pattern = this.makePattern(kind, x0, s)
+      plan = needsDouble(check(pattern))
+      for (let tries = 0; !plan && tries < 24; tries++) {
+        kind = tries % 2 ? 'triple' : 'pair'
+        pattern = this.makePattern(kind, x0, s)
+        plan = needsDouble(check(pattern))
+      }
+    } else {
       pattern = this.makePattern(kind, x0, s)
       plan = check(pattern)
+      for (let tries = 0; !plan && tries < 3; tries++) {
+        pattern = this.makePattern(kind, x0, s)
+        plan = check(pattern)
+      }
     }
     if (!plan && kind !== 'single') {
       kind = 'single'
@@ -295,10 +332,9 @@ export class Spawner {
     const end = last.wx + this.cfg.obstacles[last.type].w
 
     let [g0, g1] = s.world.gap
-    if (intro) {
-      g0 *= sc.introGapScale
-      g1 *= sc.introGapScale
-    }
+    const scale = tut ? this.cfg.tutorial.gapScale : intro ? sc.introGapScale : 1
+    g0 *= scale
+    g1 *= scale
     this.nextAt = start + this.rng.range(g0, g1) * s.speed
     this.nextAt = Math.max(this.nextAt, end + 60)
 

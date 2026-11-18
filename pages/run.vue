@@ -25,6 +25,9 @@ const result = ref<RunSummary | null>(null)
 const newBest = ref(false)
 const earned = ref<string[]>([])
 const tutorial = 'tutorial' in route.query
+const coach = ref<{ title: string; text: string; step: number; oops: boolean } | null>(null)
+let coachTimer: ReturnType<typeof setTimeout> | undefined
+let coachStep: { title: string; text: string; step: number; oops: boolean } | null = null
 const sticker = (id: string) => STICKERS.find((s) => s.id === id)?.name ?? id
 const pauseInfo = ref({
   score: 0,
@@ -74,10 +77,13 @@ let botTimer: ReturnType<typeof setTimeout> | undefined
 
 function start() {
   runBiscuits.value = 0
+  coach.value = null
   result.value = null
   newBest.value = false
   phase.value = 'running'
   engine?.start()
+  // Only the first run from ?tutorial is a tutorial; "Play again" is a normal run.
+  engine?.setTutorial(false)
   analytics.track('run_start', {})
 }
 
@@ -145,6 +151,7 @@ onMounted(async () => {
     autoplay: bot,
     invincible: bot,
     startWorld,
+    tutorial,
     look: lookFor(player.dog, player),
     safeTop: safeProbe.value?.offsetHeight ?? 0,
     hudInsetLeft: 52,
@@ -152,7 +159,7 @@ onMounted(async () => {
   engine.on('run:end', (r) => {
     earned.value = []
     newBest.value = false
-    if (startWorld === undefined && !tutorial) {
+    if (startWorld === undefined) {
       const got = player.recordRun(r)
       newBest.value = got.newBest
       earned.value = [
@@ -168,6 +175,22 @@ onMounted(async () => {
     if (bot) botTimer = setTimeout(start, 1500)
   })
   engine.on('biscuit', (b) => (runBiscuits.value = b.count))
+  engine.on('tutorial', (t) => {
+    const C = config.game().tutorial.coach
+    clearTimeout(coachTimer)
+    if (t.step === 'done') {
+      player.flags.tutorialDone = true
+      coach.value = { ...C.done, step: 0, oops: false }
+      coachTimer = setTimeout(() => (coach.value = null), 3500)
+      return
+    }
+    const n = ['jump', 'double', 'biscuits'].indexOf(t.step) + 1
+    coachStep = { ...C[t.step], step: n, oops: false }
+    if (t.oops) {
+      coach.value = { ...C.oops, step: n, oops: true }
+      coachTimer = setTimeout(() => (coach.value = coachStep), 1500)
+    } else coach.value = coachStep
+  })
   engine.on('continue', (c) => {
     if (bot) return engine?.decline()
     offer.value = {
@@ -186,6 +209,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   clearTimeout(botTimer)
+  clearTimeout(coachTimer)
   document.removeEventListener('visibilitychange', onHidden)
   window.removeEventListener('pagehide', pause)
   window.removeEventListener('blur', pause)
@@ -198,6 +222,7 @@ onBeforeUnmount(() => {
   <div class="run">
     <div ref="safeProbe" class="safe-probe" aria-hidden="true" />
     <canvas ref="canvas" class="game" aria-label="Dobie Dash. Tap anywhere to jump." />
+    <RunCoach v-if="coach && phase === 'running'" v-bind="coach" />
     <RunPauseButton v-if="phase === 'running'" @pause="pause" />
     <RunPauseSheet
       v-if="phase === 'paused'"
