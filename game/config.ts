@@ -166,6 +166,12 @@ export interface GameConfig {
   dog: { hitbox: Box; biscuitReach: number; mouth: { x: number; y: number } }
   scoring: { unitsPerMetre: number; biscuit: number; smash: number }
   crash: { endDelay: number }
+  /**
+   * "Keep running?" after a crash: seconds to decide, the biscuit price of each continue
+   * in a run (its length is the most continues per run), seconds of grace after reviving,
+   * and how far ahead obstacles are cleared.
+   */
+  continue: { countdown: number; prices: number[]; grace: number; clearAhead: number }
   worldTransition: { speedLerpSeconds: number; fadeSeconds: number }
   chase: { window: number; enterSeconds: number; exitSeconds: number }
   spawner: SpawnerConfig

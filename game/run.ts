@@ -67,6 +67,7 @@ export interface RunSummary {
   escapes: number
   /** Boss that was chasing when you crashed, if any ("The mail van got you!"). */
   caughtBy: string | null
+  continues: number
 }
 
 /** The only events that leave the engine for Vue. */
@@ -75,6 +76,8 @@ export interface RunEvents {
   biscuit: { count: number; meter: number; gold: boolean }
   world: { index: number; id: string; name: string }
   power: PowerEvent
+  /** Crashed with continues left: offer "Keep running?" at this biscuit price. */
+  continue: { price: number; index: number; countdown: number }
   /** A gate chase started (active) or ended (escaped, or caught when the run crashed). */
   chase: { active: boolean; boss: BossKind; name: string; escaped: boolean }
 }
@@ -82,11 +85,12 @@ export type RunEvent = { [K in keyof RunEvents]: { type: K; data: RunEvents[K] }
 
 /** Visual / haptic cues for the renderer (not part of the Vue contract). */
 export type Fx =
-  | { type: 'jump' | 'double' | 'land' | 'crash' | 'splash' }
+  | { type: 'jump' | 'double' | 'land' | 'crash' | 'splash' | 'revive' }
   | { type: 'eat'; x: number; y: number; gold: boolean }
   | { type: 'smash' | 'pop'; x: number; y: number }
 
-export type RunState = 'running' | 'crashed' | 'ended'
+/** 'offer': crashed, waiting for the player to keep running (revive) or not (decline). */
+export type RunState = 'running' | 'crashed' | 'offer' | 'ended'
 
 export interface RunOptions {
   /** Taps happen on the steps the spawner planned (tests, `?bot`). */
@@ -129,6 +133,7 @@ export class Run {
   /** When the last chase ended (run time), so the boss can drop back on screen. */
   chaseEnded: { boss: BossKind; at: number } | null = null
   escapes = 0
+  continues = 0
   private chased = new Set<number>()
   biscuitsEaten = 0
   smashes = 0
@@ -180,6 +185,7 @@ export class Run {
       seed: this.seed,
       escapes: this.escapes,
       caughtBy: this.chase?.name ?? null,
+      continues: this.continues,
     }
   }
 
@@ -198,12 +204,19 @@ export class Run {
     }
 
     this.updateKnocked(dt)
-    if (this.state === 'ended') return
+    if (this.state === 'ended' || this.state === 'offer') return
     if (this.state === 'crashed') {
       this.crashTime += dt
       if (this.crashTime >= this.cfg.crash.endDelay) {
-        this.state = 'ended'
-        this.emit('run:end', this.summary())
+        const C = this.cfg.continue
+        if (this.continues < C.prices.length) {
+          this.state = 'offer'
+          this.emit('continue', {
+            price: C.prices[this.continues]!,
+            index: this.continues,
+            countdown: C.countdown,
+          })
+        } else this.end()
       }
       return
     }
@@ -350,6 +363,32 @@ export class Run {
       this.worldIndex = wi
       this.emit('world', { index: wi, id: this.world.id, name: this.world.name })
     }
+  }
+
+  private end() {
+    this.state = 'ended'
+    this.emit('run:end', this.summary())
+  }
+
+  /** "Keep running?" accepted: clear what's just ahead, back on your feet, brief grace. */
+  revive() {
+    if (this.state !== 'offer') return
+    this.continues++
+    const C = this.cfg.continue
+    const dogX = this.cfg.view.dogX
+    for (const o of this.obstacles)
+      if (!o.dead && o.wx - this.dist < dogX + C.clearAhead) this.knock(o)
+    this.dog = newDog()
+    this.taps.clear()
+    this.power.grace = Math.max(this.power.grace, C.grace)
+    this.spawner.holdUntil(this.dist + this.cfg.view.dogX + C.clearAhead)
+    this.state = 'running'
+    this.fx.push({ type: 'revive' })
+  }
+
+  /** "Keep running?" declined or timed out. */
+  decline() {
+    if (this.state === 'offer') this.end()
   }
 
   /** Starts a boss chase in the last stretch before a target; passing the target escapes it. */

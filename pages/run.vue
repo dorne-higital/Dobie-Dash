@@ -10,16 +10,19 @@ definePageMeta({ layout: 'run' })
 
 const route = useRoute()
 const router = useRouter()
-const { config, haptics, analytics } = useServices()
+const { config, haptics, analytics, ads } = useServices()
 const player = usePlayerStore()
 const settings = useSettingsStore()
 
 const canvas = ref<HTMLCanvasElement | null>(null)
 const safeProbe = ref<HTMLDivElement | null>(null)
-const phase = ref<'loading' | 'running' | 'paused' | 'results'>('loading')
+const phase = ref<'loading' | 'running' | 'paused' | 'continue' | 'results'>('loading')
 const result = ref<RunSummary | null>(null)
 const newBest = ref(false)
 const pauseInfo = ref({ score: 0, worldName: '', progress: null as number | null })
+const offer = ref({ price: 0, countdown: 5, caughtBy: null as string | null })
+const runBiscuits = ref(0)
+const continueSheet = ref<{ adFinished: () => void } | null>(null)
 
 const bot = 'bot' in route.query
 // Testing: `?world=3` starts in Sunny Beach. Such runs don't count towards best or stats.
@@ -30,6 +33,7 @@ let engine: Engine | null = null
 let botTimer: ReturnType<typeof setTimeout> | undefined
 
 function start() {
+  runBiscuits.value = 0
   result.value = null
   newBest.value = false
   phase.value = 'running'
@@ -48,6 +52,29 @@ function pause() {
 function resume() {
   phase.value = 'running'
   engine?.resume()
+}
+
+async function continueWithAd() {
+  const { rewarded } = await ads.showRewarded('continue')
+  if (phase.value !== 'continue') return
+  if (rewarded) keepRunning('ad')
+  else continueSheet.value?.adFinished()
+}
+
+function continueWithBiscuits() {
+  if (!player.spendBiscuits(offer.value.price, runBiscuits.value)) return
+  keepRunning('biscuits')
+}
+
+function keepRunning(paidWith: 'ad' | 'biscuits') {
+  analytics.track('continue', { paidWith, price: offer.value.price })
+  phase.value = 'running'
+  engine?.revive()
+}
+
+function declineContinue() {
+  if (phase.value !== 'continue') return
+  engine?.decline() // ends the run: run:end shows the results card
 }
 
 function goHome() {
@@ -88,6 +115,16 @@ onMounted(async () => {
     analytics.track('run_end', { score: r.score, world: r.world, seconds: r.seconds })
     if (bot) botTimer = setTimeout(start, 1500)
   })
+  engine.on('biscuit', (b) => (runBiscuits.value = b.count))
+  engine.on('continue', (c) => {
+    if (bot) return engine?.decline()
+    offer.value = {
+      price: c.price,
+      countdown: c.countdown,
+      caughtBy: engine?.status()?.caughtBy ?? null,
+    }
+    phase.value = 'continue'
+  })
   engine.on('world', (w) => analytics.track('world_reached', { world: w.index }))
   document.addEventListener('visibilitychange', onHidden)
   window.addEventListener('pagehide', pause)
@@ -116,6 +153,15 @@ onBeforeUnmount(() => {
       @resume="resume"
       @restart="start"
       @quit="goHome"
+    />
+    <RunContinueSheet
+      v-if="phase === 'continue'"
+      ref="continueSheet"
+      v-bind="offer"
+      :available="player.biscuits + runBiscuits"
+      @ad="continueWithAd"
+      @spend="continueWithBiscuits"
+      @decline="declineContinue"
     />
     <RunResultsCard
       v-if="phase === 'results' && result"

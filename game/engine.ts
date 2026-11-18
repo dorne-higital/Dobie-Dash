@@ -119,11 +119,22 @@ export class Engine {
       score: run.score,
       worldName: run.world.name,
       progress: worldProgress(run.score, run.worldIndex, run.worlds),
+      caughtBy: run.chase?.name ?? null,
     }
   }
 
   setBest(best: number) {
     this.best = best
+  }
+
+  /** "Keep running?" accepted (ad watched or biscuits spent). */
+  revive() {
+    this.run?.revive()
+  }
+
+  /** "Keep running?" declined or timed out: the run ends. */
+  decline() {
+    this.run?.decline()
   }
 
   press() {

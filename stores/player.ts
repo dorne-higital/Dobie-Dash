@@ -18,6 +18,15 @@ export const usePlayerStore = defineStore('player', {
     stats: { runs: 0, metres: 0, biscuits: 0, smashes: 0 },
   }),
   actions: {
+    /**
+     * Spends biscuits mid-run ("Keep running?"). `pending` is this run's biscuits, which
+     * count as available but are only banked when the run is recorded.
+     */
+    spendBiscuits(price: number, pending = 0) {
+      if (this.biscuits + pending < price) return false
+      this.biscuits -= price
+      return true
+    },
     /** Records a finished run. Returns whether it set a new best. */
     recordRun(r: RunSummary) {
       const newBest = r.score > this.best

@@ -222,6 +222,12 @@ export class Spawner {
     this.nextBreather = cfg.spawner.breatherEvery
   }
 
+  /** After a continue: nothing new until world x `wx` (the cleared stretch stays clear). */
+  holdUntil(wx: number) {
+    this.nextAt = Math.max(this.nextAt, wx)
+    this.readyStep = 0
+  }
+
   /** Call once per step after `dist` advances. Returns anything that should appear now. */
   update(s: SpawnerState): SpawnBatch | null {
     const sc = this.cfg.spawner

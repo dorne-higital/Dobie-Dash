@@ -119,6 +119,75 @@ describe('gate chases', () => {
   })
 })
 
+describe('keep running?', () => {
+  /** Runs a non-tapping dog until it crashes and the continue offer (or the end) arrives. */
+  function untilOffer(run: Run) {
+    for (let i = 0; i < 60 * 60; i++) {
+      run.update()
+      const e = run.events.splice(0).find((e) => e.type === 'continue' || e.type === 'run:end')
+      if (e) return e
+    }
+    throw new Error('no offer')
+  }
+
+  it('offers continues at 50, 100, then 200 biscuits, then the run ends', () => {
+    const c = loadGameConfig()
+    expect(c.continue.prices).toEqual([50, 100, 200])
+    const run = new Run(c, 2, 600)
+    const prices: number[] = []
+    for (;;) {
+      const e = untilOffer(run)
+      if (e.type === 'run:end') {
+        expect(e.data.continues).toBe(3)
+        break
+      }
+      if (e.type !== 'continue') throw new Error()
+      expect(run.state).toBe('offer')
+      expect(e.data.countdown).toBe(5)
+      prices.push(e.data.price)
+      run.revive()
+    }
+    expect(prices).toEqual([50, 100, 200])
+  })
+
+  it('reviving clears what is just ahead and gives a grace period', () => {
+    const c = loadGameConfig()
+    const run = new Run(c, 4, 600)
+    untilOffer(run)
+    run.revive()
+    expect(run.state).toBe('running')
+    expect(run.power.grace).toBeCloseTo(c.continue.grace)
+    expect(run.dog.grounded).toBe(true)
+    const dogX = c.view.dogX
+    const near = run.obstacles.filter(
+      (o) => !o.dead && o.wx - run.dist < dogX + c.continue.clearAhead,
+    )
+    expect(near).toEqual([])
+  })
+
+  it('declining ends the run', () => {
+    const run = new Run(loadGameConfig(), 4, 600)
+    untilOffer(run)
+    run.decline()
+    expect(run.state).toBe('ended')
+    expect(run.events.some((e) => e.type === 'run:end')).toBe(true)
+  })
+
+  it('a revived bot run is still fair: it survives on after continuing', () => {
+    const c = loadGameConfig()
+    c.meter.blocks = 1e9
+    for (let seed = 1; seed <= 8; seed++) {
+      const run = new Run(c, seed, 600)
+      // Crash on purpose (no taps), continue, then let the bot play.
+      untilOffer(run)
+      run.revive()
+      ;(run.opts as { autoplay?: boolean }).autoplay = true
+      for (let i = 0; i < 90 * 60 && run.state === 'running'; i++) run.update()
+      expect({ seed, state: run.state }).toEqual({ seed, state: 'running' })
+    }
+  }, 30_000)
+})
+
 describe('testing start world', () => {
   it('startWorld begins in that world with its target banked and no world event', () => {
     const c = loadGameConfig()
@@ -276,6 +345,7 @@ describe('power-ups', () => {
 describe('run events', () => {
   it('emits biscuit events, then run:end with the summary after the crash delay', () => {
     const c = loadGameConfig()
+    c.continue.prices = [] // no "Keep running?" offer
     const run = new Run(c, 21, 600)
     const evs: string[] = []
     let end: unknown = null

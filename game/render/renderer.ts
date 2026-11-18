@@ -227,6 +227,23 @@ export class Renderer {
       case 'crash':
         if (!this.reduceMotion) this.shake = 10
         break
+      case 'revive':
+        for (let i = 0; i < 16; i++) {
+          const a = (i / 16) * TAU
+          this.parts.push({
+            x: dogX + 8,
+            y: -36,
+            vx: Math.cos(a) * 220,
+            vy: Math.sin(a) * 220,
+            life: 0.7,
+            max: 0.7,
+            col: i % 2 ? '#ffd23f' : '#ff4fa0',
+            r: 4,
+            star: true,
+          })
+        }
+        this.flash = this.reduceMotion ? 0 : 0.4
+        break
       case 'splash':
         for (let i = 0; i < 12; i++)
           this.parts.push({
