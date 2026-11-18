@@ -3,8 +3,11 @@
 A one-tap endless runner for iPhone. Nuxt 4 single-page app (static, `ssr: false`) with a
 plain-TypeScript canvas engine. It will ship inside the same iOS container as Footballdle.
 
-**Status:** milestones **M0** (set-up) and **M1** (the run) are done. You can play Bark Park
-and City Streets: jump, double jump, biscuits, score, power-ups, crash, results, pause.
+**Status:** **M0** (set-up), **M1** (the run) and **M2** (worlds and power-ups) are done.
+All four worlds play: Bark Park, City Streets, Sunny Beach (waves) and Midnight Run (lit only
+by street lamps), each with its own obstacles and a boss chase before its target. Plus
+power-ups, near misses, "Keep running?", sound, music and haptics. The iOS app builds on
+Codemagic and uploads to TestFlight (see `ios/README.md`).
 
 ## Run it
 
@@ -38,7 +41,9 @@ slower.
    for example `http://192.168.1.23:4173/run?fps`.
 4. For a hands-free soak test, open `/run?bot&fps`. The bot plays, can't die, and restarts
    by itself.
-5. Optional: Share → **Add to Home Screen** to run it full screen without Safari's bars.
+5. To test a world straight away, add `?world=2`, `3` or `4` (e.g. `/run?world=4`). Such runs
+   start at that world's score target and don't count towards your best.
+6. Optional: Share → **Add to Home Screen** to run it full screen without Safari's bars.
 
 If the phone can't connect, allow incoming connections for `node` when macOS asks, or check
 **System Settings → Network → Firewall**. For quick UI work, `npm run dev:lan` exposes the
@@ -54,17 +59,22 @@ overlay on in **Settings → Frame-time overlay**.
 **Every gameplay number is in [`content/worlds.json`](content/worlds.json).** Change it and
 reload; no code changes needed.
 
-| Section         | What it tunes                                                                                                                                     |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `physics`       | gravity 2350, jump −780, double jump −700, jump buffer 0.12 s, coyote time                                                                        |
-| `worlds[]`      | per world: score target `at`, `speed`, `gap` [min, max] s, obstacle weights (they stack with earlier worlds), pattern weights, `enabled`, `theme` |
-| `obstacles`     | width, height, hitbox `inset`, `fly` height (pigeon 100), `extraSpeed`                                                                            |
-| `dog.hitbox`    | the forgiving hitbox shared by every breed (ears and tail excluded)                                                                               |
-| `spawner`       | intro (20 s, gap × 1.45), breather (every 45 s for 3 s), pair spacing, biscuit arcs/lines/rows, golden-arc chance 8%                              |
-| `scoring`       | units per metre, biscuit +5, smash +25                                                                                                            |
-| `meter`         | blocks to fill (8)                                                                                                                                |
-| `powerups`      | Zoomies 6 s × 1.55 speed; Magnet 8 s, radius 320; Shield invulnerability after a pop                                                              |
-| `view` / `loop` | logical width 600, ground at 76%, pixel-ratio cap 2, 60 Hz fixed step                                                                             |
+| Section          | What it tunes                                                                                                        |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `physics`        | gravity 2350, jump −780, double jump −700, jump buffer 0.12 s, coyote time                                           |
+| `worlds[]`       | per world: score target `at`, `speed`, `gap`, obstacle and pattern weights, `theme`, `twist`, `chase`, `gate` (last) |
+| `worlds[].twist` | Sunny Beach `waves` (every 7–12 s, 1.6 s at 0.75×); Midnight Run `lamps` (darkness 0.62, pool radius 115)            |
+| `worlds[].chase` | the boss and the minion it adds during its chase (mail van → parcels, King Crab → crabs, fox pack → foxes)           |
+| `chase`          | chase window (last 300 points before a target), boss enter/exit times                                                |
+| `obstacles`      | width, height, hitbox `inset`, `fly` height, `extraSpeed` (skateboarders, crabs, foxes, birds move toward you)       |
+| `dog.hitbox`     | the forgiving hitbox shared by every breed (ears and tail excluded)                                                  |
+| `spawner`        | intro, breathers (every 45 s for 3 s), `carryOver` (how much earlier worlds' obstacles stay), biscuit density/shapes |
+| `scoring`        | units per metre, biscuit +5, smash +25, near miss +10                                                                |
+| `nearMiss`       | clearance that counts (5), slow-mo 0.2 s at 0.35×, at most once per 4 s                                              |
+| `meter`          | blocks to fill (8); doesn't fill while Zoomies or Magnet is running                                                  |
+| `powerups`       | Zoomies 6 s × 1.55 speed; Magnet 8 s, radius 320; Shield invulnerability after a pop                                 |
+| `continue`       | "Keep running?": 5 s countdown, prices 50 / 100 / 200 biscuits, 2 s grace, clears 420 ahead                          |
+| `view` / `loop`  | logical width 600, ground at 76%, pixel-ratio cap 2, 60 Hz fixed step                                                |
 
 `content/items.json`, `missions.json` and `trophies.json` hold starter data for the hub
 (M3). The config is loaded through `services/config`, so Remote Config can later override
@@ -76,67 +86,60 @@ it without an App Store update.
 pages/run.vue ── mounts ──▶ game/engine.ts  (canvas, rAF, input, 60 Hz fixed step)
      ▲                          │
      └── events: run:end, ──────┤  game/run.ts       deterministic simulation (no DOM)
-         biscuit, world, power  │  game/physics.ts   jump, double jump, buffer, coyote, hitboxes
+         biscuit, world, power, │  game/physics.ts   jump, double jump, buffer, coyote, hitboxes
+         chase, continue        │  game/feedback.ts  sound/haptic cues out of the engine
                                 │  game/spawner.ts   seeded patterns + fairness validator
                                 │  game/powerups.ts  meter, Zoomies, Magnet, Shield
                                 │  game/scoring.ts · game/worlds.ts
-                                └─ game/render/      sprite cache, backgrounds, HUD, renderer
+                                └─ game/render/      sprite cache, backgrounds, HUD, renderer,
+                                                     bosses, twists (waves, lamp lighting)
                                    game/art/dobie.ts every breed + Closet item, drawn in code
 ```
 
-- **No Vue inside `/game`.** Vue only hears the four events, and also reads `engine.status()`
-  for the pause sheet. Haptics are passed in as a plain `FeedbackPort`.
+- **No Vue inside `/game`.** Vue only hears the events above, and reads `engine.status()`
+  for the pause sheet. Sound and haptics go out through a `FeedbackPort` of named cues; the
+  run page sends each cue to the audio and haptics services. Near-miss slow-mo slows the
+  engine's clock, not the simulation.
 - **Fixed 60 Hz simulation with interpolated drawing.** 120 Hz ProMotion screens and slow
   frames stay smooth, and the same seed with the same taps replays exactly.
 - **Fair by construction.** Before placing a pattern, the spawner simulates it with the
   engine's own physics step and hitboxes. It looks for one jump (plus at most one double
   jump) that clears it, starting only after the dog has landed from the previous pattern,
-  and checks again at the next world's speed. A test bot that only uses those plans
-  survives 3-minute runs on every seed.
+  and checks again at any speed it might meet (the world's ramp, the next world, a wave).
+  Nothing may reach the dog's column before it has landed, so fliers can't catch you
+  mid-jump. A test bot survives 5-minute runs through all four worlds on every seed.
 - **Sprite cache.** Dobie's run, jump and dizzy frames, the obstacles, biscuits and each
   world's parallax layers are drawn once into offscreen canvases (pixel ratio ≤ 2). A
   world's background is built when the run reaches the world before it.
-- **Services** (`services/types.ts`): `save`, `haptics`, `iap`, `ads`, `gamecenter`,
+- **Services** (`services/types.ts`): `save`, `haptics`, `audio`, `iap`, `ads`, `gamecenter`,
   `analytics`, `config`, with web fakes in `services/web/`. The iOS container swaps in native
   versions in `plugins/01.services.client.ts`. See `ios/README.md`.
+- **Audio** (`services/web/audio.ts`) is synthesised with Web Audio: every sound effect and a
+  placeholder loop per world, faster as the speed rises. Swap in a licensed pack later.
 - **Dev helpers:** `/?sheet` shows the baked sprite sheet under the home hero. `/run?bot`
-  turns on autoplay. `?fps` turns on the overlay.
+  turns on autoplay. `?fps` turns on the overlay. `?world=N` starts in world N.
 
 ## Tests
 
-`tests/unit/`:
+`tests/unit/` (58 tests):
 
-- **physics:** jump apex and air time, a single double jump, the 0.12 s jump buffer (and
-  that a tap just before landing doesn't waste the double jump), coyote time, hitboxes
-  (pigeons pass over a grounded dog).
-- **spawner:** determinism per seed, obstacle pools per world, every pattern has a clearing
-  plan, 20 s wide-gap intro, 3 s breather every 45 s, ~8% golden arcs, plus end-to-end:
-  a planned-tap bot survives 3 minutes (worlds 1–2 and with all 4 enabled).
-- **scoring / power-ups:** score formula, world thresholds and pill progress, meter fill,
-  golden biscuit, Zoomies / Magnet / Shield timings and outcomes, `run:end` summary,
-  same-seed replay.
+- **physics:** jump apex and air time, a single double jump, the jump buffer, coyote time,
+  hitboxes (seagulls pass over a grounded dog).
+- **spawner:** determinism, each world's own obstacles making up about half of its mix,
+  every pattern has a clearing plan, intro, breathers, golden arcs, fliers rejected while
+  the dog may be mid-jump, waves only on the beach with nothing inside them, and end to
+  end: a bot survives 5 minutes through all four worlds.
+- **scoring / power-ups:** score formula (with near misses), world changes at each target,
+  pacing (a near-perfect run reaches Midnight Run in roughly 3–4 minutes), meter, golden
+  biscuit, Zoomies / Magnet / Shield timers, Zoomies leftovers stay smashable, gate chases
+  in order, minions only during chases, continue prices 50 / 100 / 200 then the end,
+  revive clears the path, `?world` start, same-seed replay.
 
 ## What's next
 
-**M2 – Worlds and power-ups** (plan: weeks 5–7)
+**M3 – The hub**: dog maker, Closet, missions, profile, save/iCloud, first-run tutorial.
+Then M4 StoreKit / AdMob / Game Center (real rewarded ads replace the fake one in
+"Keep running?"), M5 polish and beta, M6 launch.
 
-- Turn on **Sunny Beach** (4,000, pigeons fly 100 above the ground: stay low) and
-  **Midnight Run** (7,500) by setting `enabled: true` in `worlds.json`. Their art, obstacles,
-  speeds and patterns are already in, and the fairness tests pass with them on. They still
-  need tuning and play-testing.
-- Gate chases in the last 300 points before each target.
-- Power-up polish: the logic, HUD pills and effects for Zoomies, Magnet, Shield and golden
-  biscuits are in and tested. Still to do: final feel, sound, and the 5 upgrade levels.
-- "Keep running?" continue with biscuits (ads arrive in M4).
-- Sound effects, music loops, and native haptics through the container.
-- Done when a good run reaches Midnight Run in about 4 minutes and every world feels
-  different.
-
-**Before M2, check on device:** the M1 "done when" is 60 fps on an older iPhone in Safari.
-I've only measured it in desktop Chrome so far (about 3 ms of work per frame). Run
-`npm run phone`, open `/run?bot&fps` on the oldest iPhone you have, and watch `work` and
-`worst` for a few minutes, especially around a world change. If you see spikes: the
-spawner's pair validation (about 2 ms on a Mac) is the first thing to move to idle time.
-
-Later: M3 hub (dog maker, Closet, missions, profile, save/iCloud, first-run tutorial), M4
-StoreKit / AdMob / Game Center, M5 polish and TestFlight beta, M6 launch.
+Still to confirm on a real phone: 60 fps on an older iPhone (`/run?bot&fps`), especially
+at world changes, in Midnight Run (the darkness layer) and during waves.

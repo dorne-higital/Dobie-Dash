@@ -8,7 +8,8 @@ Plan: https://claude.ai/artifact/YZddbGmWVYAXZFiTbJv5hv (read it with the Artifa
 
 - **M0 Set-up**: done. iOS container added at the start of M2 (`ios/`, `codemagic.yaml`).
 - **M1 The run**: code done and tested. 60 fps on an older iPhone not yet confirmed by Dan.
-- **M2 Worlds and power-ups**: in progress.
+- **M2 Worlds and power-ups**: done. Worlds 1–4 with twists (beach waves, lamp-lit night),
+  gate chases, near misses, Keep running?, Web Audio sound/music. Bot reaches Midnight Run in ~3:10.
 - M3 hub, M4 money + Game Center, M5 polish + beta, M6 launch: not started.
 
 ## Commands
@@ -30,12 +31,15 @@ No local Xcode: iOS builds run on Codemagic (`codemagic.yaml`, steps in `ios/REA
 - **Every gameplay number and price lives in `/content` JSON** (`content/worlds.json` for the
   run). Code reads it through `game/config.ts`. Never hard-code tuning values.
 - **`/game` has no Vue.** The engine talks out only through events (`run:end`, `biscuit`,
-  `world`, `power`), a feedback port for haptics/sound, and `engine.status()` for the pause sheet.
+  `world`, `power`, `chase`, `continue`), a feedback port of named cues for sound and haptics
+  (`game/feedback.ts`), and `engine.status()` for the pause sheet. In: `revive()`/`decline()`.
 - **Simulation is deterministic**: `game/run.ts` steps at a fixed 60 Hz from a seeded RNG.
   Render-only randomness (particles) uses `Math.random` in `game/render/`.
 - **Fairness**: `findClearPlan` in `game/spawner.ts` simulates every pattern with the real
-  physics and hitboxes before placing it. New obstacles or twists must go through it, and the
-  end-to-end bot tests in `tests/unit/spawner.test.ts` must keep passing.
+  physics and hitboxes before placing it, at every speed it may meet. New obstacles or twists
+  must go through it, and the end-to-end bot tests in `tests/unit/spawner.test.ts` must keep
+  passing. Anything that changes speed (waves, Zoomies ending) needs its own fairness rule.
+- **Testing a world**: `/run?world=3` starts in that world (not recorded). `?bot` autoplays.
 - **Art is drawn in code** and baked once into sprite caches (`game/render/sprites.ts`);
   per-frame drawing should be `drawImage` calls, not path drawing.
 - **Services** (`services/types.ts`) have web fakes; native ones are swapped in by
