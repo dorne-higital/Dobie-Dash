@@ -184,7 +184,8 @@
       },
       "patterns": {
         "single": 1
-      }
+      },
+      "twist": null
     },
     {
       "id": "city-streets",
@@ -203,7 +204,8 @@
       "patterns": {
         "single": 3,
         "pair": 1
-      }
+      },
+      "twist": null
     },
     {
       "id": "sunny-beach",
@@ -222,6 +224,15 @@
         "single": 3,
         "pair": 1.2,
         "flier": 1
+      },
+      "twist": {
+        "kind": "waves",
+        "every": [7, 12],
+        "seconds": 1.6,
+        "slow": 0.75,
+        "ease": 0.35,
+        "leadIn": 0.35,
+        "after": 0.9
       }
     },
     {
@@ -242,6 +253,11 @@
         "pair": 1.5,
         "flier": 1,
         "triple": 0.6
+      },
+      "twist": {
+        "kind": "lamps",
+        "darkness": 0.62,
+        "pool": 115
       }
     }
   ]

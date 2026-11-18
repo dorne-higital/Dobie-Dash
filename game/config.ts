@@ -53,6 +53,33 @@ export interface ObstacleDef {
   extraSpeed?: number
 }
 
+/** Waves wash across the path and slow you down. No obstacles spawn inside a wave. */
+export interface WavesTwist {
+  kind: 'waves'
+  /** Seconds between waves (random in range). */
+  every: [number, number]
+  /** Time spent in the water at the slowed speed. */
+  seconds: number
+  /** Speed multiplier while in the water. */
+  slow: number
+  /** Seconds to ease into and out of the slowdown. */
+  ease: number
+  /** Clear running (seconds at world speed) before and after a wave. */
+  leadIn: number
+  after: number
+}
+
+/** Darkness everywhere except pools of light under the street lamps. */
+export interface LampsTwist {
+  kind: 'lamps'
+  /** Alpha of the darkness between lamps (obstacles stay visible, just dim). */
+  darkness: number
+  /** Radius of each lamp's pool of light. */
+  pool: number
+}
+
+export type TwistDef = WavesTwist | LampsTwist
+
 export interface WorldDef {
   id: string
   name: string
@@ -63,6 +90,7 @@ export interface WorldDef {
   theme: ThemeKind
   obstacles: Partial<Record<ObstacleType, number>>
   patterns: Partial<Record<PatternType, number>>
+  twist: TwistDef | null
 }
 
 export interface PhysicsConfig {

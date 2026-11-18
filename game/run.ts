@@ -70,7 +70,7 @@ export type RunEvent = { [K in keyof RunEvents]: { type: K; data: RunEvents[K] }
 
 /** Visual / haptic cues for the renderer (not part of the Vue contract). */
 export type Fx =
-  | { type: 'jump' | 'double' | 'land' | 'crash' }
+  | { type: 'jump' | 'double' | 'land' | 'crash' | 'splash' }
   | { type: 'eat'; x: number; y: number; gold: boolean }
   | { type: 'smash' | 'pop'; x: number; y: number }
 
@@ -105,6 +105,12 @@ export class Run {
   runPhase = 0
   obstacles: Obstacle[] = []
   biscuits: Biscuit[] = []
+  /** Waves on the path (world x); in one, the speed eases down to `slow`. */
+  waves: { wx0: number; wx1: number; slow: number }[] = []
+  /** Current wave speed multiplier (1 out of the water). */
+  waveMul = 1
+  private inWave = false
+  private lastSlow = 1
   power: PowerState = newPowerState()
   biscuitsEaten = 0
   smashes = 0
@@ -137,7 +143,7 @@ export class Run {
 
   /** Effective scroll speed including Zoomies. */
   get scrollSpeed() {
-    return this.speed * speedMultiplier(this.power, this.cfg)
+    return this.speed * speedMultiplier(this.power, this.cfg) * this.waveMul
   }
 
   press() {
@@ -194,6 +200,19 @@ export class Run {
       this.speed += Math.sign(d) * Math.min(Math.abs(d), rate * dt)
     }
 
+    // Waves: ease the speed down while the dog is in the water, back up after.
+    const dogWX = this.dist + this.cfg.view.dogX
+    const wave = this.waves.find((w) => dogWX >= w.wx0 && dogWX <= w.wx1)
+    const twist = this.world.twist
+    const ease = twist?.kind === 'waves' ? twist.ease : 0.35
+    const want = wave ? wave.slow : 1
+    const step = (dt / ease) * (1 - (wave?.slow ?? this.lastSlow))
+    this.waveMul += Math.sign(want - this.waveMul) * Math.min(Math.abs(want - this.waveMul), step)
+    if (wave && !this.inWave) this.fx.push({ type: 'splash' })
+    if (wave) this.lastSlow = wave.slow
+    this.inWave = !!wave
+    if (this.waves.length && this.waves[0]!.wx1 < this.dist - 200) this.waves.shift()
+
     const v = this.scrollSpeed
     this.dist += v * dt
     this.runPhase += (dt * v) / 24
@@ -226,6 +245,7 @@ export class Run {
           rot: 0,
         })
       }
+      if (batch.wave) this.waves.push(batch.wave)
       for (const b of batch.biscuits)
         this.biscuits.push({ ...b, pwx: b.wx, py: b.y, ph: (b.wx * 0.37) % (Math.PI * 2) })
     }

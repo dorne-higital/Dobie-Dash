@@ -172,3 +172,41 @@ describe('fairness end to end', () => {
     expect(run.time).toBeLessThan(6)
   })
 })
+
+describe('world twists', () => {
+  it('Sunny Beach waves: nothing spawns inside one, and only Sunny Beach has them', () => {
+    const cfg = loadGameConfig()
+    for (const [i, w] of cfg.worlds.entries()) {
+      const batches = spawnFor(cfg, 4, i, 120)
+      const waves = batches.filter((s) => s.batch.wave).map((s) => s.batch.wave!)
+      if (w.twist?.kind !== 'waves') {
+        expect(waves, w.name).toEqual([])
+        continue
+      }
+      expect(waves.length).toBeGreaterThan(5)
+      const obstacles = batches.flatMap((s) => s.batch.obstacles)
+      for (const wave of waves)
+        for (const o of obstacles) {
+          const end = o.wx + cfg.obstacles[o.type].w
+          expect(end < wave.wx0 || o.wx > wave.wx1).toBe(true)
+        }
+    }
+  })
+
+  it('running through a wave eases the speed down to the slow factor and back', () => {
+    const cfg = noPowers()
+    const tw = cfg.worlds[2]!.twist
+    if (tw?.kind !== 'waves') throw new Error('Sunny Beach should have waves')
+    const run = new Run(cfg, 2, W, { autoplay: true, startWorld: 2 })
+    let lowest = 1
+    let entered = false
+    while (run.state === 'running' && run.time < 40) {
+      run.update()
+      lowest = Math.min(lowest, run.waveMul)
+      if (run.fx.splice(0).some((f) => f.type === 'splash')) entered = true
+    }
+    expect(entered).toBe(true)
+    expect(lowest).toBeCloseTo(tw.slow, 5)
+    expect(run.state).toBe('running')
+  })
+})

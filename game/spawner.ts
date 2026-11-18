@@ -7,7 +7,7 @@
  * has landed from the previous pattern. If no such plan exists the pattern is pushed back
  * or downgraded, so every run is always clearable.
  */
-import type { GameConfig, ObstacleType, PatternType, WorldDef } from './config'
+import type { GameConfig, ObstacleType, PatternType, WavesTwist, WorldDef } from './config'
 import { newDog, obstacleBox, stepDog } from './physics'
 import { Rng } from './rng'
 
@@ -178,7 +178,9 @@ export interface SpawnBatch {
   biscuits: SpawnedBiscuit[]
   /** Absolute step numbers of the taps that clear this batch (used by bots and tests). */
   plan: PlannedTaps | null
-  pattern: PatternType | 'breather'
+  pattern: PatternType | 'breather' | 'wave'
+  /** World-x span of a wave (Sunny Beach twist). */
+  wave?: { wx0: number; wx1: number; slow: number }
 }
 
 export interface SpawnerState {
@@ -204,6 +206,8 @@ export class Spawner {
   /** Absolute step at which the dog has landed from the last placed pattern. */
   private readyStep = 0
   private viewW: number
+  private nextWave = Infinity
+  private waveWorld = ''
 
   constructor(
     private cfg: GameConfig,
@@ -231,6 +235,17 @@ export class Spawner {
       return { obstacles: [], biscuits, plan: null, pattern: 'breather' }
     }
 
+    const tw = s.world.twist
+    if (tw?.kind === 'waves') {
+      if (this.waveWorld !== s.world.id) {
+        this.waveWorld = s.world.id
+        this.nextWave = s.time + this.rng.range(tw.every[0], tw.every[1])
+      } else if (s.time >= this.nextWave) {
+        this.nextWave = s.time + this.rng.range(tw.every[0], tw.every[1])
+        return this.makeWave(tw, s)
+      }
+    }
+
     const intro = s.time < sc.introSeconds
     const base = this.nextAt
     const x0 = base - s.dist // screen x at this step
@@ -241,7 +256,9 @@ export class Spawner {
       if (!plan) return null
       // The pattern may reach the dog at another speed: the one this world is ramping
       // to, or the next world's if the score target is close. It must clear at those too.
-      for (const v of [s.world.speed, s.nextSpeed])
+      // A wave just behind it may still be easing the speed back up.
+      const slowed = tw?.kind === 'waves' ? s.speed * tw.slow : undefined
+      for (const v of [s.world.speed, s.nextSpeed, slowed])
         if (v && v !== s.speed && !findClearPlan(pat, this.cfg, { speed: v, ready: 0 })) return null
       return plan
     }
@@ -353,6 +370,24 @@ export class Spawner {
         out.push({ wx: end + b.highAfter + i * b.spacing, y: b.highY, gold: false })
     }
     return out
+  }
+
+  /** A wave: clear water to run through (slowly), with a low line of biscuits. */
+  private makeWave(tw: WavesTwist, s: SpawnerState): SpawnBatch {
+    const wx0 = this.nextAt + tw.leadIn * s.speed
+    const wx1 = wx0 + tw.seconds * s.speed * tw.slow
+    const b = this.cfg.spawner.biscuits
+    const biscuits: SpawnedBiscuit[] = []
+    for (let x = wx0 + 40; x < wx1 - 30; x += b.breatherSpacing)
+      biscuits.push({ wx: x, y: b.lowY, gold: false })
+    this.nextAt = wx1 + tw.after * s.speed
+    return {
+      obstacles: [],
+      biscuits,
+      plan: null,
+      pattern: 'wave',
+      wave: { wx0, wx1, slow: tw.slow },
+    }
   }
 
   private breatherBiscuits(start: number, len: number): SpawnedBiscuit[] {

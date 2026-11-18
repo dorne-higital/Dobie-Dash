@@ -81,6 +81,15 @@ interface LayerDef {
 
 const TARGET_PERIOD = 1200
 
+/** Width of a baked strip for a layer with this item spacing (whole items, ~1200 wide). */
+export function stripPeriod(spacing: number) {
+  return Math.max(1, Math.ceil(TARGET_PERIOD / spacing)) * spacing
+}
+
+/** Street lamps: spacing and the lamp head's x within each item (night lighting uses it). */
+export const LAMP_SPACING = 180
+export const LAMP_X = 62
+
 const buildingsFar: LayerDef = {
   factor: 0.15,
   spacing: 46,
@@ -118,16 +127,17 @@ function buildingsNear(night: boolean): LayerDef {
 function lamps(night: boolean): LayerDef {
   return {
     factor: 1,
-    spacing: 180,
+    spacing: LAMP_SPACING,
     top: () => -98,
     bottom: () => 0,
     item: (c, x, _i, f, T) => {
+      const lx = x + LAMP_X
       c.fillStyle = T.mid
-      c.fillRect(x + 60, f.GY - 78, 5, 78)
-      rr(c, x + 50, f.GY - 84, 26, 8, 4)
+      c.fillRect(lx - 2, f.GY - 78, 5, 78)
+      rr(c, lx - 12, f.GY - 84, 26, 8, 4)
       c.fill()
-      dot(c, x + 62, f.GY - 74, 12, night ? 'rgba(255,220,120,.35)' : 'rgba(255,240,200,.25)')
-      dot(c, x + 62, f.GY - 76, 4, '#fff0b0')
+      dot(c, lx, f.GY - 74, 12, night ? 'rgba(255,220,120,.35)' : 'rgba(255,240,200,.25)')
+      dot(c, lx, f.GY - 76, 4, '#fff0b0')
     },
   }
 }
@@ -309,8 +319,8 @@ export interface Strip {
 }
 
 function buildStrip(def: LayerDef, f: Frame, T: ThemeColors, scale: number): Strip {
-  const n = Math.max(1, Math.ceil(TARGET_PERIOD / def.spacing))
-  const period = n * def.spacing
+  const period = stripPeriod(def.spacing)
+  const n = period / def.spacing
   const top = f.GY + def.top(f)
   const height = Math.max(1, def.bottom(f) - def.top(f))
   const { cv, c } = makeCanvas(period, height, scale)

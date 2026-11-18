@@ -82,6 +82,7 @@ export class Engine {
     this.renderer.reset(this.run.world.theme)
     const next = this.run.worlds[this.run.worldIndex + 1]
     if (next) this.renderer.prepareTheme(next.theme)
+    this.renderer.prepareTwist(this.run.world.twist ?? next?.twist ?? null)
     this.acc = 0
     this.paused = false
     this.loop()
@@ -217,6 +218,7 @@ export class Engine {
       this.renderer.addFx(fx, run)
       if (fx.type === 'jump' || fx.type === 'double') fb?.play('jump')
       else if (fx.type === 'eat') fb?.play('biscuit')
+      else if (fx.type === 'splash') fb?.play('jump')
       else if (fx.type === 'crash') fb?.play('crash')
     }
     run.fx.length = 0
@@ -225,7 +227,10 @@ export class Engine {
         const w = run.worlds[e.data.index]!
         this.renderer.showWorld(w.theme, e.data.index, w.name, this.cfg.worldTransition.fadeSeconds)
         const next = run.worlds[e.data.index + 1]
-        if (next) this.renderer.prepareTheme(next.theme)
+        if (next) {
+          this.renderer.prepareTheme(next.theme)
+          this.renderer.prepareTwist(next.twist)
+        }
         fb?.play('success')
       } else if (e.type === 'power' && e.data.active) {
         const [a, b] = POWER_BANNER[e.data.kind]

@@ -3,10 +3,18 @@
  * Positions are interpolated between the last two fixed steps (alpha) so motion stays
  * smooth on 120 Hz ProMotion screens and when a frame runs long.
  */
-import type { ThemeKind } from '../config'
+import type { LampsTwist, ThemeKind, TwistDef } from '../config'
 import type { Fx, Run } from '../run'
 import { clamp, dot, rr, sparkle, text, BODY_FONT, TAU, type Ctx } from './draw'
 import { drawTheme } from './backgrounds'
+import {
+  bakeDarkness,
+  bakeWaves,
+  drawDarkness,
+  drawWaves,
+  type Darkness,
+  type WaveSprites,
+} from './twists'
 import { drawBanner, drawHud, type Banner } from './hud'
 import { drawGoldSparkle, OBSTACLE_ANIM } from './obstacles'
 import { DIZZY_FRAMES, DIZZY_PERIOD, drawSprite, jumpFrame, runFrame, SpriteCache } from './sprites'
@@ -58,6 +66,8 @@ export class Renderer {
   private theme: ThemeKind = 'park'
   private prevTheme: ThemeKind | null = null
   private fade = 0
+  private waveSprites: WaveSprites
+  private dark: Darkness | null = null
   reduceMotion = false
 
   constructor(
@@ -65,12 +75,28 @@ export class Renderer {
     public view: View,
   ) {
     this.sprites = new SpriteCache(view.S)
+    this.waveSprites = bakeWaves(view.S)
   }
 
   setView(v: View) {
     const rescale = Math.abs(v.S - this.view.S) > 0.001
     this.view = v
-    if (rescale) this.sprites = new SpriteCache(v.S)
+    if (rescale) {
+      this.sprites = new SpriteCache(v.S)
+      this.waveSprites = bakeWaves(v.S)
+    }
+  }
+
+  /** Darkness for a lamps world, baked on first use (or ahead of time via prepare). */
+  private darkness(tw: LampsTwist): Darkness {
+    const { W, H, GY } = this.view
+    const key = `${W}x${H}x${GY}x${tw.darkness}x${tw.pool}`
+    if (this.dark?.key !== key) this.dark = bakeDarkness(tw, W, H, GY)
+    return this.dark
+  }
+
+  prepareTwist(tw: TwistDef | null) {
+    if (tw?.kind === 'lamps') this.darkness(tw)
   }
 
   reset(theme: ThemeKind) {
@@ -179,6 +205,19 @@ export class Renderer {
       case 'crash':
         if (!this.reduceMotion) this.shake = 10
         break
+      case 'splash':
+        for (let i = 0; i < 12; i++)
+          this.parts.push({
+            x: dogX + r(-10, 30),
+            y: -4,
+            vx: r(-160, 60),
+            vy: r(-320, -140),
+            life: 0.6,
+            max: 0.6,
+            col: i % 3 ? 'rgba(170,228,255,.95)' : '#ffffff',
+            r: r(2, 4.5),
+          })
+        break
     }
   }
 
@@ -227,6 +266,8 @@ export class Renderer {
     drawTheme(c, this.sprites.theme(this.theme, frame), dist, this.sprites.cloud)
     c.globalAlpha = 1
 
+    if (run.waves.length) drawWaves(c, this.waveSprites, run.waves, dist, GY, W, t)
+
     // Obstacles.
     for (const o of run.obstacles) {
       const x = lerp(o.pwx, o.wx) - dist
@@ -256,7 +297,14 @@ export class Renderer {
       drawSprite(c, spr, x, GY - fly)
     }
 
-    // Biscuits.
+    // Midnight Run: only the lamps light the path (fades in with the world).
+    const tw = run.world.twist
+    if (tw?.kind === 'lamps') {
+      const a = this.prevTheme ? 1 - this.fade / run.cfg.worldTransition.fadeSeconds : 1
+      drawDarkness(c, this.darkness(tw), dist, clamp(a, 0, 1))
+    }
+
+    // Biscuits (drawn over the darkness so they still glint).
     for (const b of run.biscuits) {
       const x = lerp(b.pwx, b.wx) - dist
       const y = GY + lerp(b.py, b.y) + Math.sin(t * 4 + b.ph) * 3
