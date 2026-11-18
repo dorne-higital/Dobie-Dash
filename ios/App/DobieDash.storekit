@@ -1,0 +1,319 @@
+{
+  "identifier": "D0B1E5A1",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "2.99",
+      "familyShareable": false,
+      "internalID": "1000001",
+      "localizations": [
+        {
+          "description": "No ads between runs. Ads you choose (continues, doubling) stay.",
+          "displayName": "Remove Ads",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.removeads",
+      "referenceName": "Remove Ads",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "1000002",
+      "localizations": [
+        {
+          "description": "1,000 biscuits and the Bandana. One time only.",
+          "displayName": "Starter Pack",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.starter",
+      "referenceName": "Starter Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "1000003",
+      "localizations": [
+        {
+          "description": "Bag of Biscuits",
+          "displayName": "Bag of Biscuits",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.biscuits.bag",
+      "referenceName": "Bag of Biscuits",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "8.99",
+      "familyShareable": false,
+      "internalID": "1000004",
+      "localizations": [
+        {
+          "description": "Barrel of Biscuits",
+          "displayName": "Barrel of Biscuits",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.biscuits.barrel",
+      "referenceName": "Barrel of Biscuits",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "1000005",
+      "localizations": [
+        {
+          "description": "Pouch of Golden Bones",
+          "displayName": "Pouch of Golden Bones",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.bones.pouch",
+      "referenceName": "Pouch of Golden Bones",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "8.99",
+      "familyShareable": false,
+      "internalID": "1000006",
+      "localizations": [
+        {
+          "description": "Box of Golden Bones",
+          "displayName": "Box of Golden Bones",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.bones.box",
+      "referenceName": "Box of Golden Bones",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "17.99",
+      "familyShareable": false,
+      "internalID": "1000007",
+      "localizations": [
+        {
+          "description": "Crate of Golden Bones",
+          "displayName": "Crate of Golden Bones",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.bones.crate",
+      "referenceName": "Crate of Golden Bones",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "1000008",
+      "localizations": [
+        {
+          "description": "Gold Collar",
+          "displayName": "Gold Collar",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.collar.gold",
+      "referenceName": "Gold Collar",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "4.99",
+      "familyShareable": false,
+      "internalID": "1000009",
+      "localizations": [
+        {
+          "description": "All 12 breeds, now and every new one.",
+          "displayName": "Every Breed",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.breeds.all",
+      "referenceName": "Every Breed",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "1000010",
+      "localizations": [
+        {
+          "description": "Breed: lab",
+          "displayName": "Breed: lab",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.breed.lab",
+      "referenceName": "Breed: lab",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "1000011",
+      "localizations": [
+        {
+          "description": "Breed: golden",
+          "displayName": "Breed: golden",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.breed.golden",
+      "referenceName": "Breed: golden",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "1000012",
+      "localizations": [
+        {
+          "description": "Breed: spaniel",
+          "displayName": "Breed: spaniel",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.breed.spaniel",
+      "referenceName": "Breed: spaniel",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "1000013",
+      "localizations": [
+        {
+          "description": "Breed: collie",
+          "displayName": "Breed: collie",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.breed.collie",
+      "referenceName": "Breed: collie",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "1000014",
+      "localizations": [
+        {
+          "description": "Breed: husky",
+          "displayName": "Breed: husky",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.breed.husky",
+      "referenceName": "Breed: husky",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "1000015",
+      "localizations": [
+        {
+          "description": "Breed: corgi",
+          "displayName": "Breed: corgi",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.breed.corgi",
+      "referenceName": "Breed: corgi",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "1000016",
+      "localizations": [
+        {
+          "description": "Breed: dachshund",
+          "displayName": "Breed: dachshund",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.breed.dachshund",
+      "referenceName": "Breed: dachshund",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "1000017",
+      "localizations": [
+        {
+          "description": "Breed: dalmatian",
+          "displayName": "Breed: dalmatian",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.breed.dalmatian",
+      "referenceName": "Breed: dalmatian",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "1000018",
+      "localizations": [
+        {
+          "description": "Breed: frenchie",
+          "displayName": "Breed: frenchie",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.breed.frenchie",
+      "referenceName": "Breed: frenchie",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "1000019",
+      "localizations": [
+        {
+          "description": "Breed: greyhound",
+          "displayName": "Breed: greyhound",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.breed.greyhound",
+      "referenceName": "Breed: greyhound",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "1000020",
+      "localizations": [
+        {
+          "description": "Breed: jack",
+          "displayName": "Breed: jack",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.breed.jack",
+      "referenceName": "Breed: jack",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {
+    "_applicationInternalID": "6836275397",
+    "_developerTeamID": "3XPH3J87EQ",
+    "_failTransactionsEnabled": false,
+    "_locale": "en_GB",
+    "_storefront": "GBR",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}
