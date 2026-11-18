@@ -13,6 +13,14 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: uk.co.danhorne.dobiedash
+      # Keys kept out of the repo (Codemagic → Teams → Global variables, group "dobiedash"):
+      #   REVENUECAT_APPLE_KEY   RevenueCat → Dobie Dash → API keys (starts appl_)
+      #   ADMOB_APP_ID           AdMob → App settings (ca-app-pub-…~…)
+      #   ADMOB_REWARDED_ID      AdMob → Ad units → Rewarded (ca-app-pub-…/…)
+      #   ADMOB_INTERSTITIAL_ID  AdMob → Ad units → Interstitial
+      # Leave the AdMob ones out to build with Google's test ads.
+      groups:
+        - dobiedash
       vars:
         XCODE_PROJECT: ios/App/App.xcodeproj
         XCODE_SCHEME: App
@@ -25,7 +33,17 @@ workflows:
       - name: Install dependencies
         script: npm ci
       - name: Build web app and sync into iOS project
-        script: npm run cap:sync
+        script: |
+          if [ -z "$REVENUECAT_APPLE_KEY" ]; then echo "Warning: no REVENUECAT_APPLE_KEY, the Store won't load"; fi
+          npm run cap:sync
+      - name: Real AdMob app id (when set)
+        script: |
+          if [ -n "$ADMOB_APP_ID" ]; then
+            /usr/libexec/PlistBuddy -c "Set :GADApplicationIdentifier $ADMOB_APP_ID" ios/App/App/Info.plist
+            echo "Using the real AdMob app id"
+          else
+            echo "No ADMOB_APP_ID: building with Google's test ads"
+          fi
       - name: Apply code signing profiles
         script: xcode-project use-profiles
       - name: Bump build number past the latest TestFlight build

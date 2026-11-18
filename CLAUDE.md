@@ -13,7 +13,11 @@ Plan: https://claude.ai/artifact/YZddbGmWVYAXZFiTbJv5hv (read it with the Artifa
 - **M3 The hub**: done. Save v2 + migrations, hub/tab bar/badges, dog maker (breeds are
   unlocks: Dobie free, others 80 Golden Bones or £0.99 from M4), Closet, Worlds, Missions
   (daily/weekly/streak/chests), Profile, pause/results/settings, first-run tutorial.
-- M4 money + Game Center, M5 polish + beta, M6 launch: not started.
+- **M4 Money and Game Center**: code done. RevenueCat Store + Restore + launch entitlement
+  check, AdMob rewarded/between-run ads with ATT, Game Center boards + achievements, iCloud
+  save sync, reminders from day 2, desktop phone frame. Waiting on console setup (ios/README
+  "M4 setup") and sandbox testing on a phone.
+- M5 polish + beta, M6 launch: not started.
 
 ## Commands
 
@@ -50,6 +54,11 @@ No local Xcode: iOS builds run on Codemagic (`codemagic.yaml`, steps in `ios/REA
 - **Hub logic is pure TS in `/logic`** (shop, missions, trophies, look), tested without
   Nuxt; Pinia stores and pages wrap it. Pass `now` and randomness in, never read the clock
   inside logic.
+- **Money and ads**: products, ad rules and reminder times in `content/store.json`; rules in
+  `logic/store.ts` (deliver once, `reconcile` at launch) and `logic/ads.ts`. Real keys and ad
+  unit ids come from Codemagic env (group `dobiedash`); never commit them. The repo only has
+  Google's test ad ids. After changing products run `npm run storekit`.
+- **Game Center ids** in `content/gamecenter.json`; achievements are trophy × medal.
 - **Content**: items and breed prices in `content/items.json`, missions/streak/chests in
   `content/missions.json`, trophies in `content/trophies.json`, tutorial words and world
   blurbs in `content/worlds.json`.

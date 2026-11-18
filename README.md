@@ -3,12 +3,14 @@
 A one-tap endless runner for iPhone. Nuxt 4 single-page app (static, `ssr: false`) with a
 plain-TypeScript canvas engine. It will ship inside the same iOS container as Footballdle.
 
-**Status:** **M0–M3** are done. A new player makes a dog, learns in a three-step
+**Status:** **M0–M4** are done. A new player makes a dog, learns in a three-step
 tutorial, then plays all four worlds (Bark Park, City Streets, Sunny Beach with waves,
 Midnight Run lit only by street lamps) with boss chases, power-ups and "Keep running?".
 Between runs there's the hub: Closet, Worlds, Missions with a login streak and chests,
-Profile with trophies, and Settings. The iOS app builds on Codemagic and uploads to
-TestFlight (see `ios/README.md`).
+Profile with trophies, and Settings. M4 adds the Store (RevenueCat), AdMob rewarded and
+between-run ads, Game Center boards and achievements, iCloud save sync and reminders.
+The iOS app builds on Codemagic and uploads to TestFlight (see `ios/README.md`). On a
+desktop browser the game sits in a phone-sized frame.
 
 ## Run it
 
@@ -84,6 +86,9 @@ The hub's content is also JSON:
 | `content/items.json`            | collars, outfits and trails with biscuit / bone / App Store prices or world unlocks; boss stickers; breed pricing (Dobie free, others 80 bones or £0.99) |
 | `content/missions.json`         | the daily mission pool (3 a day), weekly goals, 7-day streak rewards, daily and free chests                                                              |
 | `content/trophies.json`         | 10 trophies with bronze / silver / gold thresholds                                                                                                       |
+| `content/store.json`            | App Store products (ids are `uk.co.danhorne.dobiedash.` + id), what each gives, starter offer after run 10, between-run ad rules, reminder times         |
+| `content/gamecenter.json`       | leaderboard ids (all-time, weekly) and the achievement id pattern (trophy × bronze/silver/gold)                                                          |
+| `content/site.json`             | the App Store link for the desktop panel (null hides it)                                                                                                 |
 | `content/worlds.json`           | also the Worlds tab text, worlds 5–8 (locked), and the tutorial's steps and words                                                                        | The config is loaded through `services/config`, so Remote Config can later override |
 | it without an App Store update. |
 
@@ -119,8 +124,15 @@ pages/run.vue ── mounts ──▶ game/engine.ts  (canvas, rAF, input, 60 Hz
   world's parallax layers are drawn once into offscreen canvases (pixel ratio ≤ 2). A
   world's background is built when the run reaches the world before it.
 - **Services** (`services/types.ts`): `save`, `haptics`, `audio`, `iap`, `ads`, `gamecenter`,
-  `analytics`, `config`, with web fakes in `services/web/`. The iOS container swaps in native
-  versions in `plugins/01.services.client.ts`. See `ios/README.md`.
+  `notify`, `analytics`, `config`, with web fakes in `services/web/`. The iOS container swaps
+  in native versions in `plugins/01.services.client.ts` (`services/native/`). See
+  `ios/README.md`.
+- **Money:** the purchase service only says what was bought; `logic/store.ts` decides what it
+  gives (consumables every time, non-consumables once) and, at every launch, reconciles the
+  save with what the App Store says this Apple ID owns (`reconcile`), so a hand-edited save
+  loses Remove Ads, the Gold Collar or Every Breed. `logic/ads.ts` holds the between-run rule.
+- **iCloud:** the save is mirrored to iCloud key-value storage. At launch, and when another
+  phone writes, `pickSave` keeps the copy with more play (newer write on a tie).
 - **Audio** (`services/web/audio.ts`) is synthesised with Web Audio: every sound effect and a
   placeholder loop per world, faster as the speed rises. Swap in a licensed pack later.
 - **Hub logic** lives in `logic/` as plain TypeScript (save + migrations, shop, missions,
@@ -132,7 +144,7 @@ pages/run.vue ── mounts ──▶ game/engine.ts  (canvas, rAF, input, 60 Hz
 
 ## Tests
 
-`tests/unit/` (92 tests):
+`tests/unit/` (116 tests):
 
 - **physics, spawner, scoring / power-ups:** as before (fairness bot through all four
   worlds, waves, chases, continues, near misses, pacing).
@@ -144,14 +156,18 @@ pages/run.vue ── mounts ──▶ game/engine.ts  (canvas, rAF, input, 60 Hz
   claiming once, weekly item rewards, daily chest after all three, free chest every 4 h,
   the badge count, the streak (day 7 bones, pauses instead of resetting), trophies, and
   first-time world rewards and boss stickers.
+- **store:** every M4 product's id, type, price and grant; consumables vs one-time payouts;
+  launch entitlement check (hand-edited save, refund, restore on a new phone); starter offer.
+- **ads:** none in the first 3 sessions, one every 3 runs, never after a new best, never with
+  Remove Ads, tracking prompt once.
+- **save / iCloud:** v2 → v3 migration; which copy wins. **gamecenter:** 30 achievement ids,
+  medals complete the ones below. **notify:** asked from day 2, a week of reminders.
 - **tutorial:** jump → double → biscuits → done, no crash while learning, the double step
   needs a double jump, crashes work again afterwards.
 
 ## What's next
 
-**M4 – Money and Game Center**: StoreKit products and the Store tab (biscuit bags, bones,
-Remove Ads, breeds at £0.99 and all breeds at £4.99), Restore purchases, AdMob rewarded
-ads (continue, chest, double), between-run ad rules, App Tracking Transparency, Game
-Center sign-in, leaderboards and achievements. Then M5 polish and beta, M6 launch.
+**M5 – Polish and beta**, then **M6 – Launch**.
 
-Still to confirm on a real phone: 60 fps on an older iPhone (`/run?bot&fps`).
+Still to confirm on a real phone: 60 fps on an older iPhone (`/run?bot&fps`), and the M4
+list in `ios/README.md` (purchases in the sandbox, ads, Game Center, iCloud, reminders).
