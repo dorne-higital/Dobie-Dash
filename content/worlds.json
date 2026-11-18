@@ -215,7 +215,13 @@
         "minion": null,
         "minionWeight": 0
       },
-      "gate": null
+      "gate": null,
+      "about": {
+        "colour": "#5fbf4a",
+        "obstacles": "Hydrants, cones, puddles",
+        "twist": "Learn to jump and double jump",
+        "boss": "The park keeper's ride-on mower"
+      }
     },
     {
       "id": "city-streets",
@@ -242,7 +248,13 @@
         "minion": "parcel",
         "minionWeight": 2.5
       },
-      "gate": null
+      "gate": null,
+      "about": {
+        "colour": "#a2648c",
+        "obstacles": "Fences, cats, skateboarders",
+        "twist": "Open manholes you must jump",
+        "boss": "The mail van throwing parcels"
+      }
     },
     {
       "id": "sunny-beach",
@@ -277,7 +289,13 @@
         "minion": "crab",
         "minionWeight": 2.5
       },
-      "gate": null
+      "gate": null,
+      "about": {
+        "colour": "#2fa7d8",
+        "obstacles": "Crabs, sandcastles, seagulls",
+        "twist": "Waves wash in and slow you down",
+        "boss": "King Crab snapping behind you"
+      }
     },
     {
       "id": "midnight-run",
@@ -309,7 +327,47 @@
         "minion": "fox",
         "minionWeight": 2.5
       },
-      "gate": 12000
+      "gate": 12000,
+      "about": {
+        "colour": "#3a3584",
+        "obstacles": "Owls, wheelie bins, foxes",
+        "twist": "Only lamp posts light the path",
+        "boss": "A fox pack running alongside"
+      }
+    }
+  ],
+  "comingSoon": [
+    {
+      "name": "Snowy Peaks",
+      "at": 12000,
+      "colour": "#8fb8e8",
+      "obstacles": "Snowmen, rolling snowballs",
+      "twist": "Ice patches make you slide",
+      "boss": "An avalanche"
+    },
+    {
+      "name": "Building Site",
+      "at": 17500,
+      "colour": "#f2a516",
+      "obstacles": "Cement mixers, swinging girders",
+      "twist": "Conveyor belts speed you up or slow you down",
+      "boss": "The wrecking ball"
+    },
+    {
+      "name": "Haunted Hollow",
+      "at": 24000,
+      "colour": "#6b4a8a",
+      "obstacles": "Pumpkins, bats, ghosts",
+      "twist": "Ghosts fade in and out of solid",
+      "boss": "The Ghost Hound"
+    },
+    {
+      "name": "Moon Walkies",
+      "at": 32000,
+      "colour": "#7d7f99",
+      "obstacles": "Craters, alien cats",
+      "twist": "Low gravity, long floaty jumps",
+      "boss": "A UFO every 4,000 points"
     }
   ]
 }

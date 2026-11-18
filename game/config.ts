@@ -107,6 +107,21 @@ export interface WorldDef {
   chase: ChaseDef
   /** Score target for the chase in the last world (later worlds take over in 1.1). */
   gate: number | null
+  /** Shown on the Worlds tab. */
+  about: WorldAbout
+}
+
+export interface WorldAbout {
+  colour: string
+  obstacles: string
+  twist: string
+  boss: string
+}
+
+/** Worlds 5–8: shown locked on the Worlds tab until they ship. */
+export interface ComingSoonWorld extends WorldAbout {
+  name: string
+  at: number
 }
 
 export interface PhysicsConfig {
@@ -189,6 +204,7 @@ export interface GameConfig {
   }
   obstacles: Record<ObstacleType, ObstacleDef>
   worlds: WorldDef[]
+  comingSoon: ComingSoonWorld[]
 }
 
 /** Deep-ish clone so tests and remote overrides never mutate the bundled JSON. */
