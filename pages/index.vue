@@ -1,10 +1,15 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'hub' })
+
+// `/?sheet` shows the baked sprite sheet under the hero (handy for checking the art port).
+const route = useRoute()
+const showSheet = computed(() => 'sheet' in route.query)
 </script>
 
 <template>
   <section class="home">
     <h1 class="logo">Dobie <span>Dash</span></h1>
+    <HubRunningDobie :sheet="showSheet" />
     <NuxtLink to="/run" class="play">Tap to run</NuxtLink>
   </section>
 </template>
@@ -14,13 +19,14 @@ definePageMeta({ layout: 'hub' })
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
-  padding-top: 24px;
+  gap: 20px;
+  padding-top: 12px;
 }
 .logo {
   margin: 0;
   font-size: 56px;
   line-height: 1;
+  color: var(--fg);
 }
 .logo span {
   color: var(--pink);
