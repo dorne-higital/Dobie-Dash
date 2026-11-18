@@ -164,7 +164,13 @@ export interface GameConfig {
   loop: { hz: number; maxStepsPerFrame: number }
   physics: PhysicsConfig
   dog: { hitbox: Box; biscuitReach: number; mouth: { x: number; y: number } }
-  scoring: { unitsPerMetre: number; biscuit: number; smash: number }
+  scoring: { unitsPerMetre: number; biscuit: number; smash: number; nearMiss: number }
+  /**
+   * Near miss: an obstacle passes within `gap` units without touching. Worth
+   * scoring.nearMiss, with `slowMo` seconds of slow motion at `timeScale`, at most once
+   * per `slowMoCooldown` seconds. Slow motion slows the engine clock, not the simulation.
+   */
+  nearMiss: { gap: number; slowMo: number; timeScale: number; slowMoCooldown: number }
   crash: { endDelay: number }
   /**
    * "Keep running?" after a crash: seconds to decide, the biscuit price of each continue

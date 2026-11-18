@@ -33,6 +33,10 @@ function tapAnywhere() {
           <dt>World</dt>
           <dd>{{ result.world + 1 }} · {{ result.worldName }}</dd>
         </div>
+        <div v-if="result.nearMisses">
+          <dt>Near misses</dt>
+          <dd>{{ result.nearMisses }}</dd>
+        </div>
         <div v-if="result.escapes">
           <dt>Escaped</dt>
           <dd>{{ result.escapes }} {{ result.escapes === 1 ? 'chase' : 'chases' }}</dd>

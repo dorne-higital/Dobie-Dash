@@ -106,6 +106,7 @@ export class Renderer {
 
   /** Big banner for a chase starting or being escaped. */
   showChase(name: string, active: boolean) {
+    if (active && !this.reduceMotion) this.shake = 6
     this.bannerQueue.unshift(
       active
         ? { a: 'RUN!', b: `${name} is after you`, col: '#ff5a5a', t: 0 }
@@ -227,6 +228,19 @@ export class Renderer {
       case 'crash':
         if (!this.reduceMotion) this.shake = 10
         break
+      case 'nearMiss':
+        this.parts.push({
+          x: fx.x + 24,
+          y: fx.y,
+          vx: 0,
+          vy: -50,
+          life: 0.9,
+          max: 0.9,
+          col: '#3ee08f',
+          r: 0,
+          txt: `CLOSE! +${run.cfg.scoring.nearMiss}`,
+        })
+        break
       case 'revive':
         for (let i = 0; i < 16; i++) {
           const a = (i / 16) * TAU
@@ -305,6 +319,17 @@ export class Renderer {
     }
     drawTheme(c, this.sprites.theme(this.theme, frame), dist, this.sprites.cloud)
     c.globalAlpha = 1
+
+    if (run.power.zoomies > 0 && run.state === 'running' && !this.reduceMotion) {
+      // Zoomies speed lines streaking past.
+      c.fillStyle = 'rgba(255,255,255,.55)'
+      for (let i = 0; i < 9; i++) {
+        const y = GY * (0.18 + ((i * 0.37) % 0.72))
+        const len = 60 + ((i * 53) % 90)
+        const x = W - ((t * (900 + i * 70) + i * 211) % (W + len * 2))
+        c.fillRect(x, y, len, 2.5)
+      }
+    }
 
     if (run.waves.length) drawWaves(c, this.waveSprites, run.waves, dist, GY, W, t)
 

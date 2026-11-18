@@ -16,7 +16,7 @@ import { worldIndexForScore, worldProgress } from '~/game/worlds'
 const cfg = loadGameConfig()
 
 describe('scoring', () => {
-  it('score = metres + biscuits × 5 + smashes × 25', () => {
+  it('score = metres + biscuits × 5 + smashes × 25 (+ near misses × 10)', () => {
     expect(score({ dist: 12345, biscuits: 0, smashes: 0 }, cfg)).toBe(1234)
     expect(score({ dist: 10000, biscuits: 7, smashes: 2 }, cfg)).toBe(1000 + 35 + 50)
   })
@@ -117,6 +117,44 @@ describe('gate chases', () => {
     while (run.state === 'running') run.update()
     expect(run.summary().caughtBy).toBe('The mail van')
   })
+})
+
+describe('near misses', () => {
+  it('tight passes count as near misses and add +10 each to the score', () => {
+    const c = loadGameConfig()
+    c.meter.blocks = 1e9
+    const run = new Run(c, 6, 600, { autoplay: true })
+    let fx = 0
+    while (run.state === 'running' && run.time < 120) {
+      run.update()
+      fx += run.fx.splice(0).filter((f) => f.type === 'nearMiss').length
+    }
+    expect(run.nearMisses).toBeGreaterThan(3)
+    expect(fx).toBe(run.nearMisses)
+    expect(run.score).toBe(
+      score(
+        {
+          dist: run.dist,
+          biscuits: run.biscuitsEaten,
+          smashes: run.smashes,
+          nearMisses: run.nearMisses,
+        },
+        c,
+      ),
+    )
+  }, 30_000)
+
+  it('a wider gap setting finds more near misses (it is a clearance threshold)', () => {
+    const count = (gap: number) => {
+      const c = loadGameConfig()
+      c.nearMiss.gap = gap
+      const run = new Run(c, 6, 600, { autoplay: true })
+      while (run.state === 'running' && run.time < 60) run.update()
+      return run.nearMisses
+    }
+    expect(count(0)).toBeLessThanOrEqual(count(5))
+    expect(count(5)).toBeLessThan(count(20))
+  }, 30_000)
 })
 
 describe('keep running?', () => {

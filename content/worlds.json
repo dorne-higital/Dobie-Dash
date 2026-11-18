@@ -35,7 +35,14 @@
   "scoring": {
     "unitsPerMetre": 10,
     "biscuit": 5,
-    "smash": 25
+    "smash": 25,
+    "nearMiss": 10
+  },
+  "nearMiss": {
+    "gap": 5,
+    "slowMo": 0.2,
+    "timeScale": 0.35,
+    "slowMoCooldown": 4
   },
   "crash": {
     "endDelay": 0.9

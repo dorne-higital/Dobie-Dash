@@ -5,6 +5,7 @@
 import {
   playableWorlds,
   type BossKind,
+  type Box,
   type GameConfig,
   type ObstacleDef,
   type ObstacleType,
@@ -37,6 +38,9 @@ export interface Obstacle {
    * Zoomies ends rather than becoming an unfair hit at the slower speed.
    */
   soft: boolean
+  /** Closest vertical clearance to Dobie while overlapping him horizontally. */
+  minGap: number
+  passed: boolean
   /** Knock-away motion once dead (screen-space, relative to wx/ground). */
   kx: number
   ky: number
@@ -68,6 +72,7 @@ export interface RunSummary {
   /** Boss that was chasing when you crashed, if any ("The mail van got you!"). */
   caughtBy: string | null
   continues: number
+  nearMisses: number
 }
 
 /** The only events that leave the engine for Vue. */
@@ -87,7 +92,7 @@ export type RunEvent = { [K in keyof RunEvents]: { type: K; data: RunEvents[K] }
 export type Fx =
   | { type: 'jump' | 'double' | 'land' | 'crash' | 'splash' | 'revive' }
   | { type: 'eat'; x: number; y: number; gold: boolean }
-  | { type: 'smash' | 'pop'; x: number; y: number }
+  | { type: 'smash' | 'pop' | 'nearMiss'; x: number; y: number }
 
 /** 'offer': crashed, waiting for the player to keep running (revive) or not (decline). */
 export type RunState = 'running' | 'crashed' | 'offer' | 'ended'
@@ -134,6 +139,7 @@ export class Run {
   chaseEnded: { boss: BossKind; at: number } | null = null
   escapes = 0
   continues = 0
+  nearMisses = 0
   private chased = new Set<number>()
   biscuitsEaten = 0
   smashes = 0
@@ -186,6 +192,7 @@ export class Run {
       escapes: this.escapes,
       caughtBy: this.chase?.name ?? null,
       continues: this.continues,
+      nearMisses: this.nearMisses,
     }
   }
 
@@ -275,6 +282,8 @@ export class Run {
           ph: this.spawner.rng.next() * Math.PI * 2,
           dead: false,
           soft: this.power.zoomies > 0,
+          minGap: Infinity,
+          passed: false,
           kx: 0,
           ky: 0,
           kvx: 0,
@@ -300,7 +309,11 @@ export class Run {
     for (const o of this.obstacles) {
       if (o.dead) continue
       if (o.def.extraSpeed) o.wx -= o.def.extraSpeed * dt
-      if (!overlaps(db, obstacleBox(o.wx - this.dist, o.def))) continue
+      const ob = obstacleBox(o.wx - this.dist, o.def)
+      if (!overlaps(db, ob)) {
+        this.checkNearMiss(o, db, ob)
+        continue
+      }
       const outcome = this.opts.invincible || o.soft ? 'smash' : resolveHit(this.power, this.cfg)
       if (outcome === 'pass') continue
       if (outcome === 'crash') {
@@ -356,13 +369,36 @@ export class Run {
     // Score and world.
     this.score =
       this.scoreOffset +
-      score({ dist: this.dist, biscuits: this.biscuitsEaten, smashes: this.smashes }, this.cfg)
+      score(
+        {
+          dist: this.dist,
+          biscuits: this.biscuitsEaten,
+          smashes: this.smashes,
+          nearMisses: this.nearMisses,
+        },
+        this.cfg,
+      )
     this.updateChase()
     const wi = worldIndexForScore(this.score, this.worlds)
     if (wi > this.worldIndex) {
       this.worldIndex = wi
       this.emit('world', { index: wi, id: this.world.id, name: this.world.name })
     }
+  }
+
+  /** Scrapes past an obstacle without touching it: +10 and a moment of slow motion. */
+  private checkNearMiss(o: Obstacle, db: Box, ob: Box) {
+    if (o.passed) return
+    if (ob.x1 > db.x0 && ob.x0 < db.x1) {
+      o.minGap = Math.min(o.minGap, Math.max(ob.y0 - db.y1, db.y0 - ob.y1))
+      return
+    }
+    if (ob.x1 > db.x0) return // not reached yet
+    o.passed = true
+    if (o.minGap > this.cfg.nearMiss.gap || o.soft) return
+    if (this.power.zoomies > 0 || this.power.grace > 0) return
+    this.nearMisses++
+    this.fx.push({ type: 'nearMiss', x: this.cfg.view.dogX, y: this.dog.y - 60 })
   }
 
   private end() {

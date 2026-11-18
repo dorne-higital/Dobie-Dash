@@ -46,6 +46,9 @@ export class Engine {
   private raf = 0
   private last = 0
   private acc = 0
+  /** Real seconds of near-miss slow motion left, and when the last one started. */
+  private slowMo = 0
+  private lastSlowMo = -Infinity
   private paused = false
   private destroyed = false
   private ro: ResizeObserver | null = null
@@ -206,7 +209,11 @@ export class Engine {
   private frame(dt: number) {
     const run = this.run!
     const step = 1 / this.cfg.loop.hz
-    this.acc += dt
+    // Near-miss slow motion: the fixed-step simulation just runs fewer steps per second,
+    // so runs stay deterministic.
+    const slow = this.slowMo > 0
+    this.slowMo = Math.max(0, this.slowMo - dt)
+    this.acc += slow ? dt * this.cfg.nearMiss.timeScale : dt
     let steps = 0
     while (this.acc >= step && steps < this.cfg.loop.maxStepsPerFrame) {
       run.update()
@@ -232,6 +239,14 @@ export class Engine {
       else if (fx.type === 'eat') fb?.play('biscuit')
       else if (fx.type === 'splash') fb?.play('jump')
       else if (fx.type === 'crash') fb?.play('crash')
+      else if (fx.type === 'nearMiss') {
+        const now = performance.now() / 1000
+        if (now - this.lastSlowMo >= this.cfg.nearMiss.slowMoCooldown) {
+          this.slowMo = this.cfg.nearMiss.slowMo
+          this.lastSlowMo = now
+        }
+        fb?.play('jump')
+      }
     }
     run.fx.length = 0
     for (const e of run.events) {
