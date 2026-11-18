@@ -1,0 +1,45 @@
+# Codemagic builds the iOS app on their Macs and uploads it to TestFlight.
+# Same setup as Footballdle. Steps are in ios/README.md.
+workflows:
+  ios-testflight:
+    name: iOS → TestFlight
+    max_build_duration: 45
+    instance_type: mac_mini_m2
+    integrations:
+      # The App Store Connect API key already set up for Footballdle (team-wide).
+      # Must match its name in Codemagic exactly, including the "Foodballdle" typo.
+      app_store_connect: Foodballdle ASC
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: uk.co.danhorne.dobiedash
+      vars:
+        XCODE_PROJECT: ios/App/App.xcodeproj
+        XCODE_SCHEME: App
+        # Numeric "Apple ID" from App Store Connect → Dobie Dash → App Information
+        APP_STORE_APPLE_ID: 0000000000
+      node: 24
+      xcode: 26.5
+    # No triggering block: builds are started by hand so free minutes aren't used on every push.
+    scripts:
+      - name: Install dependencies
+        script: npm ci
+      - name: Build web app and sync into iOS project
+        script: npm run cap:sync
+      - name: Apply code signing profiles
+        script: xcode-project use-profiles
+      - name: Bump build number past the latest TestFlight build
+        script: |
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" || echo 0)
+          NEXT=$((LATEST + 1))
+          echo "Build number: $NEXT"
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = $NEXT;/g" "$XCODE_PROJECT/project.pbxproj"
+      - name: Build signed .ipa
+        script: xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: false

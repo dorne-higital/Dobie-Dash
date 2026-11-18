@@ -20,9 +20,16 @@
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "check": "npm run lint && npm run typecheck && npm run test && npm run generate",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "cap:sync": "nuxt generate && cap sync ios"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.6.2",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4",
     "@fontsource/lilita-one": "^5.3.0",
     "@fontsource/nunito": "^5.3.0",
     "@pinia/nuxt": "^1.0.3",
@@ -32,6 +39,7 @@
     "vue-router": "^5.5.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
     "@nuxt/eslint": "^1.17.0",
     "@types/node": "^26.6.6",
     "eslint": "^10.15.0",
