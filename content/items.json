@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "items": [
+    { "id": "collar:red", "slot": "collar", "name": "Red Collar", "price": 0, "default": true },
+    {
+      "id": "collar:gold",
+      "slot": "collar",
+      "name": "Gold Collar",
+      "iap": "dobiedash.collar.gold"
+    },
+    { "id": "neck:bandana", "slot": "neck", "name": "Bandana", "price": 400 },
+    { "id": "neck:bowtie", "slot": "neck", "name": "Bow Tie", "price": 600 },
+    { "id": "eyes:shades", "slot": "eyes", "name": "Shades", "price": 800 },
+    { "id": "eyes:specs", "slot": "eyes", "name": "Specs", "price": 500 },
+    { "id": "hat:party", "slot": "hat", "name": "Party Hat", "price": 700 },
+    { "id": "hat:beanie", "slot": "hat", "name": "Beanie", "price": 700 },
+    { "id": "hat:crown", "slot": "hat", "name": "Crown", "bones": 60 },
+    { "id": "back:cape", "slot": "back", "name": "Super Cape", "bones": 45 }
+  ]
+}

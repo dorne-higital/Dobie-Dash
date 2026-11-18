@@ -1,0 +1,65 @@
+:root {
+  /* Palette (matches the plan's art kit) */
+  --charcoal: #332e3d;
+  --tan: #e8965a;
+  --collar: #e5484d;
+  --gold: #ffd23f;
+  --pink: #ff4fa0;
+  --plum: #2a1530;
+  --cream: #fff8ee;
+  --magnet: #3a86f0;
+  --teal: #2fd0c0;
+
+  --bg: #f6f1fb;
+  --surface: #ffffff;
+  --fg: #22142c;
+  --muted: #6c5d78;
+  --line: #e4daee;
+
+  --display: 'Lilita One', 'Arial Rounded MT Bold', system-ui, sans-serif;
+  --body: 'Nunito', system-ui, -apple-system, sans-serif;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --tabbar-h: 64px;
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--body);
+  font-weight: 700;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+#__nuxt {
+  height: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+h1,
+h2,
+h3,
+.display {
+  font-family: var(--display);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}

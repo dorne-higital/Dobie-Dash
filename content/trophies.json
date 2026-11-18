@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "trophies": [
+    { "id": "marathon", "name": "Marathon", "stat": "metres", "tiers": [10000, 100000, 1000000] },
+    { "id": "globetrotter", "name": "Globetrotter", "stat": "bestWorld", "tiers": [2, 3, 4] },
+    { "id": "snacker", "name": "Snacker", "stat": "biscuits", "tiers": [500, 5000, 50000] }
+  ]
+}

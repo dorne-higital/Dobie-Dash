@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "daily": [
+    {
+      "id": "eat150",
+      "text": "Eat 150 biscuits",
+      "stat": "biscuits",
+      "goal": 150,
+      "reward": { "biscuits": 100 }
+    },
+    {
+      "id": "jump3cats",
+      "text": "Jump 3 cats in one run",
+      "stat": "catsJumpedInRun",
+      "goal": 3,
+      "reward": { "biscuits": 80 }
+    },
+    {
+      "id": "run2000",
+      "text": "Score 2,000 in one run",
+      "stat": "bestScoreToday",
+      "goal": 2000,
+      "reward": { "biscuits": 120 }
+    }
+  ],
+  "weekly": [
+    {
+      "id": "km10",
+      "text": "Run 10 km in total",
+      "stat": "metres",
+      "goal": 10000,
+      "reward": { "item": "neck:bowtie" }
+    }
+  ]
+}
