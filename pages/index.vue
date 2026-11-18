@@ -37,6 +37,14 @@ async function openChest() {
   opening.value = false
 }
 
+// From day 2 (never at first launch): offer reminders.
+const reminders = useReminders()
+const askReminders = ref(reminders.shouldAsk())
+function answerReminders(yes: boolean) {
+  askReminders.value = false
+  void reminders.answer(yes)
+}
+
 function run() {
   router.push('/run')
 }
@@ -50,6 +58,15 @@ function run() {
       <p v-if="player.dog" class="hi">{{ player.dog.name }} is ready</p>
     </div>
     <p class="tap">Tap anywhere to run</p>
+    <div v-if="askReminders" class="nudge" @click.stop>
+      <p>
+        <b>🔔 Want a nudge?</b> We'll tell you when new missions land and before your week ends.
+      </p>
+      <div>
+        <UiButton variant="ghost" @click="answerReminders(false)">Not now</UiButton>
+        <UiButton @click="answerReminders(true)">Yes please</UiButton>
+      </div>
+    </div>
     <div class="cards" @click.stop>
       <button v-if="chestReady" type="button" class="card ready" @click="openChest">
         <span class="ic" aria-hidden="true">🎁</span>
@@ -77,6 +94,27 @@ function run() {
 </template>
 
 <style scoped>
+.nudge {
+  position: relative;
+  z-index: 2;
+  margin: 0 16px 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.nudge p {
+  margin: 0;
+  font-size: 14px;
+}
+.nudge div {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
 .home {
   position: absolute;
   inset: 0;

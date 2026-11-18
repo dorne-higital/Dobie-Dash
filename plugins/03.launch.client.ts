@@ -15,6 +15,10 @@ export default defineNuxtPlugin(() => {
   void usePurchases()
     .checkEntitlements()
     .catch(() => {})
+  // Reminders are a rolling week, so top them up each launch (only if allowed).
+  void useReminders()
+    .reschedule()
+    .catch(() => {})
   // Game Center sign-in shows Apple's own banner or sheet; no account needed beyond that.
   void useGameCenter()
     .signIn()
