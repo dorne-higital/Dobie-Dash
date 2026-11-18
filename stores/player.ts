@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import type { RunSummary } from '~/game/run'
-import { defaultSave, type Save } from '~/logic/save'
+import { defaultSave, type DogSave, type Save, type Slot } from '~/logic/save'
+import { buyBreed, buyItem, equip, grant, unequip } from '~/logic/shop'
 
 /** Everything in the save except settings. Persisted by plugins/02.persist.client.ts. */
 export type PlayerState = Omit<Save, 'v' | 'settings'>
@@ -20,6 +21,25 @@ export const usePlayerStore = defineStore('player', {
     bones: (s) => s.wallet.bones,
   },
   actions: {
+    buy(id: string) {
+      return buyItem(this, id)
+    },
+    equip(id: string) {
+      return equip(this, id)
+    },
+    unequip(slot: Slot) {
+      unequip(this, slot)
+    },
+    grant(id: string) {
+      grant(this, id)
+    },
+    buyBreed(breed: string) {
+      return buyBreed(this, breed)
+    },
+    setDog(dog: DogSave) {
+      this.dog = { ...dog }
+      if (!this.player.name) this.player.name = dog.name
+    },
     /**
      * Spends biscuits mid-run ("Keep running?"). `pending` is this run's biscuits, which
      * count as available but are only banked when the run is recorded.

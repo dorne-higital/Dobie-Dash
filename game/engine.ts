@@ -4,7 +4,9 @@
  * (run:end, biscuit, world, power) plus an optional feedback port for haptics.
  */
 import type { GameConfig, PowerKind } from './config'
+import type { Accessories, Dog } from './art/dobie'
 import { Emitter } from './events'
+import type { TrailKind } from './render/trails'
 import type { FeedbackCue, FeedbackPort } from './feedback'
 import { Renderer, type FrameStats, type View } from './render/renderer'
 import { randomSeed } from './rng'
@@ -23,6 +25,8 @@ export interface EngineOptions {
   /** Bot plays (dev: `?bot`). */
   autoplay?: boolean
   invincible?: boolean
+  /** The player's dog, accessories and trail (defaults to plain Dobie). */
+  look?: { dog: Dog; acc: Accessories; trail: TrailKind | null }
   /** Testing only: start in this world (0-based). */
   startWorld?: number
   /** CSS px of the top safe area (status bar / Dynamic Island). */
@@ -75,7 +79,7 @@ export class Engine {
   ) {
     this.ctx = canvas.getContext('2d', { alpha: false })!
     this.best = opts.best ?? 0
-    this.renderer = new Renderer(this.ctx, this.measure())
+    this.renderer = new Renderer(this.ctx, this.measure(), opts.look ?? null)
     this.renderer.reduceMotion = !!opts.reduceMotion
     this.ro = new ResizeObserver(() => this.renderer.setView(this.measure()))
     this.ro.observe(canvas)

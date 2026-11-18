@@ -5,6 +5,7 @@
  */
 import { Engine, type FeedbackCue, type FeedbackPort } from '~/game/engine'
 import type { HapticKind } from '~/services/types'
+import { lookFor } from '~/logic/look'
 import type { RunSummary } from '~/game/run'
 
 definePageMeta({ layout: 'run' })
@@ -133,6 +134,7 @@ onMounted(async () => {
     autoplay: bot,
     invincible: bot,
     startWorld,
+    look: lookFor(player.dog, player),
     safeTop: safeProbe.value?.offsetHeight ?? 0,
     hudInsetLeft: 52,
   })

@@ -84,7 +84,7 @@ export function jumpFrame(tilt: number) {
 
 export class SpriteCache {
   readonly scale: number
-  readonly dog: DogSprites
+  dog: DogSprites
   readonly obstacles: Record<ObstacleType, Sprite[]>
   readonly biscuit: Sprite
   readonly goldBiscuit: Sprite
@@ -94,9 +94,9 @@ export class SpriteCache {
   private bosses = new Map<BossKind, Sprite[]>()
   private themeKey = ''
 
-  constructor(scale: number) {
+  constructor(scale: number, look?: { dog: Dog; acc: Accessories }) {
     this.scale = scale
-    this.dog = bakeDog(scale)
+    this.dog = bakeDog(scale, look?.dog, look?.acc)
     const obs = {} as Record<ObstacleType, Sprite[]>
     for (const type of OBSTACLE_TYPES) {
       const anim = OBSTACLE_ANIM[type]

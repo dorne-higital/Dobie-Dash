@@ -18,6 +18,14 @@ import {
 } from './twists'
 import { drawBanner, drawHud, type Banner } from './hud'
 import { drawGoldSparkle, OBSTACLE_ANIM } from './obstacles'
+import type { Accessories, Dog } from '../art/dobie'
+import {
+  drawTrailParticle,
+  spawnTrail,
+  TRAIL_RATE,
+  type TrailKind,
+  type TrailParticle,
+} from './trails'
 import { DIZZY_FRAMES, DIZZY_PERIOD, drawSprite, jumpFrame, runFrame, SpriteCache } from './sprites'
 
 export interface View {
@@ -73,11 +81,16 @@ export class Renderer {
   private dark: Darkness | null = null
   reduceMotion = false
 
+  private trailParts: TrailParticle[] = []
+  private trailAcc = 0
+
   constructor(
     private c: Ctx,
     public view: View,
+    /** The player's dog, what it's wearing and its trail. */
+    private look: { dog: Dog; acc: Accessories; trail: TrailKind | null } | null = null,
   ) {
-    this.sprites = new SpriteCache(view.S)
+    this.sprites = new SpriteCache(view.S, look ?? undefined)
     this.waveSprites = bakeWaves(view.S)
   }
 
@@ -85,7 +98,7 @@ export class Renderer {
     const rescale = Math.abs(v.S - this.view.S) > 0.001
     this.view = v
     if (rescale) {
-      this.sprites = new SpriteCache(v.S)
+      this.sprites = new SpriteCache(v.S, this.look ?? undefined)
       this.waveSprites = bakeWaves(v.S)
     }
   }
@@ -123,6 +136,7 @@ export class Renderer {
     this.parts = []
     this.banner = null
     this.bannerQueue = []
+    this.trailParts = []
     this.shake = this.flash = this.squash = 0
     this.theme = theme
     this.prevTheme = null
@@ -289,6 +303,7 @@ export class Renderer {
       p.life -= frameDt
     }
     this.parts = this.parts.filter((p) => p.life > 0)
+    this.updateTrail(run, frameDt)
     if (this.banner) {
       this.banner.t += frameDt
       if (this.banner.t > 2) this.banner = null
@@ -393,6 +408,7 @@ export class Renderer {
     }
 
     this.drawBoss(run, t)
+    for (const p of this.trailParts) drawTrailParticle(c, p, GY)
     this.drawDog(run, dogY, t)
 
     // Particles.
@@ -418,6 +434,31 @@ export class Renderer {
     })
     if (this.banner) drawBanner(c, this.banner, W, GY)
     if (stats) this.drawStats(stats)
+  }
+
+  private updateTrail(run: Run, dt: number) {
+    for (const p of this.trailParts) {
+      p.x += p.vx * dt
+      p.y += p.vy * dt
+      p.vy += p.g * dt
+      p.life -= dt
+    }
+    this.trailParts = this.trailParts.filter((p) => p.life > 0)
+    const kind = this.look?.trail
+    if (!kind || run.state !== 'running' || this.reduceMotion) return
+    this.trailAcc += dt * TRAIL_RATE[kind]
+    while (this.trailAcc >= 1) {
+      this.trailAcc--
+      const p = spawnTrail(
+        kind,
+        run.cfg.view.dogX,
+        run.dog.y,
+        run.scrollSpeed,
+        run.dog.grounded,
+        this.t,
+      )
+      if (p) this.trailParts.push(p)
+    }
   }
 
   /** The chasing boss: rushes in from the left, lunges, then drops back once escaped. */
