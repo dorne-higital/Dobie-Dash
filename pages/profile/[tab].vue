@@ -50,7 +50,6 @@ const groups = computed(() => [
   { name: 'Trails', items: ITEMS.filter((i) => i.slot === 'trail') },
   { name: 'Collars', items: ITEMS.filter((i) => i.slot === 'collar') },
 ])
-const MEDAL_ICON = ['⚪', '🥉', '🥈', '🥇']
 /** World indices are 0-based in the save; show them as "World 2". */
 const fmt = (stat: string, v: number) =>
   stat === 'bestWorld' ? `World ${v + 1}` : v.toLocaleString()
@@ -76,7 +75,9 @@ const fmt = (stat: string, v: number) =>
 
     <ul v-else-if="tab === 'trophies'" class="trophies">
       <li v-for="x in trophies" :key="x.t.id" :class="`m${x.medal}`">
-        <span class="medal" :aria-label="MEDALS[x.medal]">{{ MEDAL_ICON[x.medal] }}</span>
+        <span class="medal" role="img" :aria-label="MEDALS[x.medal]"
+          ><UiIcon :name="`medal-${x.medal}`"
+        /></span>
         <div class="tt">
           <b>{{ x.t.name }}</b>
           <small>{{ x.t.text }}: {{ fmt(x.t.stat, x.v) }}</small>
@@ -101,7 +102,7 @@ const fmt = (stat: string, v: number) =>
         </h2>
         <ul>
           <li v-for="i in g.items" :key="i.id" :class="{ got: owns(player, i.id) }">
-            {{ owns(player, i.id) ? '✓' : '·' }} {{ i.name }}
+            <UiIcon :name="owns(player, i.id) ? 'check' : 'dot'" /> {{ i.name }}
           </li>
         </ul>
       </section>
@@ -115,7 +116,7 @@ const fmt = (stat: string, v: number) =>
         </h2>
         <ul>
           <li v-for="s in STICKERS" :key="s.id" :class="{ got: player.owned.includes(s.id) }">
-            {{ player.owned.includes(s.id) ? '⭐' : '🔒' }} {{ s.name }}
+            <UiIcon :name="player.owned.includes(s.id) ? 'star' : 'lock'" /> {{ s.name }}
           </li>
         </ul>
       </section>

@@ -33,7 +33,7 @@ const showSettings = ref(false)
 
       <ul v-if="missions.length" class="missions">
         <li v-for="m in missions" :key="m.id" :class="{ done: m.done, claimed: m.claimed }">
-          <span class="tick">{{ m.done ? '✓' : '○' }}</span>
+          <UiIcon class="tick" :name="m.done ? 'check' : 'todo'" />
           <span class="t">{{ m.def.text }}</span>
           <span class="p"
             >{{ Math.min(m.p, m.def.goal).toLocaleString() }}/{{

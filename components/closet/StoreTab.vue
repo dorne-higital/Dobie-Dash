@@ -22,15 +22,15 @@ const groups = computed(() => [
   { title: 'Golden Bones', items: ['bones.pouch', 'bones.box', 'bones.crate'] },
 ])
 const ICON: Record<string, string> = {
-  removeads: '🚫',
-  starter: '🎒',
-  'collar.gold': '🥇',
-  'breeds.all': '🐕',
-  'biscuits.bag': '🍪',
-  'biscuits.barrel': '🛢️',
-  'bones.pouch': '🦴',
-  'bones.box': '📦',
-  'bones.crate': '🧰',
+  removeads: 'noads',
+  starter: 'backpack',
+  'collar.gold': 'collar',
+  'breeds.all': 'breeds',
+  'biscuits.bag': 'bag',
+  'biscuits.barrel': 'barrel',
+  'bones.pouch': 'pouch',
+  'bones.box': 'box',
+  'bones.crate': 'crate',
 }
 
 async function tap(id: string) {
@@ -49,12 +49,12 @@ async function tap(id: string) {
       <h2>{{ g.title }}</h2>
       <ul>
         <li v-for="id in g.items" :key="id" :class="{ own: owned(id) }">
-          <span class="ic" aria-hidden="true">{{ ICON[id] }}</span>
+          <UiIcon :name="ICON[id] ?? 'gift'" class="ic" />
           <span class="txt">
             <b>{{ product(id)!.title }}</b>
             <small v-if="product(id)!.blurb">{{ product(id)!.blurb }}</small>
           </span>
-          <span v-if="owned(id)" class="owned">✓ Owned</span>
+          <span v-if="owned(id)" class="owned"><UiIcon name="check" /> Owned</span>
           <UiButton v-else class="buy" :disabled="!!busy || (!native && !dev)" @click="tap(id)">{{
             busy === id ? '…' : price(id)
           }}</UiButton>

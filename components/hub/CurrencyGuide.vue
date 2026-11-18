@@ -11,7 +11,7 @@ const guide = site.currencies
     <summary>{{ guide.title }}</summary>
     <ul>
       <li v-for="c in guide.items" :key="c.name">
-        <span class="ic" aria-hidden="true">{{ c.icon }}</span>
+        <UiIcon :name="c.icon" class="ic" />
         <span
           ><b>{{ c.name }}</b
           >{{ c.text }}</span

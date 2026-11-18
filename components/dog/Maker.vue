@@ -73,7 +73,7 @@ function save() {
   <div class="maker">
     <div class="preview">
       <DogView :look="look" mode="idle" />
-      <span v-if="!owned" class="lock">🔒 {{ BREEDS[draft.breed]!.name }}</span>
+      <span v-if="!owned" class="lock"><UiIcon name="lock" /> {{ BREEDS[draft.breed]!.name }}</span>
     </div>
 
     <label class="name">
@@ -95,7 +95,9 @@ function save() {
         >
           <span class="face"><DogView :look="breedLook(key)" mode="head" /></span>
           <span class="bn">{{ b.name }}</span>
-          <span v-if="!ownsBreed(player, key)" class="price">🦴 {{ BREED_PRICING.bones }}</span>
+          <span v-if="!ownsBreed(player, key)" class="price"
+            ><UiIcon name="bone" /> {{ BREED_PRICING.bones }}</span
+          >
         </button>
       </div>
     </section>
@@ -175,7 +177,7 @@ function save() {
       </template>
       <template v-else>
         <UiButton big :disabled="!canAfford" @click="unlock">
-          Unlock for 🦴 {{ BREED_PRICING.bones }}
+          Unlock for <UiIcon name="bone" /> {{ BREED_PRICING.bones }}
         </UiButton>
         <div class="money">
           <UiButton variant="secondary" :disabled="!!purchases.busy.value" @click="buyBreedMoney">
@@ -186,7 +188,9 @@ function save() {
           </UiButton>
         </div>
         <p class="hint">
-          <template v-if="!canAfford">You have 🦴 {{ player.bones }}. </template>
+          <template v-if="!canAfford"
+            >You have <UiIcon name="bone" /> {{ player.bones }}.
+          </template>
           {{ purchases.message.value || 'Every breed runs the same.' }}
         </p>
       </template>

@@ -9,12 +9,12 @@ const look = useLook()
       <DogView :look="look" mode="head" />
     </NuxtLink>
     <NuxtLink to="/closet/store" class="pill" aria-label="Biscuits, open the store">
-      <span class="ic" aria-hidden="true">🍪</span>{{ player.biscuits.toLocaleString() }}
+      <UiIcon name="biscuit" class="ic" />{{ player.biscuits.toLocaleString() }}
     </NuxtLink>
     <NuxtLink to="/closet/store" class="pill" aria-label="Golden Bones, open the store">
-      <span class="ic" aria-hidden="true">🦴</span>{{ player.bones.toLocaleString() }}
+      <UiIcon name="bone" class="ic" />{{ player.bones.toLocaleString() }}
     </NuxtLink>
-    <NuxtLink to="/settings" class="gear" aria-label="Settings">⚙︎</NuxtLink>
+    <NuxtLink to="/settings" class="gear" aria-label="Settings"><UiIcon name="gear" /></NuxtLink>
   </header>
 </template>
 

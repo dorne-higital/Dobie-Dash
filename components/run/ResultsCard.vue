@@ -84,18 +84,22 @@ function tapAnywhere() {
         </div>
       </dl>
       <ul v-if="earned.length" class="earned">
-        <li v-for="e in earned" :key="e">🎉 {{ e }}</li>
+        <li v-for="e in earned" :key="e"><UiIcon name="party" /> {{ e }}</li>
       </ul>
       <UiButton
         v-if="canDouble && result.biscuits > 0 && !doubled"
         variant="secondary"
         :disabled="doubling"
         @click="double"
-        >{{
-          doubling ? 'Ad playing…' : `▶ Watch an ad: double your 🍪 ${result.biscuits}`
-        }}</UiButton
+        ><template v-if="doubling">Ad playing…</template
+        ><template v-else
+          ><UiIcon name="play" /> Watch an ad: double your <UiIcon name="biscuit" />
+          {{ result.biscuits }}</template
+        ></UiButton
       >
-      <p v-if="doubled" class="doubled">🍪 +{{ result.biscuits }} doubled!</p>
+      <p v-if="doubled" class="doubled">
+        <UiIcon name="biscuit" /> +{{ result.biscuits }} doubled!
+      </p>
       <UiButton big :disabled="!ready" @click="emit('again')">Play again</UiButton>
       <div class="row">
         <UiButton variant="ghost" @click="emit('home')">Home</UiButton>

@@ -11,11 +11,11 @@ function badge(key: string): string | null {
 }
 
 const tabs = [
-  { key: 'closet', label: 'Wardrobe', to: '/closet/dog', icon: '👕' },
-  { key: 'worlds', label: 'Worlds', to: '/worlds', icon: '🗺️' },
-  { key: 'run', label: 'Run', to: '/', icon: '🐾' },
-  { key: 'league', label: 'League', to: '/league/world', icon: '🏆' },
-  { key: 'missions', label: 'Missions', to: '/missions/daily', icon: '✅' },
+  { key: 'closet', label: 'Wardrobe', to: '/closet/dog', icon: 'wardrobe' },
+  { key: 'worlds', label: 'Worlds', to: '/worlds', icon: 'worlds' },
+  { key: 'run', label: 'Run', to: '/', icon: 'paw' },
+  { key: 'league', label: 'League', to: '/league/world', icon: 'trophy' },
+  { key: 'missions', label: 'Missions', to: '/missions/daily', icon: 'missions' },
 ] as const
 
 function isActive(key: string) {
@@ -35,8 +35,11 @@ function isActive(key: string) {
       :aria-current="isActive(t.key) ? 'page' : undefined"
     >
       <span class="icon" aria-hidden="true"
-        >{{ t.icon
-        }}<span v-if="badge(t.key) !== null" class="badge">{{ badge(t.key) }}</span></span
+        ><UiIcon :name="t.key === 'run' ? 'paw-light' : t.icon" /><span
+          v-if="badge(t.key) !== null"
+          class="badge"
+          >{{ badge(t.key) }}</span
+        ></span
       >
       <span class="label">{{ t.label }}</span>
     </NuxtLink>
@@ -71,8 +74,12 @@ function isActive(key: string) {
 }
 .tab .icon {
   position: relative;
-  font-size: 20px;
+  font-size: 19px;
   line-height: 1;
+}
+.tab:not(.active):not(.run) .icon .ui-icon {
+  opacity: 0.6;
+  filter: saturate(0.7);
 }
 .badge {
   position: absolute;

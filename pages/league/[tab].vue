@@ -62,7 +62,9 @@ watch([tab, when], load, { immediate: true })
       <ol v-else class="board">
         <li v-for="r in rows" :key="`${r.rank}-${r.name}`" :class="{ me: r.me }">
           <span class="rank">{{ r.rank }}</span>
-          <span class="face"><DogView v-if="r.me" :look="look" mode="head" /><b v-else>🐶</b></span>
+          <span class="face"
+            ><DogView v-if="r.me" :look="look" mode="head" /><UiIcon v-else name="dog"
+          /></span>
           <span class="who">
             <b>{{ r.me ? (player.dog?.name ?? r.name) : r.name }}</b>
             <small>{{ worlds[r.world]?.name ?? 'Bark Park' }}</small>

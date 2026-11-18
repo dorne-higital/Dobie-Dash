@@ -16,9 +16,11 @@ async function take() {
   <div class="backdrop" @pointerdown.stop>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="starter-title">
       <span class="tag">One-time offer</span>
-      <div class="ic" aria-hidden="true">🎒</div>
+      <UiIcon name="backpack" class="ic" />
       <h2 id="starter-title">{{ p.title }}</h2>
-      <p>🍪 {{ p.grants.biscuits?.toLocaleString() }} biscuits and the Bandana</p>
+      <p>
+        <UiIcon name="biscuit" /> {{ p.grants.biscuits?.toLocaleString() }} biscuits and the Bandana
+      </p>
       <UiButton big :disabled="!!busy" @click="take">{{ busy ? '…' : price('starter') }}</UiButton>
       <small v-if="message">{{ message }}</small>
       <UiButton variant="ghost" @click="emit('close')">No thanks</UiButton>

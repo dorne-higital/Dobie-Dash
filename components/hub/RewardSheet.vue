@@ -10,12 +10,16 @@ defineEmits<{ close: [] }>()
 <template>
   <div class="backdrop" @click.self="$emit('close')">
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="reward-title">
-      <div class="burst" aria-hidden="true">🎉</div>
+      <UiIcon name="party" class="burst" />
       <h2 id="reward-title">{{ title }}</h2>
       <ul class="got">
-        <li v-if="reward.biscuits">🍪 {{ reward.biscuits.toLocaleString() }} biscuits</li>
-        <li v-if="reward.bones">🦴 {{ reward.bones }} Golden Bones</li>
-        <li v-if="reward.item">✨ {{ item(reward.item)?.name ?? reward.item }}</li>
+        <li v-if="reward.biscuits">
+          <UiIcon name="biscuit" /> {{ reward.biscuits.toLocaleString() }} biscuits
+        </li>
+        <li v-if="reward.bones"><UiIcon name="bone" /> {{ reward.bones }} Golden Bones</li>
+        <li v-if="reward.item">
+          <UiIcon name="sparkle" /> {{ item(reward.item)?.name ?? reward.item }}
+        </li>
       </ul>
       <p v-if="note" class="note">{{ note }}</p>
       <UiButton big @click="$emit('close')">Nice!</UiButton>

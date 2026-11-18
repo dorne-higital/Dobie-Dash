@@ -25,13 +25,13 @@ const SLOTS: Record<string, Slot[]> = {
   collars: ['collar'],
 }
 const TRAIL_ICON: Record<string, string> = {
-  dust: '💨',
-  paws: '🐾',
-  hearts: '💗',
-  confetti: '🎉',
-  bubbles: '🫧',
-  stars: '⭐',
-  rainbow: '🌈',
+  dust: 'dust',
+  paws: 'paw',
+  hearts: 'hearts',
+  confetti: 'party',
+  bubbles: 'bubbles',
+  stars: 'star',
+  rainbow: 'rainbow',
 }
 
 const route = useRoute()
@@ -89,14 +89,15 @@ function itemLook(it: ItemDef) {
   return lookFor(player.dog, player, it.id)
 }
 
-function status(it: ItemDef) {
-  if (isWorn(it)) return '✓ Wearing'
+/** The line under each item: an icon (or none) and its text. */
+function status(it: ItemDef): { icon?: string; text: string } {
+  if (isWorn(it)) return { icon: 'check', text: 'Wearing' }
   const o = offer(player, it)
-  if (o.kind === 'owned') return 'Owned'
-  if (o.kind === 'biscuits') return `🍪 ${o.price.toLocaleString()}`
-  if (o.kind === 'bones') return `🦴 ${o.price}`
-  if (o.kind === 'iap') return o.gbp
-  return `🔒 ${worlds[o.world]?.name ?? 'Later'}`
+  if (o.kind === 'owned') return { text: 'Owned' }
+  if (o.kind === 'biscuits') return { icon: 'biscuit', text: o.price.toLocaleString() }
+  if (o.kind === 'bones') return { icon: 'bone', text: String(o.price) }
+  if (o.kind === 'iap') return { text: o.gbp }
+  return { icon: 'lock', text: worlds[o.world]?.name ?? 'Later' }
 }
 </script>
 
@@ -122,7 +123,7 @@ function status(it: ItemDef) {
           @click="tap(it)"
         >
           <span class="icon">
-            <span v-if="it.slot === 'trail'" class="emoji">{{ TRAIL_ICON[it.art.trail!] }}</span>
+            <UiIcon v-if="it.slot === 'trail'" :name="TRAIL_ICON[it.art.trail!]!" class="emoji" />
             <span
               v-else-if="it.slot === 'collar'"
               class="swatch"
@@ -133,7 +134,9 @@ function status(it: ItemDef) {
             <DogView v-else :look="itemLook(it)" mode="head" />
           </span>
           <span class="nm">{{ it.name }}</span>
-          <span class="st">{{ status(it) }}</span>
+          <span class="st"
+            ><UiIcon v-if="status(it).icon" :name="status(it).icon!" /> {{ status(it).text }}</span
+          >
         </button>
       </div>
 
@@ -141,16 +144,13 @@ function status(it: ItemDef) {
         <b>{{ selected.name }}</b>
         <template v-if="selOffer.kind === 'biscuits' || selOffer.kind === 'bones'">
           <UiButton :disabled="!selOffer.affordable" @click="buy">
-            Buy for {{ selOffer.kind === 'biscuits' ? '🍪' : '🦴' }}
+            Buy for <UiIcon :name="selOffer.kind === 'biscuits' ? 'biscuit' : 'bone'" />
             {{ selOffer.price.toLocaleString() }}
           </UiButton>
           <small v-if="!selOffer.affordable">
             You have
-            {{
-              selOffer.kind === 'biscuits'
-                ? `🍪 ${player.biscuits.toLocaleString()}`
-                : `🦴 ${player.bones}`
-            }}
+            <UiIcon :name="selOffer.kind === 'biscuits' ? 'biscuit' : 'bone'" />
+            {{ selOffer.kind === 'biscuits' ? player.biscuits.toLocaleString() : player.bones }}
           </small>
         </template>
         <template v-else-if="selOffer.kind === 'iap'">

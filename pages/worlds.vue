@@ -79,7 +79,7 @@ function rewards(i: number) {
             <dt>Rewards</dt>
             <dd>
               <span v-for="r in rewards(i)" :key="r.name" class="rw" :class="{ got: r.got }"
-                >{{ r.got ? '✓' : '🎁' }} {{ r.name }}</span
+                ><UiIcon :name="r.got ? 'check' : 'gift'" /> {{ r.name }}</span
               >
             </dd>
           </div>
@@ -94,7 +94,7 @@ function rewards(i: number) {
         <div class="head">
           <span class="num">{{ cfg.worlds.length + j + 1 }}</span>
           <b>{{ w.name }}</b>
-          <span class="at">🔒 {{ w.at.toLocaleString() }}</span>
+          <span class="at"><UiIcon name="lock" /> {{ w.at.toLocaleString() }}</span>
         </div>
         <dl>
           <div>
@@ -207,10 +207,7 @@ h1 {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
-.reached .at::before {
-  content: '✓ ';
-  color: #18a597;
-}
+
 dl {
   margin: 8px 0 0;
   display: flex;

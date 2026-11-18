@@ -5,12 +5,13 @@ import { item } from '~/logic/items'
 defineProps<{ def: MissionDef; p: number; claimed: boolean }>()
 defineEmits<{ claim: [] }>()
 
-function rewardText(r: Reward) {
-  const parts: string[] = []
-  if (r.biscuits) parts.push(`🍪 ${r.biscuits}`)
-  if (r.bones) parts.push(`🦴 ${r.bones}`)
-  if (r.item) parts.push(item(r.item)?.name ?? r.item)
-  return parts.join(' + ')
+/** Reward pieces: an icon (biscuit or bone) and the amount, or an item name. */
+function rewardParts(r: Reward) {
+  const parts: { icon?: string; text: string }[] = []
+  if (r.biscuits) parts.push({ icon: 'biscuit', text: String(r.biscuits) })
+  if (r.bones) parts.push({ icon: 'bone', text: String(r.bones) })
+  if (r.item) parts.push({ text: item(r.item)?.name ?? r.item })
+  return parts
 }
 </script>
 
@@ -21,9 +22,13 @@ function rewardText(r: Reward) {
       <div class="bar"><i :style="{ width: `${Math.min(100, (p / def.goal) * 100)}%` }" /></div>
       <small>{{ Math.min(p, def.goal).toLocaleString() }} / {{ def.goal.toLocaleString() }}</small>
     </div>
-    <span v-if="claimed" class="tick">✓</span>
+    <UiIcon v-if="claimed" name="check" class="tick" />
     <UiButton v-else-if="p >= def.goal" class="claim" @click="$emit('claim')">Claim</UiButton>
-    <span v-else class="reward">{{ rewardText(def.reward) }}</span>
+    <span v-else class="reward"
+      ><span v-for="(x, i) in rewardParts(def.reward)" :key="i"
+        >{{ i ? ' + ' : '' }}<UiIcon v-if="x.icon" :name="x.icon" /> {{ x.text }}</span
+      ></span
+    >
   </div>
 </template>
 

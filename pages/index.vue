@@ -60,7 +60,8 @@ function run() {
     <p class="tap">Tap anywhere to run</p>
     <div v-if="askReminders" class="nudge" @click.stop>
       <p>
-        <b>🔔 Want a nudge?</b> We'll tell you when new missions land and before your week ends.
+        <b><UiIcon name="bell" /> Want a nudge?</b> We'll tell you when new missions land and before
+        your week ends.
       </p>
       <div>
         <UiButton variant="ghost" @click="answerReminders(false)">Not now</UiButton>
@@ -69,20 +70,20 @@ function run() {
     </div>
     <div class="cards" @click.stop>
       <button v-if="chestReady" type="button" class="card ready" @click="openChest">
-        <span class="ic" aria-hidden="true">🎁</span>
+        <UiIcon name="gift" class="ic" />
         <span
-          ><b>Free chest</b
-          ><small>{{ opening ? 'Ad playing…' : '▶ Watch an ad to open' }}</small></span
+          ><b>Free chest</b><small v-if="opening">Ad playing…</small
+          ><small v-else><UiIcon name="play" /> Watch an ad to open</small></span
         >
       </button>
       <div v-else class="card">
-        <span class="ic" aria-hidden="true">🎁</span>
+        <UiIcon name="gift" class="ic" />
         <span
           ><b>Free chest</b><small>Ready in {{ chestIn }}</small></span
         >
       </div>
       <NuxtLink to="/worlds" class="card">
-        <span class="ic" aria-hidden="true">🏁</span>
+        <UiIcon name="flag" class="ic" />
         <span
           ><b>Best {{ player.best.toLocaleString() }}</b
           ><small>{{ worlds[player.player.bestWorld]?.name }}</small></span

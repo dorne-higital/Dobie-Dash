@@ -79,7 +79,9 @@ function doChest() {
             }"
           >
             <span class="d">Day {{ i + 1 }}</span>
-            <span class="r">{{ r.bones ? `🦴${r.bones}` : `🍪${r.biscuits}` }}</span>
+            <span class="r"
+              ><UiIcon :name="r.bones ? 'bone' : 'biscuit'" />{{ r.bones ?? r.biscuits }}</span
+            >
           </li>
         </ol>
         <small class="pause">Miss a day and your streak just pauses.</small>
@@ -104,9 +106,7 @@ function doChest() {
         :disabled="!dailyChestReady(player)"
         @click="doChest"
       >
-        <span class="ic" aria-hidden="true">{{
-          player.missions.dailyChestClaimed ? '📭' : '🎁'
-        }}</span>
+        <UiIcon :name="player.missions.dailyChestClaimed ? 'gift-empty' : 'gift'" class="ic" />
         <span>
           <b>Daily chest</b>
           <small v-if="player.missions.dailyChestClaimed">Opened. A new one tomorrow.</small>
@@ -132,7 +132,7 @@ function doChest() {
     </template>
 
     <div v-else class="pass">
-      <span class="ic" aria-hidden="true">🎟️</span>
+      <UiIcon name="ticket" class="ic" />
       <b>Pup Pass</b>
       <p>A 6-week season with 30 tiers of trails, collars and outfits arrives in a later update.</p>
     </div>
