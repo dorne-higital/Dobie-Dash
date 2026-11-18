@@ -135,3 +135,87 @@ export function drawDarkness(c: Ctx, d: Darkness, dist: number, alpha: number) {
   for (let x = -off; x < d.W; x += d.period) c.drawImage(d.cv, x, 0, d.period, d.H)
   c.globalAlpha = 1
 }
+
+// ---- rooftop ledges --------------------------------------------------------------------
+
+/** A low building whose roof is the ledge: tileable middle plus a left end (mirrored). */
+export interface LedgeSprites {
+  tile: HTMLCanvasElement
+  cap: HTMLCanvasElement
+  h: number
+  scale: number
+}
+
+const LEDGE_TILE = 64
+const LEDGE_CAP = 14
+const LEDGE_PAD = 6 // above the roof line, for the outline
+const LEDGE_LOOK: Record<string, { body: string; window: string; slab: string }> = {
+  // Warm brick, so it stands out from the purple skyline behind it.
+  city: { body: '#e08f6e', window: '#fff1c9', slab: '#8a3f4f' },
+  night: { body: '#5a4a8c', window: '#ffd23f', slab: '#2a1f55' },
+}
+const PLUM = '#2a1530'
+
+function ledgeBody(c: Ctx, x0: number, w: number, h: number, look: (typeof LEDGE_LOOK)[string]) {
+  c.fillStyle = look.body
+  c.fillRect(x0, 10, w, h - 10)
+  c.fillStyle = look.window
+  for (let y = 26; y < h - 14; y += 30)
+    for (let x = x0 + 12; x < x0 + w - 8; x += 28) c.fillRect(x, y, 12, 14)
+  // Roof slab: cream trim on top, dark band, plum outline top and bottom.
+  c.fillStyle = look.slab
+  c.fillRect(x0, -2, w, 12)
+  c.fillStyle = '#fff1dc'
+  c.fillRect(x0, -2, w, 4)
+  c.fillStyle = PLUM
+  c.fillRect(x0, -5, w, 3)
+  c.fillRect(x0, 10, w, 2)
+}
+
+export function bakeLedge(theme: string, h: number, scale: number): LedgeSprites {
+  const look = LEDGE_LOOK[theme] ?? { body: '#a99bbd', window: '#fff3c4', slab: '#5a4a70' }
+  const t = makeCanvas(LEDGE_TILE, h + LEDGE_PAD, scale)
+  t.c.translate(0, LEDGE_PAD)
+  ledgeBody(t.c, 0, LEDGE_TILE, h, look)
+  const k = makeCanvas(LEDGE_CAP, h + LEDGE_PAD, scale)
+  k.c.translate(0, LEDGE_PAD)
+  ledgeBody(k.c, 4, LEDGE_CAP - 4, h, { ...look, window: look.body })
+  // The slab overhangs the wall a little; outline down the wall's edge.
+  k.c.fillStyle = look.slab
+  k.c.fillRect(0, -2, 4, 12)
+  k.c.fillStyle = PLUM
+  k.c.fillRect(0, -5, 4, 3)
+  k.c.fillRect(0, -5, 2, 17)
+  k.c.fillRect(4, 10, 2.5, h - 10)
+  return { tile: t.cv, cap: k.cv, h, scale }
+}
+
+export function drawLedges(
+  c: Ctx,
+  sprites: (theme: string, h: number) => LedgeSprites,
+  ledges: { wx0: number; wx1: number; h: number; theme: string }[],
+  dist: number,
+  GY: number,
+  W: number,
+) {
+  for (const l of ledges) {
+    const x0 = l.wx0 - dist
+    const x1 = l.wx1 - dist
+    if (x1 < -LEDGE_CAP || x0 > W + LEDGE_CAP) continue
+    const s = sprites(l.theme, l.h)
+    const y = GY - l.h - LEDGE_PAD
+    const full = l.h + LEDGE_PAD
+    const from = Math.max(x0, -LEDGE_TILE)
+    const start = x0 + Math.floor((from - x0) / LEDGE_TILE) * LEDGE_TILE
+    for (let x = start; x < Math.min(x1, W); x += LEDGE_TILE) {
+      const tw = Math.min(LEDGE_TILE, x1 - x)
+      c.drawImage(s.tile, 0, 0, tw * s.scale, full * s.scale, x, y, tw, full)
+    }
+    c.drawImage(s.cap, x0 - LEDGE_CAP + 4, y, LEDGE_CAP, full)
+    c.save()
+    c.translate(x1 + LEDGE_CAP - 4, y)
+    c.scale(-1, 1)
+    c.drawImage(s.cap, 0, 0, LEDGE_CAP, full)
+    c.restore()
+  }
+}

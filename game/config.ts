@@ -82,6 +82,22 @@ export interface LampsTwist {
 
 export type TwistDef = WavesTwist | LampsTwist
 
+/**
+ * Ledges (rooftops of low buildings) to run along: an optional higher path, never needed.
+ * You can jump up through one and land on top. Nothing on the ground can reach a dog on
+ * it, no fliers spawn under it, and the spawner keeps a landing zone clear after it.
+ */
+export interface PlatformsDef {
+  /** Seconds between ledges (random in range). */
+  every: [number, number]
+  /** Length, in seconds of running at world speed (random in range). */
+  seconds: [number, number]
+  /** Height of the top above the ground. */
+  height: number
+  /** Clear running (seconds) before a ledge starts. */
+  leadIn: number
+}
+
 export type BossKind = 'mower' | 'van' | 'kingCrab' | 'foxPack'
 
 /** Gate chase: in the last `chase.window` points before the target, a boss chases you. */
@@ -104,6 +120,8 @@ export interface WorldDef {
   obstacles: Partial<Record<ObstacleType, number>>
   patterns: Partial<Record<PatternType, number>>
   twist: TwistDef | null
+  /** Ledges to run along (City Streets, Midnight Run). */
+  platforms?: PlatformsDef | null
   chase: ChaseDef
   /** Score target for the chase in the last world (later worlds take over in 1.1). */
   gate: number | null

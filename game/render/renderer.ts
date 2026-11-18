@@ -10,10 +10,13 @@ import { drawTheme } from './backgrounds'
 import { BOSS_BOX, BOSS_FRAMES, BOSS_PERIOD } from './bosses'
 import {
   bakeDarkness,
+  bakeLedge,
   bakeWaves,
   drawDarkness,
+  drawLedges,
   drawWaves,
   type Darkness,
+  type LedgeSprites,
   type WaveSprites,
 } from './twists'
 import { drawBanner, drawHud, type Banner } from './hud'
@@ -79,6 +82,14 @@ export class Renderer {
   private fade = 0
   private waveSprites: WaveSprites
   private dark: Darkness | null = null
+  private ledgeSprites = new Map<string, LedgeSprites>()
+  /** Rooftop ledge art per world look and height, baked on first use. */
+  private ledge = (theme: string, h: number) => {
+    const key = `${theme}:${h}`
+    let s = this.ledgeSprites.get(key)
+    if (!s) this.ledgeSprites.set(key, (s = bakeLedge(theme, h, this.view.S)))
+    return s
+  }
   reduceMotion = false
 
   private trailParts: TrailParticle[] = []
@@ -100,6 +111,7 @@ export class Renderer {
     if (rescale) {
       this.sprites = new SpriteCache(v.S, this.look ?? undefined)
       this.waveSprites = bakeWaves(v.S)
+      this.ledgeSprites.clear()
     }
   }
 
@@ -347,6 +359,7 @@ export class Renderer {
     }
 
     if (run.waves.length) drawWaves(c, this.waveSprites, run.waves, dist, GY, W, t)
+    if (run.ledges.length) drawLedges(c, this.ledge, run.ledges, dist, GY, W)
 
     // Obstacles.
     for (const o of run.obstacles) {

@@ -22,7 +22,7 @@ import {
   type PowerState,
 } from './powerups'
 import { metres, score } from './scoring'
-import { findClearPlan, Spawner, type PatternObstacle } from './spawner'
+import { findClearPlan, Spawner, type Ledge, type PatternObstacle } from './spawner'
 import { gateTarget, worldIndexForScore } from './worlds'
 
 export interface Obstacle {
@@ -141,6 +141,8 @@ export class Run {
   biscuits: Biscuit[] = []
   /** Waves on the path (world x); in one, the speed eases down to `slow`. */
   waves: { wx0: number; wx1: number; slow: number }[] = []
+  /** Rooftop ledges in play (City Streets, Midnight Run). */
+  ledges: Ledge[] = []
   /** Current wave speed multiplier (1 out of the water). */
   waveMul = 1
   private inWave = false
@@ -355,13 +357,15 @@ export class Run {
         })
       }
       if (batch.wave) this.waves.push(batch.wave)
+      if (batch.ledge) this.ledges.push(batch.ledge)
       for (const b of batch.biscuits)
         this.biscuits.push({ ...b, pwx: b.wx, py: b.y, ph: (b.wx * 0.37) % (Math.PI * 2) })
     }
 
     // Dog.
     if (this.opts.autoplay) this.autoplay()
-    const r = stepDog(this.dog, this.cfg.physics, dt, this.pressed)
+    const r = stepDog(this.dog, this.cfg.physics, dt, this.pressed, this.floorUnderDog())
+    if (this.ledges.length && this.ledges[0]!.wx1 < this.dist - 300) this.ledges.shift()
     this.pressed = false
     if (r.jumped) {
       this.jumps++
@@ -463,6 +467,15 @@ export class Run {
       this.worldIndex = wi
       this.emit('world', { index: wi, id: this.world.id, name: this.world.name })
     }
+  }
+
+  /** The surface under the dog: a ledge's top if the dog is over one and above it, else 0. */
+  private floorUnderDog(): number {
+    const hb = this.cfg.dog.hitbox
+    const x = this.dist + this.cfg.view.dogX
+    for (const l of this.ledges)
+      if (x + hb.x1 > l.wx0 + 8 && x + hb.x0 < l.wx1 - 8 && this.dog.y <= -l.h + 0.5) return -l.h
+    return 0
   }
 
   /** Scrapes past an obstacle without touching it: +10 and a moment of slow motion. */

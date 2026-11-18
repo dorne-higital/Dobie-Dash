@@ -225,7 +225,8 @@
         "obstacles": "Hydrants, cones, puddles",
         "twist": "Learn to jump and double jump",
         "boss": "The park keeper's ride-on mower"
-      }
+      },
+      "platforms": null
     },
     {
       "id": "city-streets",
@@ -256,8 +257,14 @@
       "about": {
         "colour": "#a2648c",
         "obstacles": "Fences, cats, skateboarders",
-        "twist": "Open manholes you must jump",
+        "twist": "Open manholes you must jump. Rooftops to run along",
         "boss": "The mail van throwing parcels"
+      },
+      "platforms": {
+        "every": [10, 16],
+        "seconds": [2.5, 4],
+        "height": 100,
+        "leadIn": 0.4
       }
     },
     {
@@ -299,7 +306,8 @@
         "obstacles": "Crabs, sandcastles, seagulls",
         "twist": "Waves wash in and slow you down",
         "boss": "King Crab snapping behind you"
-      }
+      },
+      "platforms": null
     },
     {
       "id": "midnight-run",
@@ -335,8 +343,14 @@
       "about": {
         "colour": "#3a3584",
         "obstacles": "Owls, wheelie bins, foxes",
-        "twist": "Only lamp posts light the path",
+        "twist": "Only lamp posts light the path. Rooftops to run along",
         "boss": "A fox pack running alongside"
+      },
+      "platforms": {
+        "every": [8, 13],
+        "seconds": [3, 4.5],
+        "height": 100,
+        "leadIn": 0.4
       }
     }
   ],

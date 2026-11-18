@@ -11,11 +11,12 @@ import type {
   GameConfig,
   ObstacleType,
   PatternType,
+  PlatformsDef,
   TutorialStep,
   WavesTwist,
   WorldDef,
 } from './config'
-import { newDog, obstacleBox, stepDog } from './physics'
+import { maxAirTime, newDog, obstacleBox, stepDog } from './physics'
 import { Rng } from './rng'
 
 /** An obstacle as placed in a pattern: screen x at the step it spawns. */
@@ -39,6 +40,11 @@ export interface ValidateOpts {
 }
 
 const MAX_DOUBLE_DELAY = 40
+/**
+ * Extra clear running after a ledge's landing zone: a planned jump can come up to a second
+ * (60 steps) before an obstacle arrives, so the dog must be down by then.
+ */
+const LEDGE_LANDING_SECONDS = 1.1
 
 /**
  * Finds the plan that clears `pattern` and lands soonest, or null if none exists.
@@ -185,9 +191,18 @@ export interface SpawnBatch {
   biscuits: SpawnedBiscuit[]
   /** Absolute step numbers of the taps that clear this batch (used by bots and tests). */
   plan: PlannedTaps | null
-  pattern: PatternType | 'breather' | 'wave'
+  pattern: PatternType | 'breather' | 'wave' | 'ledge'
   /** World-x span of a wave (Sunny Beach twist). */
   wave?: { wx0: number; wx1: number; slow: number }
+  /** A ledge to run along: world-x span, height of its top and the world's look. */
+  ledge?: Ledge
+}
+
+export interface Ledge {
+  wx0: number
+  wx1: number
+  h: number
+  theme: string
 }
 
 export interface SpawnerState {
@@ -219,6 +234,10 @@ export class Spawner {
   private viewW: number
   private nextWave = Infinity
   private waveWorld = ''
+  private nextLedge = Infinity
+  private ledgeWorld = ''
+  /** The latest ledge: no fliers near it, and nothing in the landing zone up to clearTo. */
+  private ledge: { wx0: number; wx1: number; clearTo: number } | null = null
 
   constructor(
     private cfg: GameConfig,
@@ -276,6 +295,17 @@ export class Spawner {
       }
     }
 
+    const pf = s.world.platforms
+    if (!tut && pf) {
+      if (this.ledgeWorld !== s.world.id) {
+        this.ledgeWorld = s.world.id
+        this.nextLedge = s.time + this.rng.range(pf.every[0], pf.every[1])
+      } else if (s.time >= this.nextLedge && (!this.ledge || this.nextAt >= this.ledge.clearTo)) {
+        this.nextLedge = s.time + this.rng.range(pf.every[0], pf.every[1])
+        return this.makeLedge(pf, s)
+      }
+    }
+
     const intro = s.time < sc.introSeconds
     const base = this.nextAt
     const x0 = base - s.dist // screen x at this step
@@ -293,6 +323,10 @@ export class Spawner {
       return plan
     }
     let kind: PatternType = intro || tut ? 'single' : this.rng.weighted(s.world.patterns)
+    // Near a ledge only ground obstacles: a flier could reach a dog standing on top.
+    const L = this.ledge
+    const nearLedge = !!L && base < L.clearTo && base + 400 > L.wx0
+    if (nearLedge && kind === 'flier') kind = 'single'
     let pattern: PatternObstacle[]
     let plan: ClearPlan | null
     if (tut === 'double') {
@@ -318,6 +352,15 @@ export class Spawner {
       kind = 'single'
       pattern = this.makePattern(kind, x0, s)
       plan = check(pattern)
+    }
+    if (plan && nearLedge) {
+      // Nothing may run past the ledge's end into its landing zone.
+      const last = pattern[pattern.length - 1]!
+      const endW = last.x + this.cfg.obstacles[last.type].w + s.dist
+      if (endW > L!.wx1) {
+        this.nextAt = Math.max(this.nextAt, L!.clearTo)
+        return null
+      }
     }
     if (!plan) {
       // Still busy with the previous pattern: try again a little later.
@@ -417,6 +460,46 @@ export class Spawner {
         out.push({ wx: end + b.highAfter + i * b.spacing, y: b.highY, gold: false })
     }
     return out
+  }
+
+  /**
+   * A ledge: the rooftop of a low building, with biscuits along the top. Obstacles keep
+   * spawning on the ground underneath as usual (ground ones only); after it ends, the
+   * ground stays clear long enough for any jump off its edge to land.
+   */
+  private makeLedge(pf: PlatformsDef, s: SpawnerState): SpawnBatch {
+    const wx0 = this.nextAt + pf.leadIn * s.speed
+    const wx1 = wx0 + this.rng.range(pf.seconds[0], pf.seconds[1]) * s.speed
+    const hb = this.cfg.dog.hitbox
+    const fastest = Math.max(s.speed, s.nextSpeed ?? 0) + this.maxExtraSpeed()
+    const air = maxAirTime(pf.height, this.cfg.physics, 1 / this.cfg.loop.hz)
+    const clearTo = wx1 + (hb.x1 - hb.x0) + fastest * (air + LEDGE_LANDING_SECONDS)
+    this.ledge = { wx0, wx1, clearTo }
+    const b = this.cfg.spawner.biscuits
+    const biscuits: SpawnedBiscuit[] = []
+    const mid = (wx0 + wx1) / 2
+    const golden = this.rng.chance(b.goldenArcChance * 2)
+    for (let x = wx0 + 50; x < wx1 - 30; x += b.spacing * 1.5)
+      biscuits.push({ wx: x, y: -pf.height + b.lowY, gold: false })
+    if (golden && biscuits.length) {
+      let k = 0
+      for (let i = 1; i < biscuits.length; i++)
+        if (Math.abs(biscuits[i]!.wx - mid) < Math.abs(biscuits[k]!.wx - mid)) k = i
+      biscuits[k]!.gold = true
+    }
+    return {
+      obstacles: [],
+      biscuits,
+      plan: null,
+      pattern: 'ledge',
+      ledge: { wx0, wx1, h: pf.height, theme: s.world.theme },
+    }
+  }
+
+  private maxExtraSpeed() {
+    let m = 0
+    for (const d of Object.values(this.cfg.obstacles)) m = Math.max(m, d.extraSpeed ?? 0)
+    return m
   }
 
   /** A wave: clear water to run through (slowly), with a low line of biscuits. */

@@ -3,6 +3,7 @@
  * fairness validator and the tests, so "clearable" always means the same thing.
  *
  * Coordinates are logical units. y is relative to the ground line, negative is up.
+ * `floor` is the surface under the dog: 0 for the ground, or a ledge's top (negative).
  */
 import type { Box, ObstacleDef, PhysicsConfig } from './config'
 
@@ -29,14 +30,14 @@ export function newDog(): DogBody {
   return { y: 0, vy: 0, grounded: true, jumps: 0, buffer: 0, coyote: 0 }
 }
 
-/** Seconds until an airborne dog reaches the ground on its current arc. */
-export function timeToGround(d: DogBody, p: PhysicsConfig): number {
+/** Seconds until an airborne dog reaches the floor (ground by default) on its current arc. */
+export function timeToGround(d: DogBody, p: PhysicsConfig, floor = 0): number {
   if (d.grounded) return 0
-  const disc = d.vy * d.vy - 2 * p.gravity * d.y
+  const disc = d.vy * d.vy - 2 * p.gravity * (d.y - floor)
   return (-d.vy + Math.sqrt(Math.max(0, disc))) / p.gravity
 }
 
-function tryJump(d: DogBody, p: PhysicsConfig): JumpKind {
+function tryJump(d: DogBody, p: PhysicsConfig, floor: number): JumpKind {
   if (d.grounded || d.coyote > 0) {
     d.vy = p.jumpVelocity
     d.grounded = false
@@ -48,7 +49,7 @@ function tryJump(d: DogBody, p: PhysicsConfig): JumpKind {
     // A tap just before landing should be a fresh jump off the ground, not waste the
     // double jump on the last few pixels of the fall. Keep it buffered instead.
     const falling = d.vy > 0
-    if (falling && timeToGround(d, p) <= d.buffer) return null
+    if (falling && timeToGround(d, p, floor) <= d.buffer) return null
     d.vy = p.doubleJumpVelocity
     d.jumps = 2
     return 'double'
@@ -58,15 +59,23 @@ function tryJump(d: DogBody, p: PhysicsConfig): JumpKind {
 
 /**
  * Advances the dog by one fixed step. `pressed` is true if the player tapped since the
- * previous step.
+ * previous step. `floor` is the surface under the dog (0, or a ledge top it is above).
  */
-export function stepDog(d: DogBody, p: PhysicsConfig, dt: number, pressed: boolean): StepResult {
+export function stepDog(
+  d: DogBody,
+  p: PhysicsConfig,
+  dt: number,
+  pressed: boolean,
+  floor = 0,
+): StepResult {
   let jumped: JumpKind = null
   let landed = false
   if (pressed) d.buffer = p.jumpBuffer
+  // Ran off the end of a ledge: fall, with coyote time for a late jump.
+  if (d.grounded && d.y < floor) leaveGround(d, p)
 
   if (d.buffer > 0) {
-    jumped = tryJump(d, p)
+    jumped = tryJump(d, p, floor)
     if (jumped) d.buffer = 0
   }
 
@@ -74,15 +83,15 @@ export function stepDog(d: DogBody, p: PhysicsConfig, dt: number, pressed: boole
     d.vy += p.gravity * dt
     d.y += d.vy * dt
     d.coyote = Math.max(0, d.coyote - dt)
-    if (d.y >= 0) {
-      d.y = 0
+    if (d.y >= floor) {
+      d.y = floor
       d.vy = 0
       d.grounded = true
       d.jumps = 0
       landed = true
       // Buffered tap: jump straight off the landing.
       if (d.buffer > 0) {
-        jumped = tryJump(d, p)
+        jumped = tryJump(d, p, floor)
         d.buffer = 0
       }
     }
@@ -102,6 +111,24 @@ export function leaveGround(d: DogBody, p: PhysicsConfig) {
   d.grounded = false
   d.coyote = p.coyoteTime
   d.jumps = 1
+}
+
+/**
+ * Longest a dog can stay in the air after leaving a ledge `h` high: a jump off its edge
+ * and a double jump at the top. The spawner keeps this much clear after every ledge.
+ */
+export function maxAirTime(h: number, p: PhysicsConfig, dt: number): number {
+  const d: DogBody = { y: -h, vy: 0, grounded: true, jumps: 0, buffer: 0, coyote: 0 }
+  stepDog(d, p, dt, true, 0)
+  let k = 1
+  let doubled = false
+  while (!d.grounded && k < 1000) {
+    const press = !doubled && d.vy >= 0
+    if (press) doubled = true
+    stepDog(d, p, dt, press, 0)
+    k++
+  }
+  return k * dt
 }
 
 /** Apex height of a jump starting with upward speed |v|. */

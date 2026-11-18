@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { loadGameConfig, type GameConfig, type ObstacleType } from '~/game/config'
 import { Run } from '~/game/run'
+import { apex, newDog, stepDog } from '~/game/physics'
 import { findClearPlan, Spawner, type SpawnBatch } from '~/game/spawner'
 
 const W = 600
@@ -232,4 +233,97 @@ describe('world twists', () => {
     expect(lowest).toBeCloseTo(tw.slow, 5)
     expect(run.state).toBe('running')
   })
+})
+
+describe('rooftop ledges', () => {
+  /** Ledges every 1–2 s so a short run meets lots of them. */
+  function busyLedges() {
+    const cfg = noPowers()
+    for (const w of cfg.worlds) if (w.platforms) w.platforms.every = [1, 2]
+    return cfg
+  }
+
+  it('only City Streets and Midnight Run have them, and they sit above every ground obstacle', () => {
+    const cfg = loadGameConfig()
+    expect(cfg.worlds.filter((w) => w.platforms).map((w) => w.id)).toEqual([
+      'city-streets',
+      'midnight-run',
+    ])
+    const tallest = Math.max(
+      ...Object.values(cfg.obstacles)
+        .filter((o) => !o.fly)
+        .map((o) => o.h - o.inset),
+    )
+    for (const w of cfg.worlds)
+      if (w.platforms) {
+        // A dog standing on top clears the tallest ground obstacle...
+        expect(w.platforms.height + cfg.dog.hitbox.y1).toBeGreaterThan(tallest)
+        // ...and one plain jump from the ground gets you up there.
+        expect(apex(-cfg.physics.jumpVelocity, cfg.physics.gravity)).toBeGreaterThan(
+          w.platforms.height + 10,
+        )
+      }
+  })
+
+  it('a dog lands on a ledge from above, passes up through it from below, and drops off its end', () => {
+    const p = loadGameConfig().physics
+    const dt = 1 / 60
+    const d = newDog()
+    stepDog(d, p, dt, true, 0) // jump from the ground, up through the ledge
+    let landedOnTop = false
+    for (let k = 0; k < 120; k++) {
+      const floor = d.y <= -100 + 0.5 ? -100 : 0
+      stepDog(d, p, dt, false, floor)
+      if (d.grounded && d.y === -100) landedOnTop = true
+      if (landedOnTop) break
+    }
+    expect(landedOnTop).toBe(true)
+    // The ledge ends: floor drops to the ground and the dog falls to it.
+    for (let k = 0; k < 120 && !(d.grounded && d.y === 0); k++) stepDog(d, p, dt, false, 0)
+    expect(d.y).toBe(0)
+    expect(d.grounded).toBe(true)
+  })
+
+  it('no fliers near a ledge and nothing in its landing zone', () => {
+    const cfg = busyLedges()
+    for (const wi of [1, 3]) {
+      const batches = spawnFor(cfg, 9, wi, 120)
+      const ledges = batches.flatMap((b) => (b.batch.ledge ? [b.batch.ledge] : []))
+      expect(ledges.length).toBeGreaterThan(10)
+      const obstacles = batches.flatMap((b) => b.batch.obstacles)
+      for (const l of ledges)
+        for (const o of obstacles) {
+          const def = cfg.obstacles[o.type]
+          if (def.fly) expect(o.wx + def.w < l.wx0 - 100 || o.wx > l.wx1 + 300).toBe(true)
+          // Nothing starts in the 300 units straight after a ledge.
+          expect(o.wx <= l.wx1 - def.w || o.wx > l.wx1 + 300).toBe(true)
+        }
+    }
+  })
+
+  it('a bot that takes the high road whenever it can survives, and spends time up top', () => {
+    const cfg = busyLedges()
+    for (const startWorld of [1, 3])
+      for (let seed = 1; seed <= 6; seed++) {
+        const run = new Run(cfg, seed, W, { autoplay: true, startWorld })
+        let onTop = 0
+        for (let i = 0; i < 120 * 60 && run.state === 'running'; i++) {
+          const x = run.dist + cfg.view.dogX
+          const over = run.ledges.some((l) => x > l.wx0 + 20 && x < l.wx1 - 150)
+          const clearAhead = !run.obstacles.some((o) => {
+            const sx = o.wx - run.dist
+            return !o.dead && sx > cfg.view.dogX - 40 && sx < cfg.view.dogX + 160
+          })
+          if (over && run.dog.grounded && run.dog.y === 0 && clearAhead) run.press()
+          run.update()
+          if (run.dog.grounded && run.dog.y < 0) onTop++
+        }
+        expect({ startWorld, seed, state: run.state }).toEqual({
+          startWorld,
+          seed,
+          state: 'running',
+        })
+        expect(onTop).toBeGreaterThan(60 * 10)
+      }
+  }, 60_000)
 })
