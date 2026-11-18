@@ -67,12 +67,20 @@ export interface RunSummary {
   worldName: string
   seconds: number
   seed: number
-  /** Gate chases escaped this run. */
+  /** Gate chases escaped this run, and which bosses. */
   escapes: number
+  escaped: BossKind[]
   /** Boss that was chasing when you crashed, if any ("The mail van got you!"). */
   caughtBy: string | null
   continues: number
   nearMisses: number
+  /** Taps that jumped (ground and double). */
+  jumps: number
+  /** Power-ups switched on. */
+  powerups: number
+  golden: number
+  /** Obstacles cleared without touching, by type ("Jump 3 cats in one run"). */
+  cleared: Partial<Record<ObstacleType, number>>
 }
 
 /** The only events that leave the engine for Vue. */
@@ -138,8 +146,13 @@ export class Run {
   /** When the last chase ended (run time), so the boss can drop back on screen. */
   chaseEnded: { boss: BossKind; at: number } | null = null
   escapes = 0
+  escaped: BossKind[] = []
   continues = 0
   nearMisses = 0
+  jumps = 0
+  powerupsUsed = 0
+  golden = 0
+  cleared: Partial<Record<ObstacleType, number>> = {}
   private chased = new Set<number>()
   biscuitsEaten = 0
   smashes = 0
@@ -190,9 +203,14 @@ export class Run {
       seconds: Math.round(this.time * 10) / 10,
       seed: this.seed,
       escapes: this.escapes,
+      escaped: [...this.escaped],
       caughtBy: this.chase?.name ?? null,
       continues: this.continues,
       nearMisses: this.nearMisses,
+      jumps: this.jumps,
+      powerups: this.powerupsUsed,
+      golden: this.golden,
+      cleared: { ...this.cleared },
     }
   }
 
@@ -300,7 +318,10 @@ export class Run {
     if (this.opts.autoplay) this.autoplay()
     const r = stepDog(this.dog, this.cfg.physics, dt, this.pressed)
     this.pressed = false
-    if (r.jumped) this.fx.push({ type: r.jumped === 'ground' ? 'jump' : 'double' })
+    if (r.jumped) {
+      this.jumps++
+      this.fx.push({ type: r.jumped === 'ground' ? 'jump' : 'double' })
+    }
     if (r.landed && !r.jumped) this.fx.push({ type: 'land' })
 
     // Obstacles: fliers drift toward the dog, then collisions.
@@ -357,7 +378,11 @@ export class Run {
         const pe = eatBiscuit(this.power, b.gold, this.spawner.rng, this.cfg)
         this.fx.push({ type: 'eat', x: sx, y: b.y, gold: b.gold })
         this.emit('biscuit', { count: this.biscuitsEaten, meter: this.power.meter, gold: b.gold })
-        if (pe) this.emit('power', pe)
+        if (b.gold) this.golden++
+        if (pe) {
+          if (pe.active) this.powerupsUsed++
+          this.emit('power', pe)
+        }
         continue
       }
       if (sx > -40) kept.push(b)
@@ -395,6 +420,7 @@ export class Run {
     }
     if (ob.x1 > db.x0) return // not reached yet
     o.passed = true
+    this.cleared[o.type] = (this.cleared[o.type] ?? 0) + 1
     if (o.minGap > this.cfg.nearMiss.gap || o.soft) return
     if (this.power.zoomies > 0 || this.power.grace > 0) return
     this.nearMisses++
@@ -434,6 +460,7 @@ export class Run {
       this.chase = null
       this.chaseEnded = { boss: c.boss, at: this.time }
       this.escapes++
+      this.escaped.push(c.boss)
       this.emit('chase', { active: false, boss: c.boss, name: c.name, escaped: true })
       return
     }

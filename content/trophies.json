@@ -1,8 +1,75 @@
 {
-  "version": 1,
+  "version": 2,
   "trophies": [
-    { "id": "marathon", "name": "Marathon", "stat": "metres", "tiers": [10000, 100000, 1000000] },
-    { "id": "globetrotter", "name": "Globetrotter", "stat": "bestWorld", "tiers": [2, 3, 4] },
-    { "id": "snacker", "name": "Snacker", "stat": "biscuits", "tiers": [500, 5000, 50000] }
+    {
+      "id": "marathon",
+      "name": "Marathon",
+      "text": "Metres run",
+      "stat": "metres",
+      "tiers": [10000, 100000, 1000000]
+    },
+    {
+      "id": "globetrotter",
+      "name": "Globetrotter",
+      "text": "Furthest world reached",
+      "stat": "bestWorld",
+      "tiers": [1, 2, 3]
+    },
+    {
+      "id": "snacker",
+      "name": "Snacker",
+      "text": "Biscuits eaten",
+      "stat": "biscuits",
+      "tiers": [500, 5000, 50000]
+    },
+    {
+      "id": "highscore",
+      "name": "High Scorer",
+      "text": "Best score",
+      "stat": "best",
+      "tiers": [2000, 5000, 10000]
+    },
+    {
+      "id": "daredevil",
+      "name": "Daredevil",
+      "text": "Near misses",
+      "stat": "nearMisses",
+      "tiers": [25, 250, 2500]
+    },
+    {
+      "id": "smasher",
+      "name": "Smasher",
+      "text": "Obstacles smashed",
+      "stat": "smashes",
+      "tiers": [25, 250, 2500]
+    },
+    {
+      "id": "escapist",
+      "name": "Escape Artist",
+      "text": "Boss chases escaped",
+      "stat": "escapes",
+      "tiers": [5, 50, 250]
+    },
+    {
+      "id": "bouncy",
+      "name": "Bouncy",
+      "text": "Jumps",
+      "stat": "jumps",
+      "tiers": [500, 5000, 50000]
+    },
+    {
+      "id": "poweredup",
+      "name": "Powered Up",
+      "text": "Power-ups used",
+      "stat": "powerups",
+      "tiers": [25, 250, 2500]
+    },
+    {
+      "id": "regular",
+      "name": "Regular",
+      "text": "Runs played",
+      "stat": "runs",
+      "tiers": [25, 250, 1000]
+    }
   ]
 }

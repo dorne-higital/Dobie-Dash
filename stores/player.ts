@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia'
 import type { RunSummary } from '~/game/run'
 import { defaultSave, type DogSave, type Save, type Slot } from '~/logic/save'
-import { buyBreed, buyItem, equip, grant, unequip } from '~/logic/shop'
+import { recordMissions } from '~/logic/missions'
+import { buyBreed, buyItem, equip, grant, unequip, worldRewards } from '~/logic/shop'
+import { updateTrophies } from '~/logic/trophies'
 
 /** Everything in the save except settings. Persisted by plugins/02.persist.client.ts. */
 export type PlayerState = Omit<Save, 'v' | 'settings'>
@@ -49,11 +51,15 @@ export const usePlayerStore = defineStore('player', {
       this.wallet.biscuits -= price
       return true
     },
-    /** Records a finished run. Returns whether it set a new best. */
-    recordRun(r: RunSummary) {
+    /**
+     * Records a finished run: wallet, best, stats, missions, trophies, and first-time
+     * rewards (a world's item, a boss's sticker). Returns what to celebrate.
+     */
+    recordRun(r: RunSummary, now = new Date()) {
       const newBest = r.score > this.player.best
       if (newBest) this.player.best = r.score
-      this.player.bestWorld = Math.max(this.player.bestWorld, r.world)
+      const prevWorld = this.player.bestWorld
+      this.player.bestWorld = Math.max(prevWorld, r.world)
       this.wallet.biscuits += r.biscuits
       const st = this.stats
       st.runs++
@@ -64,7 +70,27 @@ export const usePlayerStore = defineStore('player', {
       st.escapes += r.escapes
       st.continues += r.continues
       st.seconds += r.seconds
-      return newBest
+      st.jumps += r.jumps
+      st.powerups += r.powerups
+      for (const [k, v] of Object.entries(r.cleared)) st.cleared[k] = (st.cleared[k] ?? 0) + v
+      recordMissions(this, r, now)
+
+      const unlocked: string[] = []
+      for (let w = prevWorld + 1; w <= r.world; w++)
+        for (const it of worldRewards(w))
+          if (!this.owned.includes(it.id)) {
+            grant(this, it.id)
+            unlocked.push(it.id)
+          }
+      for (const boss of r.escaped) {
+        const id = `sticker:${boss}`
+        if (!this.owned.includes(id)) {
+          grant(this, id)
+          unlocked.push(id)
+        }
+      }
+      const medals = updateTrophies(this)
+      return { newBest, unlocked, medals }
     },
   },
 })

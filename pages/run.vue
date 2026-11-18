@@ -139,7 +139,7 @@ onMounted(async () => {
     hudInsetLeft: 52,
   })
   engine.on('run:end', (r) => {
-    newBest.value = startWorld === undefined && player.recordRun(r)
+    newBest.value = startWorld === undefined && player.recordRun(r).newBest
     result.value = r
     phase.value = 'results'
     analytics.track('run_end', { score: r.score, world: r.world, seconds: r.seconds })
