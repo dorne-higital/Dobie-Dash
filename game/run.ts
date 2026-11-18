@@ -1,0 +1,345 @@
+/**
+ * One run of the game as a deterministic simulation: no DOM, no canvas, no Vue.
+ * The Engine drives it at a fixed 60 Hz and draws it; tests drive it directly.
+ */
+import { playableWorlds, type GameConfig, type ObstacleDef, type ObstacleType } from './config'
+import { dogBox, newDog, obstacleBox, overlaps, stepDog, type DogBody } from './physics'
+import {
+  eatBiscuit,
+  newPowerState,
+  resolveHit,
+  speedMultiplier,
+  tickPowers,
+  type PowerEvent,
+  type PowerState,
+} from './powerups'
+import { metres, score } from './scoring'
+import { findClearPlan, Spawner, type PatternObstacle } from './spawner'
+import { worldIndexForScore } from './worlds'
+
+export interface Obstacle {
+  id: number
+  type: ObstacleType
+  def: ObstacleDef
+  wx: number
+  pwx: number
+  /** Animation phase offset (cat tail, pigeon wings). */
+  ph: number
+  dead: boolean
+  /** Knock-away motion once dead (screen-space, relative to wx/ground). */
+  kx: number
+  ky: number
+  kvx: number
+  kvy: number
+  rot: number
+}
+
+export interface Biscuit {
+  wx: number
+  y: number
+  pwx: number
+  py: number
+  gold: boolean
+  ph: number
+}
+
+export interface RunSummary {
+  score: number
+  metres: number
+  biscuits: number
+  smashes: number
+  world: number
+  worldName: string
+  seconds: number
+  seed: number
+}
+
+/** The only events that leave the engine for Vue. */
+export interface RunEvents {
+  'run:end': RunSummary
+  biscuit: { count: number; meter: number; gold: boolean }
+  world: { index: number; id: string; name: string }
+  power: PowerEvent
+}
+export type RunEvent = { [K in keyof RunEvents]: { type: K; data: RunEvents[K] } }[keyof RunEvents]
+
+/** Visual / haptic cues for the renderer (not part of the Vue contract). */
+export type Fx =
+  | { type: 'jump' | 'double' | 'land' | 'crash' }
+  | { type: 'eat'; x: number; y: number; gold: boolean }
+  | { type: 'smash' | 'pop'; x: number; y: number }
+
+export type RunState = 'running' | 'crashed' | 'ended'
+
+export interface RunOptions {
+  /** Taps happen on the steps the spawner planned (tests, `?bot`). */
+  autoplay?: boolean
+  /** Obstacles can't end the run (for `?bot` perf soaks). */
+  invincible?: boolean
+}
+
+export class Run {
+  readonly cfg: GameConfig
+  readonly seed: number
+  readonly worlds = [] as ReturnType<typeof playableWorlds>
+  readonly dt: number
+  readonly spawner: Spawner
+  readonly opts: RunOptions
+
+  state: RunState = 'running'
+  step = 0
+  time = 0
+  dist = 0
+  prevDist = 0
+  speed: number
+  worldIndex = 0
+  dog: DogBody = newDog()
+  prevDogY = 0
+  runPhase = 0
+  obstacles: Obstacle[] = []
+  biscuits: Biscuit[] = []
+  power: PowerState = newPowerState()
+  biscuitsEaten = 0
+  smashes = 0
+  score = 0
+  crashTime = 0
+  events: RunEvent[] = []
+  fx: Fx[] = []
+  private pressed = false
+  private taps = new Set<number>()
+  private nextId = 1
+
+  constructor(cfg: GameConfig, seed: number, viewW: number, opts: RunOptions = {}) {
+    this.cfg = cfg
+    this.seed = seed
+    this.opts = opts
+    this.worlds = playableWorlds(cfg)
+    this.dt = 1 / cfg.loop.hz
+    this.speed = this.worlds[0]!.speed
+    this.spawner = new Spawner(cfg, seed, viewW)
+  }
+
+  get world() {
+    return this.worlds[this.worldIndex]!
+  }
+
+  /** Effective scroll speed including Zoomies. */
+  get scrollSpeed() {
+    return this.speed * speedMultiplier(this.power, this.cfg)
+  }
+
+  press() {
+    if (this.state === 'running') this.pressed = true
+  }
+
+  summary(): RunSummary {
+    return {
+      score: this.score,
+      metres: metres(this.dist, this.cfg),
+      biscuits: this.biscuitsEaten,
+      smashes: this.smashes,
+      world: this.worldIndex,
+      worldName: this.world.name,
+      seconds: Math.round(this.time * 10) / 10,
+      seed: this.seed,
+    }
+  }
+
+  private emit<K extends keyof RunEvents>(type: K, data: RunEvents[K]) {
+    this.events.push({ type, data } as RunEvent)
+  }
+
+  update() {
+    const dt = this.dt
+    this.prevDist = this.dist
+    this.prevDogY = this.dog.y
+    for (const o of this.obstacles) o.pwx = o.wx
+    for (const b of this.biscuits) {
+      b.pwx = b.wx
+      b.py = b.y
+    }
+
+    this.updateKnocked(dt)
+    if (this.state === 'ended') return
+    if (this.state === 'crashed') {
+      this.crashTime += dt
+      if (this.crashTime >= this.cfg.crash.endDelay) {
+        this.state = 'ended'
+        this.emit('run:end', this.summary())
+      }
+      return
+    }
+
+    this.step++
+    this.time += dt
+
+    // Ease toward the current world's speed after a world change.
+    const target = this.world.speed
+    if (this.speed !== target) {
+      const prev = this.worlds[Math.max(0, this.worldIndex - 1)]!.speed
+      const rate = Math.abs(target - prev) / this.cfg.worldTransition.speedLerpSeconds || 1e9
+      const d = target - this.speed
+      this.speed += Math.sign(d) * Math.min(Math.abs(d), rate * dt)
+    }
+
+    const v = this.scrollSpeed
+    this.dist += v * dt
+    this.runPhase += (dt * v) / 24
+
+    // Spawn.
+    const batch = this.spawner.update({
+      step: this.step,
+      dist: this.dist,
+      time: this.time,
+      world: this.world,
+      worldsSoFar: this.worlds.slice(0, this.worldIndex + 1),
+      speed: this.speed,
+      nextSpeed: this.worlds[this.worldIndex + 1]?.speed,
+    })
+    if (batch) {
+      for (const o of batch.obstacles) {
+        this.obstacles.push({
+          id: this.nextId++,
+          type: o.type,
+          def: this.cfg.obstacles[o.type],
+          wx: o.wx,
+          pwx: o.wx,
+          ph: this.spawner.rng.next() * Math.PI * 2,
+          dead: false,
+          kx: 0,
+          ky: 0,
+          kvx: 0,
+          kvy: 0,
+          rot: 0,
+        })
+      }
+      for (const b of batch.biscuits)
+        this.biscuits.push({ ...b, pwx: b.wx, py: b.y, ph: (b.wx * 0.37) % (Math.PI * 2) })
+    }
+
+    // Dog.
+    if (this.opts.autoplay) this.autoplay()
+    const r = stepDog(this.dog, this.cfg.physics, dt, this.pressed)
+    this.pressed = false
+    if (r.jumped) this.fx.push({ type: r.jumped === 'ground' ? 'jump' : 'double' })
+    if (r.landed && !r.jumped) this.fx.push({ type: 'land' })
+
+    // Obstacles: fliers drift toward the dog, then collisions.
+    const dogX = this.cfg.view.dogX
+    const db = dogBox(dogX, this.dog.y, this.cfg.dog.hitbox)
+    for (const o of this.obstacles) {
+      if (o.dead) continue
+      if (o.def.extraSpeed) o.wx -= o.def.extraSpeed * dt
+      if (!overlaps(db, obstacleBox(o.wx - this.dist, o.def))) continue
+      const outcome = this.opts.invincible ? 'smash' : resolveHit(this.power, this.cfg)
+      if (outcome === 'pass') continue
+      if (outcome === 'crash') {
+        this.state = 'crashed'
+        this.crashTime = 0
+        this.fx.push({ type: 'crash' })
+        return
+      }
+      this.knock(o)
+      const fy = -(o.def.fly ?? 0) - o.def.h / 2
+      if (outcome === 'smash') {
+        if (!this.opts.invincible) this.smashes++
+        this.fx.push({ type: 'smash', x: o.wx - this.dist + o.def.w / 2, y: fy })
+      } else {
+        this.fx.push({ type: 'pop', x: dogX + 8, y: this.dog.y - 36 })
+        this.emit('power', { kind: 'shield', active: false })
+      }
+    }
+
+    // Biscuits.
+    const mx = dogX + this.cfg.dog.mouth.x
+    const my = this.dog.y + this.cfg.dog.mouth.y
+    const mag = this.power.magnet > 0 ? this.cfg.powerups.magnet : null
+    const reach = this.cfg.dog.biscuitReach
+    const kept: Biscuit[] = []
+    for (const b of this.biscuits) {
+      let sx = b.wx - this.dist
+      if (mag) {
+        const dx = mx - sx
+        const dy = my - b.y
+        const d = Math.hypot(dx, dy)
+        if (d < mag.radius && d > 1) {
+          const k = Math.min(1, (mag.pullSpeed * dt) / d)
+          b.wx += dx * k
+          b.y += dy * k
+          sx = b.wx - this.dist
+        }
+      }
+      if (Math.hypot(mx - sx, my - b.y) < reach) {
+        this.biscuitsEaten++
+        const pe = eatBiscuit(this.power, b.gold, this.spawner.rng, this.cfg)
+        this.fx.push({ type: 'eat', x: sx, y: b.y, gold: b.gold })
+        this.emit('biscuit', { count: this.biscuitsEaten, meter: this.power.meter, gold: b.gold })
+        if (pe) this.emit('power', pe)
+        continue
+      }
+      if (sx > -40) kept.push(b)
+    }
+    this.biscuits = kept
+
+    for (const e of tickPowers(this.power, dt, this.cfg)) this.emit('power', e)
+
+    // Score and world.
+    this.score = score(
+      { dist: this.dist, biscuits: this.biscuitsEaten, smashes: this.smashes },
+      this.cfg,
+    )
+    const wi = worldIndexForScore(this.score, this.worlds)
+    if (wi > this.worldIndex) {
+      this.worldIndex = wi
+      this.emit('world', { index: wi, id: this.world.id, name: this.world.name })
+    }
+  }
+
+  /**
+   * Bot: whenever the dog is on the ground with nothing scheduled, plan taps for the next
+   * group of obstacles from the live state, using the same validator as the spawner.
+   */
+  private autoplay() {
+    if (this.taps.size === 0 && this.dog.grounded) {
+      const dogX = this.cfg.view.dogX
+      const hb = this.cfg.dog.hitbox
+      const ahead = this.obstacles
+        .filter((o) => !o.dead && o.wx - this.dist + o.def.w - o.def.inset > dogX + hb.x0)
+        .sort((a, b) => a.wx - b.wx)
+      const group: PatternObstacle[] = []
+      let end = -Infinity
+      for (const o of ahead) {
+        const x = o.wx - this.dist
+        if (group.length && x - end > 160) break
+        // Runs before this step's physics, so this step is the validator's step 0.
+        group.push({ type: o.type, x })
+        end = x + o.def.w
+      }
+      if (group.length && group[0]!.x - dogX < 520) {
+        const plan = findClearPlan(group, this.cfg, { speed: this.scrollSpeed, ready: 0 })
+        const base = this.step
+        if (plan?.jump != null) this.taps.add(base + plan.jump)
+        if (plan?.double != null) this.taps.add(base + plan.double)
+      }
+    }
+    if (this.taps.delete(this.step)) this.pressed = true
+    for (const t of this.taps) if (t < this.step) this.taps.delete(t)
+  }
+
+  private knock(o: Obstacle) {
+    o.dead = true
+    o.kvx = 220 + this.spawner.rng.next() * 160
+    o.kvy = -(500 + this.spawner.rng.next() * 200)
+  }
+
+  private updateKnocked(dt: number) {
+    for (const o of this.obstacles) {
+      if (!o.dead) continue
+      o.kx += o.kvx * dt
+      o.kvy += 1400 * dt
+      o.ky += o.kvy * dt
+      o.rot += dt * 10
+    }
+    this.obstacles = this.obstacles.filter((o) => o.wx - this.dist + o.kx > -140 && o.ky < 600)
+  }
+}
