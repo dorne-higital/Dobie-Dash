@@ -23,7 +23,8 @@
     "check": "npm run lint && npm run typecheck && npm run test && npm run generate",
     "postinstall": "nuxt prepare",
     "cap:sync": "nuxt generate && cap sync ios",
-    "storekit": "node scripts/make-storekit.mjs"
+    "storekit": "node scripts/make-storekit.mjs",
+    "icon": "node scripts/save-icon.mjs"
   },
   "dependencies": {
     "@capacitor-community/admob": "8.3.0",

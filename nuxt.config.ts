@@ -51,6 +51,10 @@ export default defineNuxtConfig({
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
         { name: 'format-detection', content: 'telephone=no' },
       ],
+      link: [
+        { rel: 'icon', type: 'image/png', href: '/favicon.png' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+      ],
     },
   },
 
