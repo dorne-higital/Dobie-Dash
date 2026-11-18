@@ -103,6 +103,7 @@ function resume() {
 }
 
 const adRules = useAds()
+const gameCenter = useGameCenter()
 async function continueWithAd() {
   const rewarded = await adRules.rewarded('continue')
   if (phase.value !== 'continue') return
@@ -171,6 +172,7 @@ onMounted(async () => {
         ),
         ...got.medals.map((m) => `${MEDALS[m.medal]} medal: ${m.trophy.name}`),
       ]
+      void gameCenter.afterRun(r.score)
       if (!bot) await adRules.betweenRuns({ newBest: got.newBest })
       if (!bot && shouldOfferStarter(player)) {
         player.flags.starterSeen = true

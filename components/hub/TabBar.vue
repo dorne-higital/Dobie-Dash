@@ -14,7 +14,7 @@ const tabs = [
   { key: 'closet', label: 'Closet', to: '/closet/dog', icon: '👕' },
   { key: 'worlds', label: 'Worlds', to: '/worlds', icon: '🗺️' },
   { key: 'run', label: 'Run', to: '/', icon: '🐾' },
-  { key: 'league', label: 'League', to: '/league/league', icon: '🏆' },
+  { key: 'league', label: 'League', to: '/league/world', icon: '🏆' },
   { key: 'missions', label: 'Missions', to: '/missions/daily', icon: '✅' },
 ] as const
 

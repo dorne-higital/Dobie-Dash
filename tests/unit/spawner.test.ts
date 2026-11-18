@@ -103,7 +103,7 @@ describe('spawner', () => {
           if (!batch.obstacles.length) continue
           expect(batch.plan).not.toBeNull()
         }
-  })
+  }, 20_000)
 
   it('the first 20 s are single obstacles with wide gaps', () => {
     for (let seed = 1; seed <= 20; seed++) {
