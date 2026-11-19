@@ -58,17 +58,12 @@ const travelled = computed(() =>
   Math.min(1, (best.value + frac.value) / Math.max(1, all.length - 1)),
 )
 
-// Where your dog stands on the road.
-const road = ref<SVGPathElement | null>(null)
-const dogAt = ref({ x: pos[0]!.x, y: pos[0]!.y })
-function placeDog() {
-  const el = road.value
-  if (!el) return
-  const pt = el.getPointAtLength(el.getTotalLength() * travelled.value)
-  dogAt.value = { x: pt.x, y: pt.y }
-}
-onMounted(placeDog)
-watch(travelled, placeDog)
+// Your dog stands on the island of the furthest world you've reached, in front of the
+// scenery (island top is about y + 2 in map units; the dog's feet go just below that).
+const dogAt = computed(() => {
+  const p = pos[Math.min(best.value, pos.length - 1)]!
+  return { x: p.x + 24, y: p.y + 18 }
+})
 
 const selected = ref(Math.min(best.value + 1, all.length - 1))
 const sel = computed(() => all[selected.value]!)
@@ -126,7 +121,6 @@ const pct = (v: number, of: number) => `${(v / of) * 100}%`
         <path :d="roadD" fill="none" stroke="#2a1530" stroke-width="17" stroke-linecap="round" />
         <path :d="roadD" fill="none" stroke="#d6cde0" stroke-width="11" stroke-linecap="round" />
         <path
-          ref="road"
           :d="roadD"
           pathLength="1"
           fill="none"
@@ -174,7 +168,7 @@ const pct = (v: number, of: number) => `${(v / of) * 100}%`
       </button>
 
       <div class="me" :style="{ left: pct(dogAt.x, W), top: pct(dogAt.y, H) }">
-        <DogView :look="look" mode="head" />
+        <DogView :look="look" mode="idle" />
       </div>
     </div>
 
@@ -346,15 +340,12 @@ h1 {
   text-shadow: 0 1px 2px rgba(42, 21, 48, 0.8);
 }
 .me {
+  /* The idle dog's box is 150 × 128 with its feet at (72, 112): put the feet on the spot. */
   position: absolute;
-  width: 42px;
-  height: 42px;
-  transform: translate(-50%, -60%);
-  border-radius: 50%;
-  background: #fff;
-  border: 3px solid var(--pink);
-  box-shadow: 0 6px 12px -6px rgba(42, 21, 48, 0.8);
-  overflow: hidden;
+  width: 100px;
+  height: 85px;
+  transform: translate(-48%, -87.5%);
+  filter: drop-shadow(0 3px 2px rgba(42, 21, 48, 0.35));
   pointer-events: none;
 }
 .card {
