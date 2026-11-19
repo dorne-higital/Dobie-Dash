@@ -148,4 +148,20 @@ describe('iCloud: which save wins', () => {
     expect(s.v).toBe(SAVE_VERSION)
     expect(s.flags).toMatchObject({ tutorialDone: true, fightCoached: false })
   })
+
+  it('v6 (M6) gains an empty Pup Pass, no Big Barks and no event progress; keeps the rest', () => {
+    const v6 = { ...defaultSave(), v: 6, wallet: { biscuits: 321, bones: 7 } } as Record<
+      string,
+      unknown
+    >
+    delete v6.pass
+    delete v6.bigBarks
+    delete v6.event
+    const s = migrate(v6)
+    expect(s.v).toBe(SAVE_VERSION)
+    expect(s.pass).toEqual({ season: null, xp: 0, free: [], premium: [] })
+    expect(s.bigBarks).toBe(0)
+    expect(s.event).toEqual({ id: null, presents: 0, claimed: [] })
+    expect(s.wallet).toEqual({ biscuits: 321, bones: 7 })
+  })
 })

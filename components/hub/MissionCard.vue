@@ -10,6 +10,7 @@ function rewardParts(r: Reward) {
   const parts: { icon?: string; text: string }[] = []
   if (r.biscuits) parts.push({ icon: 'biscuit', text: String(r.biscuits) })
   if (r.bones) parts.push({ icon: 'bone', text: String(r.bones) })
+  if (r.bigBark) parts.push({ icon: 'bark', text: String(r.bigBark) })
   if (r.item) parts.push({ text: item(r.item)?.name ?? r.item })
   return parts
 }

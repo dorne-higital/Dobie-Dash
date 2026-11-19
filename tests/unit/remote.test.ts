@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import items from '~/content/items.json'
 import store from '~/content/store.json'
 import worlds from '~/content/worlds.json'
+import passFile from '~/content/pass-s1.json'
 import { loadGameConfig } from '~/game/config'
 import { BREED_PRICING, item } from '~/logic/items'
 import { applyOverrides, type ContentFiles } from '~/logic/remote'
@@ -94,5 +95,24 @@ describe('remote config overrides', () => {
         ads: { everyRuns: saved.store.ads.interstitial.everyRuns },
       })
     }
+  })
+})
+
+describe('remote config: Pup Pass dates', () => {
+  const withPass = () =>
+    ({ ...files(), pass: structuredClone(passFile) }) as unknown as ContentFiles & {
+      pass: { start: string; weeks: number }
+    }
+  it('moves the season start and length', () => {
+    const f = withPass()
+    expect(applyOverrides(f, { pass: { start: '2027-01-08', weeks: 8 } })).toEqual([])
+    expect(f.pass).toMatchObject({ start: '2027-01-08', weeks: 8 })
+  })
+  it('refuses a bad date or length, changing nothing', () => {
+    const f = withPass()
+    const start = f.pass.start
+    expect(applyOverrides(f, { pass: { start: 'soon' } })).toEqual(['pass'])
+    expect(applyOverrides(f, { pass: { weeks: 0 } })).toEqual(['pass'])
+    expect(f.pass.start).toBe(start)
   })
 })

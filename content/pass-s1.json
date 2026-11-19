@@ -1,0 +1,262 @@
+{
+  "version": 1,
+  "id": "s1",
+  "name": "Season 1: Fresh Paws",
+  "product": "pass.s1",
+  "_dates": "start is a UTC date. Test date for TestFlight; set to launch day before release (Remote Config: pass.start).",
+  "start": "2026-11-19",
+  "weeks": 6,
+  "xpPerTier": 300,
+  "xp": {
+    "perRun": 5,
+    "scorePerXp": 100,
+    "runCap": 60,
+    "dailyMission": 30,
+    "weeklyMission": 150,
+    "streakDay": 20
+  },
+  "tiers": [
+    {
+      "free": {
+        "biscuits": 150
+      },
+      "premium": {
+        "item": "trail:sparkles"
+      }
+    },
+    {
+      "free": {
+        "item": "collar:orange"
+      },
+      "premium": {
+        "biscuits": 300
+      }
+    },
+    {
+      "free": {
+        "biscuits": 200
+      },
+      "premium": {
+        "bones": 10
+      }
+    },
+    {
+      "free": {
+        "bones": 5
+      },
+      "premium": {
+        "item": "collar:black"
+      }
+    },
+    {
+      "free": {
+        "item": "trail:bones"
+      },
+      "premium": {
+        "biscuits": 400
+      }
+    },
+    {
+      "free": {
+        "bigBark": 1
+      },
+      "premium": {
+        "bones": 15
+      }
+    },
+    {
+      "free": {
+        "biscuits": 250
+      },
+      "premium": {
+        "item": "back:backpack"
+      }
+    },
+    {
+      "free": {
+        "item": "collar:teal"
+      },
+      "premium": {
+        "biscuits": 500
+      }
+    },
+    {
+      "free": {
+        "biscuits": 300
+      },
+      "premium": {
+        "bones": 15
+      }
+    },
+    {
+      "free": {
+        "bones": 10
+      },
+      "premium": {
+        "item": "trail:notes"
+      }
+    },
+    {
+      "free": {
+        "biscuits": 300
+      },
+      "premium": {
+        "biscuits": 500
+      }
+    },
+    {
+      "free": {
+        "item": "eyes:hearts"
+      },
+      "premium": {
+        "bones": 20
+      }
+    },
+    {
+      "free": {
+        "biscuits": 350
+      },
+      "premium": {
+        "bigBark": 2
+      }
+    },
+    {
+      "free": {
+        "bigBark": 1
+      },
+      "premium": {
+        "biscuits": 600
+      }
+    },
+    {
+      "free": {
+        "bones": 15
+      },
+      "premium": {
+        "item": "collar:silver"
+      }
+    },
+    {
+      "free": {
+        "biscuits": 400
+      },
+      "premium": {
+        "bones": 25
+      }
+    },
+    {
+      "free": {
+        "item": "neck:scarf"
+      },
+      "premium": {
+        "biscuits": 700
+      }
+    },
+    {
+      "free": {
+        "biscuits": 400
+      },
+      "premium": {
+        "bones": 20
+      }
+    },
+    {
+      "free": {
+        "bones": 10
+      },
+      "premium": {
+        "item": "trail:leaves"
+      }
+    },
+    {
+      "free": {
+        "biscuits": 450
+      },
+      "premium": {
+        "biscuits": 800
+      }
+    },
+    {
+      "free": {
+        "biscuits": 450
+      },
+      "premium": {
+        "bones": 25
+      }
+    },
+    {
+      "free": {
+        "bigBark": 1
+      },
+      "premium": {
+        "bigBark": 2
+      }
+    },
+    {
+      "free": {
+        "biscuits": 500
+      },
+      "premium": {
+        "biscuits": 900
+      }
+    },
+    {
+      "free": {
+        "bones": 15
+      },
+      "premium": {
+        "bones": 30
+      }
+    },
+    {
+      "free": {
+        "biscuits": 500
+      },
+      "premium": {
+        "biscuits": 1000
+      }
+    },
+    {
+      "free": {
+        "biscuits": 550
+      },
+      "premium": {
+        "bones": 30
+      }
+    },
+    {
+      "free": {
+        "bones": 20
+      },
+      "premium": {
+        "biscuits": 1200
+      }
+    },
+    {
+      "free": {
+        "biscuits": 600
+      },
+      "premium": {
+        "bones": 40
+      }
+    },
+    {
+      "free": {
+        "bigBark": 2
+      },
+      "premium": {
+        "biscuits": 1500
+      }
+    },
+    {
+      "free": {
+        "item": "hat:cap",
+        "bones": 20
+      },
+      "premium": {
+        "item": "hat:flowers",
+        "bones": 50
+      }
+    }
+  ]
+}

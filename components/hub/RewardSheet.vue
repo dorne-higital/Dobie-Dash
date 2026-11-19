@@ -17,6 +17,9 @@ defineEmits<{ close: [] }>()
           <UiIcon name="biscuit" /> {{ reward.biscuits.toLocaleString() }} biscuits
         </li>
         <li v-if="reward.bones"><UiIcon name="bone" /> {{ reward.bones }} Golden Bones</li>
+        <li v-if="reward.bigBark">
+          <UiIcon name="bark" /> {{ reward.bigBark }} Big Bark{{ reward.bigBark > 1 ? 's' : '' }}
+        </li>
         <li v-if="reward.item">
           <UiIcon name="sparkle" /> {{ item(reward.item)?.name ?? reward.item }}
         </li>

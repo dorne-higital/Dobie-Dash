@@ -1,5 +1,6 @@
 import { claimableCount, refresh } from '~/logic/missions'
 import { canAffordSomething } from '~/logic/shop'
+import { claimableTiers } from '~/logic/pass'
 
 /** Leagues reset at local Monday 00:00 (leagues themselves arrive in v1.1). */
 export function msToLeagueEnd(now: Date) {
@@ -17,6 +18,6 @@ export function useBadges() {
   return computed(() => ({
     closet: canAffordSomething(player),
     league: msToLeagueEnd(now.value) < 24 * 3600_000,
-    missions: claimableCount(player, now.value),
+    missions: claimableCount(player, now.value) + claimableTiers(player),
   }))
 }

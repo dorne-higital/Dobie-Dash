@@ -8,7 +8,7 @@
 import type { EarStyle, EyeColour, TailStyle } from '~/game/art/dobie'
 import { POWER_KINDS, type PowerKind } from '~/game/config'
 
-export const SAVE_VERSION = 6
+export const SAVE_VERSION = 7
 
 export type Slot = 'collar' | 'hat' | 'eyes' | 'neck' | 'back' | 'trail'
 export const SLOTS: Slot[] = ['collar', 'hat', 'eyes', 'neck', 'back', 'trail']
@@ -65,6 +65,31 @@ export function noUpgrades(): Upgrades {
   return Object.fromEntries(POWER_KINDS.map((k) => [k, 0])) as Upgrades
 }
 
+/** Pup Pass progress for one season (M7). Claimed tiers are 0-based. */
+export interface PassSave {
+  /** The season this progress belongs to; a new season starts from zero. */
+  season: string | null
+  xp: number
+  free: number[]
+  premium: number[]
+}
+
+/** A seasonal event's progress (M7, e.g. Winter Walkies presents). */
+export interface EventSave {
+  id: string | null
+  presents: number
+  /** Reward ids already given. */
+  claimed: string[]
+}
+
+export interface SaveV7 extends Omit<SaveV6, 'v'> {
+  v: 7
+  pass: PassSave
+  /** Big Barks saved up (earned from missions and the Pup Pass; one usable per run). */
+  bigBarks: number
+  event: EventSave
+}
+
 export interface SaveV6 extends Omit<SaveV5, 'v' | 'flags'> {
   v: 6
   /** fightCoached: the first boss fight has been coached (M6). */
@@ -114,7 +139,7 @@ export interface SaveV4 {
   settings: SettingsSave
 }
 
-export type Save = SaveV6
+export type Save = SaveV7
 /** v3 is v4 without the large-text and hold-to-jump settings (M4). */
 export type SaveV3 = Omit<SaveV4, 'v' | 'settings'> & {
   v: 3
@@ -141,7 +166,10 @@ export function emptyStats(): Stats {
 
 export function defaultSave(): Save {
   return {
-    v: 6,
+    v: 7,
+    pass: { season: null, xp: 0, free: [], premium: [] },
+    bigBarks: 0,
+    event: { id: null, presents: 0, claimed: [] },
     upgrades: noUpgrades(),
     savedAt: 0,
     purchases: { delivered: [] },
@@ -246,6 +274,10 @@ const MIGRATIONS: Record<number, (s: AnySave) => AnySave> = {
     const s = raw as unknown as SaveV5
     return { ...s, v: 6, flags: { ...s.flags, fightCoached: false } } as unknown as AnySave
   },
+  6: (raw) => {
+    const d = defaultSave()
+    return { ...raw, v: 7, pass: d.pass, bigBarks: 0, event: d.event } as unknown as AnySave
+  },
 }
 
 /** Walks any older save forward to the current version, filling missing fields. */
@@ -285,6 +317,14 @@ function fillDefaults(s: Save): Save {
     purchases: { delivered: [...(s.purchases?.delivered ?? [])] },
     ads: { ...d.ads, ...s.ads },
     notify: { ...d.notify, ...s.notify },
+    pass: {
+      ...d.pass,
+      ...s.pass,
+      free: [...(s.pass?.free ?? [])],
+      premium: [...(s.pass?.premium ?? [])],
+    },
+    bigBarks: s.bigBarks ?? 0,
+    event: { ...d.event, ...s.event, claimed: [...(s.event?.claimed ?? [])] },
   }
 }
 

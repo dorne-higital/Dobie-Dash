@@ -21,6 +21,8 @@ export interface RemoteOverrides {
   breedBones?: number
   ads?: { minSessions?: number; everyRuns?: number }
   starterAfterRuns?: number
+  /** Pup Pass season dates (M7): start as a UTC date, YYYY-MM-DD. */
+  pass?: { start?: string; weeks?: number }
 }
 
 /** The parts of the /content files that overrides write into (mutated in place). */
@@ -36,7 +38,12 @@ export interface ContentFiles {
     ads: { interstitial: { minSessions: number; everyRuns: number } }
     starterOffer: { afterRuns: number }
   }
+  /** content/pass-s1.json (optional so older callers still type-check). */
+  pass?: { start: string; weeks: number }
 }
+
+const isDate = (v: unknown): v is string =>
+  typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v))
 
 const isInt = (v: unknown, min: number, max: number): v is number =>
   typeof v === 'number' && Number.isInteger(v) && v >= min && v <= max
@@ -141,6 +148,15 @@ function writeOverrides(f: ContentFiles, o: RemoteOverrides): string[] {
   if (o.starterAfterRuns !== undefined) {
     if (isInt(o.starterAfterRuns, 0, 1000)) f.store.starterOffer.afterRuns = o.starterAfterRuns
     else bad.push('starterAfterRuns')
+  }
+  if (o.pass) {
+    if (!f.pass) bad.push('pass: not loaded')
+    else {
+      const ps = { ...f.pass, ...o.pass }
+      if (isDate(ps.start) && isInt(ps.weeks, 1, 26))
+        Object.assign(f.pass, { start: ps.start, weeks: ps.weeks })
+      else bad.push('pass')
+    }
   }
   return bad
 }

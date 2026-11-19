@@ -5,6 +5,7 @@ import { recordMissions } from '~/logic/missions'
 import { buyBreed, buyItem, equip, grant, unequip, worldRewards } from '~/logic/shop'
 import { updateTrophies } from '~/logic/trophies'
 import { buyUpgrade } from '~/logic/upgrades'
+import { addXp, runXp } from '~/logic/pass'
 import type { PowerKind } from '~/game/config'
 import worlds from '~/content/worlds.json'
 
@@ -81,6 +82,8 @@ export const usePlayerStore = defineStore('player', {
       st.powerups += r.powerups
       for (const [k, v] of Object.entries(r.cleared)) st.cleared[k] = (st.cleared[k] ?? 0) + v
       recordMissions(this, r, now)
+      // Pup Pass XP (only while a season is on). Tiers reached go on the results card.
+      const passTiers = addXp(this, runXp(r), now)
 
       const unlocked: string[] = []
       for (let w = prevWorld + 1; w <= r.world; w++)
@@ -107,7 +110,7 @@ export const usePlayerStore = defineStore('player', {
         }
       }
       const medals = updateTrophies(this)
-      return { newBest, unlocked, medals, bones }
+      return { newBest, unlocked, medals, bones, passTiers }
     },
   },
 })

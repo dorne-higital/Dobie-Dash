@@ -6,7 +6,7 @@
       "id": "removeads",
       "type": "non-consumable",
       "title": "Remove Ads",
-      "gbp": "\u00a32.99",
+      "gbp": "£2.99",
       "grants": {
         "flag": "removeAds"
       },
@@ -16,7 +16,7 @@
       "id": "starter",
       "type": "non-consumable",
       "title": "Starter Pack",
-      "gbp": "\u00a30.99",
+      "gbp": "£0.99",
       "grants": {
         "biscuits": 1000,
         "item": "neck:bandana"
@@ -27,7 +27,7 @@
       "id": "biscuits.bag",
       "type": "consumable",
       "title": "Bag of Biscuits",
-      "gbp": "\u00a31.99",
+      "gbp": "£1.99",
       "grants": {
         "biscuits": 2000
       }
@@ -36,7 +36,7 @@
       "id": "biscuits.barrel",
       "type": "consumable",
       "title": "Barrel of Biscuits",
-      "gbp": "\u00a38.99",
+      "gbp": "£8.99",
       "grants": {
         "biscuits": 12000
       }
@@ -45,7 +45,7 @@
       "id": "bones.pouch",
       "type": "consumable",
       "title": "Pouch of Golden Bones",
-      "gbp": "\u00a31.99",
+      "gbp": "£1.99",
       "grants": {
         "bones": 80
       }
@@ -54,7 +54,7 @@
       "id": "bones.box",
       "type": "consumable",
       "title": "Box of Golden Bones",
-      "gbp": "\u00a38.99",
+      "gbp": "£8.99",
       "grants": {
         "bones": 450
       }
@@ -63,7 +63,7 @@
       "id": "bones.crate",
       "type": "consumable",
       "title": "Crate of Golden Bones",
-      "gbp": "\u00a317.99",
+      "gbp": "£17.99",
       "grants": {
         "bones": 1000
       }
@@ -72,16 +72,24 @@
       "id": "collar.gold",
       "type": "non-consumable",
       "title": "Gold Collar",
-      "gbp": "\u00a30.99",
+      "gbp": "£0.99",
       "grants": {
         "item": "collar:gold"
       }
     },
     {
+      "id": "pass.s1",
+      "type": "non-consumable",
+      "title": "Pup Pass: Season 1",
+      "gbp": "£4.99",
+      "grants": {},
+      "blurb": "Unlock the premium track: trails, collars, a backpack, a daisy chain and 280 Golden Bones."
+    },
+    {
       "id": "breeds.all",
       "type": "non-consumable",
       "title": "Every Breed",
-      "gbp": "\u00a34.99",
+      "gbp": "£4.99",
       "grants": {
         "breeds": "all"
       },
@@ -91,7 +99,7 @@
       "id": "breed.lab",
       "type": "non-consumable",
       "title": "Breed: lab",
-      "gbp": "\u00a30.99",
+      "gbp": "£0.99",
       "grants": {
         "breeds": "lab"
       }
@@ -100,7 +108,7 @@
       "id": "breed.golden",
       "type": "non-consumable",
       "title": "Breed: golden",
-      "gbp": "\u00a30.99",
+      "gbp": "£0.99",
       "grants": {
         "breeds": "golden"
       }
@@ -109,7 +117,7 @@
       "id": "breed.spaniel",
       "type": "non-consumable",
       "title": "Breed: spaniel",
-      "gbp": "\u00a30.99",
+      "gbp": "£0.99",
       "grants": {
         "breeds": "spaniel"
       }
@@ -118,7 +126,7 @@
       "id": "breed.collie",
       "type": "non-consumable",
       "title": "Breed: collie",
-      "gbp": "\u00a30.99",
+      "gbp": "£0.99",
       "grants": {
         "breeds": "collie"
       }
@@ -127,7 +135,7 @@
       "id": "breed.husky",
       "type": "non-consumable",
       "title": "Breed: husky",
-      "gbp": "\u00a30.99",
+      "gbp": "£0.99",
       "grants": {
         "breeds": "husky"
       }
@@ -136,7 +144,7 @@
       "id": "breed.corgi",
       "type": "non-consumable",
       "title": "Breed: corgi",
-      "gbp": "\u00a30.99",
+      "gbp": "£0.99",
       "grants": {
         "breeds": "corgi"
       }
@@ -145,7 +153,7 @@
       "id": "breed.dachshund",
       "type": "non-consumable",
       "title": "Breed: dachshund",
-      "gbp": "\u00a30.99",
+      "gbp": "£0.99",
       "grants": {
         "breeds": "dachshund"
       }
@@ -154,7 +162,7 @@
       "id": "breed.dalmatian",
       "type": "non-consumable",
       "title": "Breed: dalmatian",
-      "gbp": "\u00a30.99",
+      "gbp": "£0.99",
       "grants": {
         "breeds": "dalmatian"
       }
@@ -163,7 +171,7 @@
       "id": "breed.frenchie",
       "type": "non-consumable",
       "title": "Breed: frenchie",
-      "gbp": "\u00a30.99",
+      "gbp": "£0.99",
       "grants": {
         "breeds": "frenchie"
       }
@@ -172,7 +180,7 @@
       "id": "breed.greyhound",
       "type": "non-consumable",
       "title": "Breed: greyhound",
-      "gbp": "\u00a30.99",
+      "gbp": "£0.99",
       "grants": {
         "breeds": "greyhound"
       }
@@ -181,7 +189,7 @@
       "id": "breed.jack",
       "type": "non-consumable",
       "title": "Breed: jack",
-      "gbp": "\u00a30.99",
+      "gbp": "£0.99",
       "grants": {
         "breeds": "jack"
       }

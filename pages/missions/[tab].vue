@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Missions: three daily missions (new each local midnight) with the 7-day login streak
- * and the daily chest; the weekly goal; and the Pup Pass (v1.1).
+ * and the daily chest; the weekly goal; and the Pup Pass (M7).
  */
 import {
   claim,
@@ -17,6 +17,7 @@ import {
   type Reward,
 } from '~/logic/missions'
 import { dayNumber } from '~/logic/events'
+import { addXp, PASS } from '~/logic/pass'
 
 definePageMeta({ layout: 'hub' })
 
@@ -47,6 +48,9 @@ const { analytics } = useServices()
 function doClaim(id: string) {
   const r = claim(player, id)
   if (!r) return
+  // Pup Pass XP for missions (weekly goals are worth more).
+  const weekly = player.missions.weekly.some((m) => m.id === id)
+  addXp(player, weekly ? PASS.xp.weeklyMission : PASS.xp.dailyMission, new Date())
   sheet.value = { title: 'Mission complete!', reward: r }
   analytics.track('mission_claim', {
     mission: id,
@@ -55,6 +59,7 @@ function doClaim(id: string) {
 }
 function doStreak() {
   const r = collectStreak(player, new Date())
+  if (r) addXp(player, PASS.xp.streakDay, new Date())
   if (r) sheet.value = { title: `Day ${r.day} streak`, reward: r.reward }
 }
 function doChest() {
@@ -139,11 +144,7 @@ function doChest() {
       />
     </template>
 
-    <div v-else class="pass">
-      <UiIcon name="ticket" class="ic" />
-      <b>Pup Pass</b>
-      <p>A 6-week season with 30 tiers of trails, collars and outfits arrives in a later update.</p>
-    </div>
+    <HubPassTrack v-else @got="(title, reward) => (sheet = { title, reward })" />
 
     <HubRewardSheet
       v-if="sheet"
@@ -261,23 +262,5 @@ h1 {
 .chest small {
   color: var(--muted);
   font-size: 12px;
-}
-.pass {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  text-align: center;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  padding: 24px;
-}
-.pass .ic {
-  font-size: 40px;
-}
-.pass p {
-  margin: 0;
-  color: var(--muted);
 }
 </style>

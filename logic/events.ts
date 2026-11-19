@@ -32,6 +32,8 @@ export interface AnalyticsEvents {
   upgrade_buy: { power: string; level: number; price: number }
   /** Which missions are too hard. day: days since the player's first day (1 = first). */
   mission_claim: { mission: string; day: number }
+  /** Pup Pass engagement (M7). track: free | premium; tier is 1-based. */
+  pass_claim: { tier: number; track: string; season: string }
 }
 
 export type EventName = keyof AnalyticsEvents

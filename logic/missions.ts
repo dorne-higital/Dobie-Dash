@@ -12,6 +12,8 @@ export interface Reward {
   biscuits?: number
   bones?: number
   item?: string
+  /** Big Barks to save up (M7): one can be used per run. */
+  bigBark?: number
 }
 
 export interface MissionDef {
@@ -47,7 +49,10 @@ export function missionDef(id: string) {
   return defs.get(id)
 }
 
-export type MissionState = Pick<Save, 'missions' | 'wallet' | 'owned' | 'equipped' | 'player'>
+export type MissionState = Pick<
+  Save,
+  'missions' | 'wallet' | 'owned' | 'equipped' | 'player' | 'bigBarks'
+>
 
 // ---- dates (local time) ----------------------------------------------------------------
 
@@ -142,9 +147,14 @@ export function isDone(slot: MissionSlot) {
   return !!d && slot.p >= d.goal
 }
 
-export function applyReward(s: MissionState, r: Reward) {
+/** Gives a reward (missions, chests, the streak, the Pup Pass). */
+export function applyReward(
+  s: Pick<Save, 'wallet' | 'owned' | 'equipped' | 'player' | 'bigBarks'>,
+  r: Reward,
+) {
   s.wallet.biscuits += r.biscuits ?? 0
   s.wallet.bones += r.bones ?? 0
+  s.bigBarks += r.bigBark ?? 0
   if (r.item) grant(s, r.item)
 }
 

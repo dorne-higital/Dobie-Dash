@@ -252,6 +252,9 @@ onMounted(async () => {
               : `${item(id)?.name} unlocked`,
         ),
         ...(got.bones ? [`+${got.bones} Golden Bones for the knock-out`] : []),
+        ...(got.passTiers.length
+          ? [`Pup Pass tier ${got.passTiers[got.passTiers.length - 1]! + 1} reached`]
+          : []),
         ...got.medals.map((m) => `${MEDALS[m.medal]} medal: ${m.trophy.name}`),
       ]
       void gameCenter.afterRun(r.score)
