@@ -1,13 +1,13 @@
 <script setup lang="ts">
 /**
- * Draws a dog: running (baked frames), standing (idle, tail wags) or as a head-only
+ * Draws a dog: running (baked frames), standing or sitting (tail wags) or as a head-only
  * avatar. Used on home, the dog maker, the Closet preview, the top bar and league rows.
  */
 import { pup } from '~/game/art/dobie'
 import { bakeDog, drawSprite, runFrame, type DogSprites } from '~/game/render/sprites'
 import type { Look } from '~/logic/look'
 
-const props = withDefaults(defineProps<{ look: Look; mode?: 'run' | 'idle' | 'head' }>(), {
+const props = withDefaults(defineProps<{ look: Look; mode?: 'run' | 'idle' | 'sit' | 'head' }>(), {
   mode: 'idle',
 })
 
@@ -56,7 +56,7 @@ function draw(t: number) {
   } else if (props.mode === 'head') {
     pup(c, dog, 'icon', 0, 0, { acc })
   } else {
-    pup(c, dog, 'idle', t, 0, { acc })
+    pup(c, dog, props.mode === 'sit' ? 'sit' : 'idle', t, 0, { acc })
   }
 }
 

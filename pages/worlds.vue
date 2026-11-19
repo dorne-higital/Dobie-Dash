@@ -168,7 +168,7 @@ const pct = (v: number, of: number) => `${(v / of) * 100}%`
       </button>
 
       <div class="me" :style="{ left: pct(dogAt.x, W), top: pct(dogAt.y, H) }">
-        <DogView :look="look" mode="idle" />
+        <DogView :look="look" mode="sit" />
       </div>
     </div>
 

@@ -411,7 +411,7 @@ export interface Accessories {
   back?: 'cape'
 }
 
-export type Pose = 'run' | 'jump' | 'dizzy' | 'idle' | 'icon'
+export type Pose = 'run' | 'jump' | 'dizzy' | 'idle' | 'icon' | 'sit'
 
 /* ---- ears (head space, head radius 17) ---- */
 function earDown(c: Ctx, x: number, y: number, r: number, col: string) {
@@ -851,7 +851,19 @@ export function pup(c: Ctx, v: Dog, pose: Pose, t: number, ph: number, o: PupOpt
   const air = pose === 'jump'
   const dz = pose === 'dizzy'
   const isRun = pose === 'run'
+  const sit = pose === 'sit'
+  // Sitting: the rear drops onto its haunches and the body tips up about the back hip
+  // until the front hip is back at standing height, so the front legs still reach the
+  // ground. `th` is that tilt; the head turns back level.
+  let th = 0
   c.save()
+  if (sit) {
+    const drop = v.L * 0.75
+    th = Math.asin(Math.min(0.9, drop / (v.hipF - v.hipB)))
+    c.translate(v.hipB, v.hipY + drop)
+    c.rotate(-th)
+    c.translate(-v.hipB, -v.hipY)
+  }
   if (isRun) c.translate(0, -Math.abs(Math.sin(run)) * v.bounce)
   if (air) {
     if (o.game) c.rotate(o.tilt ?? 0)
@@ -874,7 +886,10 @@ export function pup(c: Ctx, v: Dog, pose: Pose, t: number, ph: number, o: PupOpt
       ? [1, 0.75, -1, -0.75]
       : dz
         ? [1.35, 1.2, -1.35, -1.2]
-        : [0.08, -0.04, -0.06, 0.04]
+        : sit
+          ? // Front legs straight down in the world (−th locally); back legs folded forward.
+            [-th + 0.04, -th - 0.06, 1.3 - th, 1.2 - th]
+          : [0.08, -0.04, -0.06, 0.04]
   const leg = (hx: number, a: number, near?: boolean) => {
     const fx = hx + Math.sin(a) * v.L
     const fy = v.hipY + Math.cos(a) * v.L
@@ -911,6 +926,8 @@ export function pup(c: Ctx, v: Dog, pose: Pose, t: number, ph: number, o: PupOpt
   if (K.chest) ell(c, v.brx * 0.7, v.by + 2, v.bry * 0.5, v.bry * 0.62, 0, K.chest)
   leg(v.hipF, A[0]!, true)
   leg(v.hipB, A[2]!, true)
+  // A sitting dog's thigh: a round haunch over the folded back leg.
+  if (sit) ell(c, v.hipB + 3, v.hipY - 3, v.brx * 0.38, v.bry * 0.8, -0.3, K.base)
   if (acc.cape || acc.back === 'cape') {
     const f = Math.sin(t * 8)
     c.fillStyle = '#e5484d'
@@ -926,12 +943,12 @@ export function pup(c: Ctx, v: Dog, pose: Pose, t: number, ph: number, o: PupOpt
   if (K.bib) ell(c, v.hx - 1, ny + 4, 5, 8, -0.2, K.bib)
   c.save()
   c.translate(v.hx, v.hy)
-  let r = air ? -0.06 : dz ? 0.18 : 0
+  let r = air ? -0.06 : dz ? 0.18 : sit ? th * 0.85 : 0
   if (isRun && v.tilt) r += Math.sin(run * 0.5) * v.tilt
   c.rotate(r)
   const k = v.hr / 17
   c.scale(k, k)
-  head(c, v, pose, t, ph, run, acc)
+  head(c, v, sit ? 'idle' : pose, t, ph, run, acc)
   c.restore()
   c.restore()
   if (dz)
