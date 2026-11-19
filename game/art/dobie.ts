@@ -49,6 +49,8 @@ export interface CoatParts {
   spots?: string
   earCol?: string
   patch?: string
+  /** Curly coat (Cockapoo): little curl rings over the body and a topknot. */
+  curls?: string
   nose?: string
   shade?: string
 }
@@ -291,6 +293,33 @@ export const BREEDS: Record<string, Breed> = {
       ['Tan patches', PAT.patch('#c98a4b')],
       ['Black patches', PAT.patch('#2e2a33')],
       ['Tricolour', PAT.patch('#2e2a33', '#c98a4b')],
+    ],
+  },
+  // M7: two new breeds. Same hitbox, jump and speed as every other dog.
+  cockapoo: {
+    name: 'Cockapoo',
+    shape: { L: 14, brx: 23, bry: 15, hr: 18, snout: 0.9, earScale: 1.1 },
+    ears: 'long',
+    tail: 'feather',
+    coats: [
+      ['Apricot', ext(PAT.solid('#e0a96a'), { curls: '#c98d4f' })],
+      ['Cream', ext(PAT.solid('#efdcbc'), { curls: '#d8c09a' })],
+      ['Chocolate', ext(PAT.solid('#6b4430'), { curls: '#57361f' })],
+      ['Black', ext(PAT.solid('#2e2a33'), { curls: '#4a4452' })],
+      ['Red', ext(PAT.solid('#b0603a'), { curls: '#934c2a' })],
+    ],
+  },
+  staffie: {
+    name: 'Staffie',
+    shape: { L: 13, lw: 9, brx: 24, bry: 16, hr: 18.5, snout: 0.85, neck: 2, bounce: 2 },
+    ears: 'fold',
+    tail: 'long',
+    coats: [
+      ['Brindle', ext(PAT.solid('#5b4636'), { chest: WH, bib: WH, muzzle: '#4a3a2e' })],
+      ['Red', ext(PAT.solid('#a8603a'), { chest: WH, bib: WH })],
+      ['Blue', ext(PAT.solid('#6f7487'), { chest: WH, bib: WH })],
+      ['Black & white', PAT.tux('#2e2a33')],
+      ['Fawn', ext(PAT.solid('#c9a37a'), { chest: WH, bib: WH, muzzle: '#2e2a33' })],
     ],
   },
 }
@@ -581,6 +610,21 @@ export function head(
   c.arc(0, 0, 17, 0, TAU)
   c.clip()
   if (K.patch) ell(c, -5, -7, 12, 11, 0, K.patch)
+  if (K.curls) {
+    c.strokeStyle = K.curls
+    c.lineWidth = 1.4
+    for (const [a, b] of [
+      [-9, -12],
+      [-3, -15],
+      [3, -15.5],
+      [-12, -6],
+      [-6, -9],
+    ] as const) {
+      c.beginPath()
+      c.arc(a, b, 2.6, 0.3, 5.6)
+      c.stroke()
+    }
+  }
   if (K.spots) {
     const sp: [number, number, number][] = [
       [-8, -8, 2.4],
@@ -1120,6 +1164,19 @@ export function pup(c: Ctx, v: Dog, pose: Pose, t: number, ph: number, o: PupOpt
   if (K.patch) ell(c, -v.brx * 0.35, v.by - v.bry * 0.25, v.brx * 0.42, v.bry * 0.62, 0.1, K.patch)
   if (K.spots)
     for (const [a, b, r] of SPOTS) dot(c, a * v.brx, v.by + b * v.bry, r * v.bry, K.spots)
+  if (K.curls) {
+    c.strokeStyle = K.curls
+    c.lineWidth = 1.5
+    // Rows of curls across the whole coat, every other row shifted half a step.
+    for (let row = 0; row < 4; row++)
+      for (let col = 0; col < 6; col++) {
+        const x = (-0.85 + col * 0.34 + (row % 2) * 0.17) * v.brx
+        const y = v.by + (-0.8 + row * 0.42) * v.bry
+        c.beginPath()
+        c.arc(x, y, 2.8, 0.4 + row, 5.7 + row)
+        c.stroke()
+      }
+  }
   if (K.belly) ell(c, 3, v.by + v.bry * 0.7, v.brx * 0.62, v.bry * 0.38, 0, K.belly)
   c.restore()
   ell(c, -4, v.by - v.bry * 0.5, v.brx * 0.5, v.bry * 0.22, 0, 'rgba(255,255,255,.07)')

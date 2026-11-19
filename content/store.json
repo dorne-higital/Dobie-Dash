@@ -193,6 +193,24 @@
       "grants": {
         "breeds": "jack"
       }
+    },
+    {
+      "id": "breed.cockapoo",
+      "type": "non-consumable",
+      "title": "Breed: cockapoo",
+      "gbp": "£0.99",
+      "grants": {
+        "breeds": "cockapoo"
+      }
+    },
+    {
+      "id": "breed.staffie",
+      "type": "non-consumable",
+      "title": "Breed: staffie",
+      "gbp": "£0.99",
+      "grants": {
+        "breeds": "staffie"
+      }
     }
   ],
   "starterOffer": {

@@ -316,6 +316,36 @@
       "productID": "uk.co.danhorne.dobiedash.breed.jack",
       "referenceName": "Breed: jack",
       "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "1000022",
+      "localizations": [
+        {
+          "description": "Breed: cockapoo",
+          "displayName": "Breed: cockapoo",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.breed.cockapoo",
+      "referenceName": "Breed: cockapoo",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "1000023",
+      "localizations": [
+        {
+          "description": "Breed: staffie",
+          "displayName": "Breed: staffie",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.breed.staffie",
+      "referenceName": "Breed: staffie",
+      "type": "NonConsumable"
     }
   ],
   "settings": {
