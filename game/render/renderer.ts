@@ -338,7 +338,20 @@ export class Renderer {
     }
   }
 
-  draw(run: Run, alpha: number, frameDt: number, best: number, stats: FrameStats | null) {
+  draw(
+    run: Run,
+    alpha: number,
+    frameDt: number,
+    best: number,
+    stats: FrameStats | null,
+    rivals: {
+      ghost: { run: Run; name: string } | null
+      flags: { name: string; score: number }[]
+    } = {
+      ghost: null,
+      flags: [],
+    },
+  ) {
     const c = this.c
     const V = this.view
     const { W, H, GY } = V
@@ -484,6 +497,8 @@ export class Renderer {
       }
 
     this.drawBoss(run, t)
+    this.drawFlags(run, rivals.flags, dist)
+    if (rivals.ghost) this.drawGhost(run, rivals.ghost.run, rivals.ghost.name, dist, alpha, t)
     for (const p of this.trailParts) drawTrailParticle(c, p, GY)
     this.drawDog(run, dogY, t)
 
@@ -629,6 +644,74 @@ export class Renderer {
         const a = t * 6 + (i * TAU) / 3
         sparkle(c, cx + Math.cos(a) * 22, top - 14 + Math.sin(a) * 6, 5, '#ffd23f', t * 4)
       }
+  }
+
+  /**
+   * Friends' bests ahead of you: a flag with their name, roughly where their score is
+   * (1 point ≈ unitsPerMetre of distance; biscuits make it come a little sooner).
+   */
+  private drawFlags(run: Run, flags: { name: string; score: number }[], dist: number) {
+    const c = this.c
+    const GY = this.view.GY
+    const u = run.cfg.scoring.unitsPerMetre
+    for (const f of flags) {
+      const ahead = (f.score - run.score) * u
+      if (ahead <= -40 || ahead > this.view.W) continue
+      const x = run.cfg.view.dogX + ahead + (run.dist - dist)
+      c.fillStyle = '#ffffff'
+      c.fillRect(x, GY - 70, 3, 70)
+      rr(c, x + 3, GY - 70, 74, 22, 6)
+      c.fillStyle = '#ff4fa0'
+      c.fill()
+      text(c, f.name.slice(0, 10), x + 40, GY - 58.5, 12, '#ffffff', {
+        font: BODY_FONT,
+        weight: 900,
+      })
+    }
+  }
+
+  /** A friend's Daily Dash run: a see-through dog at their distance, with their name. */
+  private drawGhost(run: Run, g: Run, name: string, dist: number, alpha: number, t: number) {
+    const c = this.c
+    const GY = this.view.GY
+    const gd = g.prevDist + (g.dist - g.prevDist) * alpha
+    const dx = gd - dist
+    const W = this.view.W
+    const x = run.cfg.view.dogX + dx
+    const gy = g.prevDogY + (g.dog.y - g.prevDogY) * alpha
+    if (x < -40 || x > W + 40) {
+      // Off screen: an arrow at the edge saying how far ahead or behind they are.
+      const ahead = dx > 0
+      const ex = ahead ? W - 70 : 10
+      rr(c, ex, GY - 120, 60, 22, 11)
+      c.fillStyle = 'rgba(138,92,246,.85)'
+      c.fill()
+      const m = Math.round(Math.abs(dx) / run.cfg.scoring.unitsPerMetre)
+      text(c, `${ahead ? '' : '-'}${m}m`, ex + 30, GY - 108.5, 12, '#ffffff', {
+        font: BODY_FONT,
+        weight: 900,
+      })
+      return
+    }
+    const D = this.sprites.dog
+    c.save()
+    c.globalAlpha = g.state === 'running' ? 0.45 : 0.2
+    c.translate(x, GY + gy)
+    const spr = !g.dog.grounded
+      ? D.jump[jumpFrame(clamp(g.dog.vy / 3000, -0.18, 0.2))]!
+      : D.run[runFrame(g.runPhase)]!
+    drawSprite(c, spr, 0, 0)
+    c.restore()
+    rr(c, x - 30, GY + gy - 92, 60, 18, 9)
+    c.fillStyle = 'rgba(138,92,246,.85)'
+    c.fill()
+    text(c, name.slice(0, 10), x, GY + gy - 82.5, 11, '#ffffff', { font: BODY_FONT, weight: 900 })
+    void t
+  }
+
+  /** Passing a friend's best. */
+  showPassed(name: string) {
+    this.bannerQueue.push({ a: 'PASSED!', b: `You beat ${name}'s best`, col: '#ff4fa0', t: 0 })
   }
 
   /** Banners for a boss fight's big moments. */

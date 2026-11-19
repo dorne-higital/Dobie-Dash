@@ -31,22 +31,41 @@ export function recordOf(run: Run, viewW: number): RunRecord {
   }
 }
 
-/** Plays the record back and returns the finished run (or where it got to by `ticks`). */
-export function replay(cfg: GameConfig, r: RunRecord, maxTicks = r.ticks + 600): Run {
-  const run = new Run(cfg, r.seed, r.viewW, { ...r.opts })
-  let k = 0
-  const inputs = [...r.inputs].sort((a, b) => a[0] - b[0])
-  while (run.state !== 'ended' && run.ticks < maxTicks) {
-    while (k < inputs.length && inputs[k]![0] <= run.ticks) {
-      const code = inputs[k]![1]
+/** Steps a recorded run one update at a time (a replay, or a friend's ghost). */
+export class Replayer {
+  readonly run: Run
+  private k = 0
+  private readonly inputs: RunInput[]
+
+  constructor(cfg: GameConfig, r: RunRecord) {
+    this.run = new Run(cfg, r.seed, r.viewW, { ...r.opts })
+    this.inputs = [...r.inputs].sort((a, b) => a[0] - b[0])
+  }
+
+  get done() {
+    return this.run.state === 'ended'
+  }
+
+  step() {
+    const run = this.run
+    while (this.k < this.inputs.length && this.inputs[this.k]![0] <= run.ticks) {
+      const code = this.inputs[this.k]![1]
       if (code === 'p') run.press()
       else if (code === 'h') run.setHolding(true)
       else if (code === 'u') run.setHolding(false)
       else if (code === 'r') run.revive()
       else if (code === 'd') run.decline()
-      k++
+      this.k++
     }
     run.update()
+    run.events.length = 0
+    run.fx.length = 0
   }
-  return run
+}
+
+/** Plays the record back and returns the finished run (or where it got to by `ticks`). */
+export function replay(cfg: GameConfig, r: RunRecord, maxTicks = r.ticks + 600): Run {
+  const p = new Replayer(cfg, r)
+  while (!p.done && p.run.ticks < maxTicks) p.step()
+  return p.run
 }

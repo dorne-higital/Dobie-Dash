@@ -5,7 +5,7 @@
  */
 import type { GameConfig, PowerKind, PowerLevels } from './config'
 import { activate } from './powerups'
-import { recordOf, type RunRecord } from './replay'
+import { recordOf, Replayer, type RunRecord } from './replay'
 import type { Accessories, Dog } from './art/dobie'
 import { Emitter } from './events'
 import type { TrailKind } from './render/trails'
@@ -16,6 +16,12 @@ import { Run, type Fx, type RunEvents } from './run'
 import { worldProgress } from './worlds'
 
 export type { FeedbackCue, FeedbackPort } from './feedback'
+
+/** A friend's Daily Dash run raced alongside yours, and friends' bests as flags. */
+export interface Rivals {
+  ghost?: { record: RunRecord; name: string } | null
+  flags?: { name: string; score: number }[]
+}
 
 export interface EngineOptions {
   /** Highest score so far, shown in the HUD. */
@@ -120,6 +126,15 @@ export class Engine {
     return recordOf(r, this.renderer.view.W)
   }
 
+  private ghost: { p: Replayer; name: string } | null = null
+  private rivals: Rivals = {}
+  private passed = new Set<string>()
+
+  /** Friends to race: a Daily Dash ghost, and flags where their bests are. */
+  setRivals(r: Rivals) {
+    this.rivals = r
+  }
+
   /** Starts a fresh run (every run starts in Bark Park). */
   start(seed = randomSeed()) {
     this.run = new Run(this.cfg, seed, this.renderer.view.W, {
@@ -132,6 +147,10 @@ export class Engine {
       coachFight: this.opts.coachFight,
     })
     if (this.opts.startPower) activate(this.run.power, this.opts.startPower, this.cfg)
+    const g = this.rivals.ghost
+    this.ghost =
+      g && g.record.seed === seed ? { p: new Replayer(this.cfg, g.record), name: g.name } : null
+    this.passed.clear()
     this.renderer.reset(this.run.world.theme)
     const next = this.run.worlds[this.run.worldIndex + 1]
     if (next) this.renderer.prepareTheme(next.theme)
@@ -281,6 +300,16 @@ export class Engine {
     this.raf = requestAnimationFrame(tick)
   }
 
+  /** Passing a friend's best: a banner (once each per run). */
+  private checkFlags(run: Run) {
+    for (const f of this.rivals.flags ?? []) {
+      if (run.score < f.score || this.passed.has(f.name)) continue
+      this.passed.add(f.name)
+      // Only friends you were behind when the run started count as passed.
+      if (f.score > 0) this.renderer.showPassed(f.name)
+    }
+  }
+
   private frame(dt: number) {
     const run = this.run!
     const step = 1 / this.cfg.loop.hz
@@ -292,7 +321,9 @@ export class Engine {
     let steps = 0
     while (this.acc >= step && steps < this.cfg.loop.maxStepsPerFrame) {
       run.update()
+      if (this.ghost && !this.ghost.p.done && run.state === 'running') this.ghost.p.step()
       this.drain(run)
+      this.checkFlags(run)
       this.acc -= step
       steps++
     }
@@ -309,7 +340,10 @@ export class Engine {
   private draw(dt: number) {
     if (!this.run) return
     const alpha = Math.min(1, this.acc * this.cfg.loop.hz)
-    this.renderer.draw(this.run, alpha, dt, this.best, this.opts.showFps ? this.shownStats : null)
+    this.renderer.draw(this.run, alpha, dt, this.best, this.opts.showFps ? this.shownStats : null, {
+      ghost: this.ghost ? { run: this.ghost.p.run, name: this.ghost.name } : null,
+      flags: this.rivals.flags ?? [],
+    })
   }
 
   private drain(run: Run) {

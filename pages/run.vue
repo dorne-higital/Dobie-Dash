@@ -58,6 +58,7 @@ const startPower = (POWER_KINDS as readonly string[]).includes(String(route.quer
 const daily = 'daily' in route.query
 let dailySeed: number | null = null
 const boards = useBoards()
+const online = useOnline()
 /** A normal run that counts (not a test world, test power or the bot). */
 const counts = startWorld === undefined && !startPower && !bot
 const showFps = import.meta.dev || 'fps' in route.query || settings.showFps
@@ -208,6 +209,8 @@ onMounted(async () => {
   }
   if (!canvas.value) return
   if (daily) dailySeed = (await boards.dailyToday())?.seed ?? null
+  // Bot runs race rivals too (for testing); they are never submitted.
+  const rivals = (counts || bot) && online.value ? await boards.rivals(daily) : null
   engine = new Engine(canvas.value, config.game(), {
     best: player.best,
     feedback,
@@ -331,6 +334,7 @@ onMounted(async () => {
   window.addEventListener('pagehide', pause)
   window.addEventListener('blur', pause)
   void listenToApp()
+  if (rivals) engine.setRivals(rivals)
   start()
 })
 

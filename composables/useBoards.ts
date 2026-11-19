@@ -198,8 +198,43 @@ export function useBoards() {
     return res.ok ? res.bones : 0
   }
 
+  /**
+   * Friends to race in a run: flags at their bests (the top 5 friends), and in the Daily
+   * Dash the best friend's run today as a ghost. Gives up quickly so a run never waits.
+   */
+  async function rivals(daily: boolean) {
+    const work = (async () => {
+      const fr = (await friends()).filter((r) => !r.me && r.score > 0)
+      const flags = fr
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5)
+        .map((r) => ({ name: r.name, score: r.score }))
+      if (!daily) return { flags, ghost: null }
+      const ids = new Set(fr.map((r) => r.player_id))
+      const top = (await boards_daily()).find((r) => ids.has(r.player_id))
+      if (!top) return { flags, ghost: null }
+      const record = (await rpcOne<RunRecord>('daily_ghost', { friend: top.player_id })) ?? null
+      return { flags, ghost: record ? { record, name: top.name } : null }
+    })()
+    const timeout = new Promise<{ flags: []; ghost: null }>((r) =>
+      setTimeout(() => r({ flags: [], ghost: null }), 2500),
+    )
+    try {
+      return await Promise.race([work, timeout])
+    } catch {
+      return { flags: [], ghost: null }
+    }
+  }
+  const boards_daily = () => rpc<BoardRow>('daily_board')
+  async function rpcOne<T>(name: string, args: Record<string, unknown>): Promise<T | null> {
+    if (!(await signIn())) return null
+    const { data, error } = await db().rpc(name, args)
+    return error ? null : (data as T)
+  }
+
   return {
     me,
+    rivals,
     nameRejected,
     signIn,
     syncProfile,
