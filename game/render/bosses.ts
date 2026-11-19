@@ -337,6 +337,39 @@ function ghostHound(c: Ctx, t: number) {
   c.stroke()
 }
 
+/** Moon Walkies: a flying saucer with a tractor beam, little alien cat at the controls. */
+function ufo(c: Ctx, t: number) {
+  const hover = Math.sin(t * Math.PI * 4) * 4
+  const y = -70 + hover
+  // Tractor beam.
+  c.fillStyle = 'rgba(160,255,200,.22)'
+  c.beginPath()
+  c.moveTo(66, y + 10)
+  c.lineTo(96, y + 10)
+  c.lineTo(126, 0)
+  c.lineTo(36, 0)
+  c.closePath()
+  c.fill()
+  // Dome and pilot.
+  c.fillStyle = 'rgba(190,225,255,.5)'
+  c.beginPath()
+  c.arc(81, y - 6, 22, Math.PI, 0)
+  c.fill()
+  dot(c, 81, y - 10, 9, '#5fd47a')
+  tri(c, [73, y - 15], [74, y - 23], [79, y - 18], '#5fd47a')
+  tri(c, [83, y - 18], [88, y - 23], [89, y - 15], '#5fd47a')
+  dot(c, 78, y - 10, 1.8, '#1d1b28')
+  dot(c, 84, y - 10, 1.8, '#1d1b28')
+  // Saucer.
+  ell(c, 81, y, 60, 14, 0, '#9aa3b8')
+  ell(c, 81, y - 3, 56, 8, 0, '#c3cad8')
+  ell(c, 81, y + 7, 34, 6, 0, '#6b7287')
+  for (let i = 0; i < 6; i++) {
+    const on = Math.floor(t * 8 + i) % 2 === 0
+    dot(c, 36 + i * 18, y + 2, 3.2, on ? '#ffd23f' : '#ff4fa0')
+  }
+}
+
 export function drawBoss(c: Ctx, kind: BossKind, t: number) {
   if (kind === 'mower') mower(c, t)
   else if (kind === 'van') van(c, t)
@@ -344,5 +377,6 @@ export function drawBoss(c: Ctx, kind: BossKind, t: number) {
   else if (kind === 'avalanche') avalanche(c, t)
   else if (kind === 'wreckingBall') wreckingBall(c, t)
   else if (kind === 'ghostHound') ghostHound(c, t)
+  else if (kind === 'ufo') ufo(c, t)
   else foxPack(c, t)
 }

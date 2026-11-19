@@ -58,8 +58,8 @@
     "clearAhead": 420
   },
   "endless": {
-    "perThousand": 15,
-    "maxSpeed": 560
+    "perThousand": 3,
+    "maxSpeed": 520
   },
   "worldTransition": {
     "speedLerpSeconds": 1.0,
@@ -240,6 +240,17 @@
       "h": 40,
       "inset": 5,
       "extraSpeed": 40
+    },
+    "crater": {
+      "w": 52,
+      "h": 12,
+      "inset": 4
+    },
+    "alienCat": {
+      "w": 34,
+      "h": 36,
+      "inset": 4,
+      "extraSpeed": 30
     }
   },
   "worlds": [
@@ -516,7 +527,7 @@
         "minion": "ghost",
         "minionWeight": 2
       },
-      "gate": 32000,
+      "gate": null,
       "platforms": null,
       "about": {
         "colour": "#7b5a9c",
@@ -524,18 +535,46 @@
         "twist": "Ghosts fade in and out (solid when close)",
         "boss": "The Ghost Hound"
       }
-    }
-  ],
-  "comingSoon": [
+    },
     {
+      "id": "moon-walkies",
       "name": "Moon Walkies",
       "at": 32000,
-      "colour": "#7d7f99",
-      "obstacles": "Craters, alien cats",
-      "twist": "Low gravity, long floaty jumps",
-      "boss": "A UFO every 4,000 points"
+      "speed": 495,
+      "gap": [0.9, 1.4],
+      "enabled": true,
+      "theme": "moon",
+      "obstacles": {
+        "crater": 1,
+        "alienCat": 1
+      },
+      "patterns": {
+        "single": 3,
+        "pair": 1.5,
+        "triple": 0.6
+      },
+      "twist": {
+        "kind": "lowGravity",
+        "gravityScale": 0.75
+      },
+      "chase": {
+        "boss": "ufo",
+        "name": "The UFO",
+        "minion": "alienCat",
+        "minionWeight": 2
+      },
+      "gate": null,
+      "chaseEvery": 4000,
+      "platforms": null,
+      "about": {
+        "colour": "#7d7f99",
+        "obstacles": "Craters, alien cats",
+        "twist": "Low gravity: long floaty jumps",
+        "boss": "A UFO every 4,000 points"
+      }
     }
   ],
+  "comingSoon": [],
   "tutorial": {
     "jumpClears": 2,
     "doubleClears": 2,

@@ -39,6 +39,9 @@ describe('long sessions', () => {
     expect(most.biscuits).toBeLessThan(150)
     expect(most.ledges).toBeLessThan(5)
     expect(most.waves).toBeLessThan(5)
-    expect(run.escaped.length).toBeLessThanOrEqual(cfg.worlds.length)
+    // One escape per world, plus the last world's repeating chase (Moon Walkies' UFO).
+    const last = cfg.worlds.at(-1)!
+    const repeats = last.chaseEvery ? Math.ceil((run.score - last.at) / last.chaseEvery) : 0
+    expect(run.escaped.length).toBeLessThanOrEqual(cfg.worlds.length + repeats)
   }, 120_000)
 })

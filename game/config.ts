@@ -27,10 +27,12 @@ export const OBSTACLE_TYPES = [
   'pumpkin',
   'bat',
   'ghost',
+  'crater',
+  'alienCat',
 ] as const
 export type ObstacleType = (typeof OBSTACLE_TYPES)[number]
 export type PatternType = 'single' | 'pair' | 'triple' | 'flier'
-export type ThemeKind = 'park' | 'city' | 'beach' | 'night' | 'snow' | 'site' | 'haunted'
+export type ThemeKind = 'park' | 'city' | 'beach' | 'night' | 'snow' | 'site' | 'haunted' | 'moon'
 export type PowerKind = 'zoomies' | 'magnet' | 'shield'
 
 export interface Box {
@@ -127,7 +129,18 @@ export interface GhostsTwist {
   solidWithin: number
 }
 
-export type TwistDef = WavesTwist | LampsTwist | IceTwist | BeltsTwist | GhostsTwist
+/**
+ * Low gravity (Moon Walkies): everything falls slower, so jumps go higher and float
+ * longer. The run, the fairness check and the bot all use the world's own physics.
+ */
+export interface LowGravityTwist {
+  kind: 'lowGravity'
+  /** Gravity is multiplied by this (less than 1). */
+  gravityScale: number
+}
+
+export type TwistDef =
+  WavesTwist | LampsTwist | IceTwist | BeltsTwist | GhostsTwist | LowGravityTwist
 
 /**
  * Ledges (rooftops of low buildings) to run along: an optional higher path, never needed.
@@ -146,7 +159,7 @@ export interface PlatformsDef {
 }
 
 export type BossKind =
-  'mower' | 'van' | 'kingCrab' | 'foxPack' | 'avalanche' | 'wreckingBall' | 'ghostHound'
+  'mower' | 'van' | 'kingCrab' | 'foxPack' | 'avalanche' | 'wreckingBall' | 'ghostHound' | 'ufo'
 
 /** Gate chase: in the last `chase.window` points before the target, a boss chases you. */
 export interface ChaseDef {
@@ -171,8 +184,13 @@ export interface WorldDef {
   /** Ledges to run along (City Streets, Midnight Run). */
   platforms?: PlatformsDef | null
   chase: ChaseDef
-  /** Score target for the chase in the last world (later worlds take over in 1.1). */
+  /** Score target for the chase in the last world, if it has one (null otherwise). */
   gate: number | null
+  /**
+   * The last world can have a chase every this many points instead of a gate (Moon
+   * Walkies: a UFO every 4,000), counting from the world's start.
+   */
+  chaseEvery?: number | null
   /** Shown on the Worlds tab. */
   about: WorldAbout
 }
@@ -298,6 +316,19 @@ export interface TutorialConfig {
   gapScale: number
   biscuitLineSeconds: number
   coach: Record<TutorialStep | 'oops' | 'done', { title: string; text: string }>
+}
+
+const worldPhysics = new WeakMap<WorldDef, { base: PhysicsConfig; p: PhysicsConfig }>()
+
+/** The physics in a world: the shared physics, with low gravity applied on the moon. */
+export function physicsFor(cfg: GameConfig, world: WorldDef | null | undefined): PhysicsConfig {
+  const tw = world?.twist
+  if (!world || tw?.kind !== 'lowGravity') return cfg.physics
+  const hit = worldPhysics.get(world)
+  if (hit && hit.base === cfg.physics) return hit.p
+  const p = { ...cfg.physics, gravity: cfg.physics.gravity * tw.gravityScale }
+  worldPhysics.set(world, { base: cfg.physics, p })
+  return p
 }
 
 /** Deep-ish clone so tests and remote overrides never mutate the bundled JSON. */

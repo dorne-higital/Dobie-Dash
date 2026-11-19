@@ -405,7 +405,7 @@ export interface Accessories {
   bandana?: boolean
   eyes?: 'specs' | 'shades'
   shades?: boolean
-  hat?: 'party' | 'beanie' | 'crown' | 'bobble' | 'hardhat' | 'witch'
+  hat?: 'party' | 'beanie' | 'crown' | 'bobble' | 'hardhat' | 'witch' | 'helmet'
   crown?: boolean
   cape?: boolean
   back?: 'cape'
@@ -776,6 +776,31 @@ export function head(
     c.strokeStyle = '#ffd23f'
     c.lineWidth = 1.5
     c.strokeRect(-1, -19, 5, 5)
+  }
+  if (acc.hat === 'helmet') {
+    // Moon Walkies reward: a glass space helmet over the whole head, with a little aerial.
+    c.strokeStyle = '#2a1530'
+    c.lineWidth = 1.5
+    c.beginPath()
+    c.moveTo(-8, -24)
+    c.lineTo(-11, -33)
+    c.stroke()
+    dot(c, -11, -34, 2.6, '#e5484d')
+    c.fillStyle = 'rgba(190,225,255,.22)'
+    c.beginPath()
+    c.arc(1, -2, 24, 0, Math.PI * 2)
+    c.fill()
+    c.strokeStyle = 'rgba(255,255,255,.85)'
+    c.lineWidth = 2.2
+    c.stroke()
+    c.strokeStyle = 'rgba(255,255,255,.9)'
+    c.lineWidth = 2.5
+    c.beginPath()
+    c.arc(1, -2, 18, Math.PI * 1.15, Math.PI * 1.45)
+    c.stroke()
+    c.fillStyle = '#c3cad8'
+    rr(c, -14, 18, 30, 6, 3)
+    c.fill()
   }
   if (acc.crown || acc.hat === 'crown') {
     c.fillStyle = '#ffc61a'

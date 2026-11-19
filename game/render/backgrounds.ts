@@ -60,6 +60,16 @@ export const THEMES: Record<ThemeKind, ThemeColors> = {
     dirt: '#e2ebf7',
     dirt2: '#c8d7ea',
   },
+  moon: {
+    sky: ['#05060f', '#0e1130', '#23264a'],
+    sun: '#ffffff',
+    far: '#3a3d55',
+    far2: '#55587a',
+    mid: '#6e7191',
+    ground: '#a5a8bb',
+    dirt: '#8c8fa3',
+    dirt2: '#74778c',
+  },
   haunted: {
     sky: ['#1a0f2e', '#3b1f5c', '#6b3f8a'],
     sun: '#f4f0d0',
@@ -246,6 +256,72 @@ const LAYERS: Record<ThemeKind, LayerDef[]> = {
     },
   ],
   city: [buildingsFar, buildingsNear(false), lamps(false)],
+  moon: [
+    {
+      // Far grey mountains.
+      factor: 0.12,
+      spacing: 210,
+      top: () => -120,
+      bottom: () => 0,
+      item: (c, x, i, f, T) => {
+        const h = 70 + hash(i) * 50
+        c.fillStyle = T.far
+        c.beginPath()
+        c.moveTo(x - 40, f.GY)
+        c.lineTo(x + 70, f.GY - h)
+        c.lineTo(x + 105, f.GY - h * 0.8)
+        c.lineTo(x + 250, f.GY)
+        c.fill()
+      },
+    },
+    {
+      // Rolling dusty hills with craters.
+      factor: 0.3,
+      spacing: 200,
+      top: () => -60,
+      bottom: () => 0,
+      item: (c, x, i, f, T) => {
+        ell(c, x + 100, f.GY + 20, 140, 40 + hash(i + 2) * 30, 0, T.far2)
+        ell(c, x + 80, f.GY - 14, 16, 4, 0, 'rgba(0,0,0,.18)')
+      },
+    },
+    {
+      // A lander and a flag now and then, rocks otherwise.
+      factor: 0.6,
+      spacing: 160,
+      top: () => -70,
+      bottom: () => 0,
+      item: (c, x, i, f, T) => {
+        const k = hash(i)
+        if (k > 0.82) {
+          c.fillStyle = '#c9cfdb'
+          c.fillRect(x + 60, f.GY - 30, 30, 18)
+          c.fillStyle = '#ffc61a'
+          c.fillRect(x + 56, f.GY - 14, 38, 6)
+          c.strokeStyle = '#c9cfdb'
+          c.lineWidth = 2.5
+          c.beginPath()
+          c.moveTo(x + 60, f.GY - 10)
+          c.lineTo(x + 50, f.GY)
+          c.moveTo(x + 90, f.GY - 10)
+          c.lineTo(x + 100, f.GY)
+          c.stroke()
+          dot(c, x + 75, f.GY - 34, 6, '#9fd4f5')
+        } else if (k > 0.66) {
+          c.fillStyle = '#d8d8d8'
+          c.fillRect(x + 70, f.GY - 56, 2, 56)
+          c.fillStyle = '#ff4fa0'
+          c.fillRect(x + 72, f.GY - 56, 22, 14)
+          c.fillStyle = '#ffffff'
+          c.beginPath()
+          c.arc(x + 83, f.GY - 49, 4, 0, Math.PI * 2)
+          c.fill()
+        } else if (k > 0.25) {
+          ell(c, x + 50, f.GY - 4, 10 + hash(i + 1) * 8, 6, 0, T.mid)
+        }
+      },
+    },
+  ],
   haunted: [
     {
       // Dark hills with a crooked house on some of them.
@@ -560,6 +636,7 @@ const GROUND_LAYERS: Record<ThemeKind, LayerDef[]> = {
   night: roadMarks(true),
   site: [pebbles],
   haunted: [pebbles],
+  moon: [pebbles],
   snow: [
     {
       // Snow lumps and blue shadows on the path.
@@ -615,7 +692,7 @@ export function buildTheme(kind: ThemeKind, f: Frame, scale: number): ThemeCache
   const { cv: sky, c } = makeCanvas(f.W, f.GY + 2, scale)
   c.fillStyle = grad(c, 0, 0, 0, f.GY, T.sky)
   c.fillRect(0, 0, f.W, f.GY + 2)
-  if (kind === 'night' || kind === 'haunted') {
+  if (kind === 'night' || kind === 'haunted' || kind === 'moon') {
     for (let i = 0; i < 110; i++) {
       const x = hash(i) * f.W
       const y = hash(i + 99) * f.GY * 0.85
@@ -623,7 +700,14 @@ export function buildTheme(kind: ThemeKind, f: Frame, scale: number): ThemeCache
       dot(c, x, y, hash(i + 7) > 0.85 ? 1.8 : 1, '#ffffff')
     }
     c.globalAlpha = 1
-    if (kind === 'haunted') {
+    if (kind === 'moon') {
+      // The Earth hanging in the sky.
+      dot(c, f.W * 0.72, f.GY * 0.26, 46, 'rgba(120,180,255,.15)')
+      dot(c, f.W * 0.72, f.GY * 0.26, 32, '#3d8be0')
+      ell(c, f.W * 0.72 - 9, f.GY * 0.26 - 8, 12, 9, 0.4, '#5fbf4a')
+      ell(c, f.W * 0.72 + 12, f.GY * 0.26 + 9, 9, 7, -0.3, '#5fbf4a')
+      ell(c, f.W * 0.72 + 4, f.GY * 0.26 - 18, 14, 4, 0.1, 'rgba(255,255,255,.75)')
+    } else if (kind === 'haunted') {
       // A big full moon with a glow (and a bat or two across it).
       dot(c, f.W * 0.7, f.GY * 0.28, 80, 'rgba(244,240,208,.12)')
       dot(c, f.W * 0.7, f.GY * 0.28, 48, T.sun)
@@ -698,7 +782,7 @@ export function drawTheme(
   const { W, H, GY } = th.frame
   const T = th.colors
   c.drawImage(th.sky, 0, 0, W, GY + 2)
-  if (th.kind !== 'night' && th.kind !== 'haunted' && cloudSprite) {
+  if (th.kind !== 'night' && th.kind !== 'haunted' && th.kind !== 'moon' && cloudSprite) {
     const off = dist * 0.06
     const sp = 240
     const start = Math.floor(off / sp) - 1

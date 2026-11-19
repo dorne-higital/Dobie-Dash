@@ -158,6 +158,10 @@ export function drawObstacle(c: Ctx, type: ObstacleType, x: number, y: number, t
     c.fillStyle = '#ffc61a'
     c.fillRect(x + 2, y - 16, 3, 16)
     tri(c, [x - 3, y - 18], [x + 10, y - 18], [x + 3.5, y - 26], '#ff7a1a')
+  } else if (type === 'crater') {
+    crater(c, x, y)
+  } else if (type === 'alienCat') {
+    alienCat(c, x, y, t)
   } else if (type === 'pumpkin') {
     pumpkin(c, x, y, t)
   } else if (type === 'bat') {
@@ -493,6 +497,60 @@ function ghost(c: Ctx, x: number, y: number, t: number) {
   ell(c, x + 15.5, y - 19 + b, 3, 2.4, 0, '#2e2440')
 }
 
+/** Moon Walkies: a crater with a raised rim (52 × 12). Low, but jump it. */
+function crater(c: Ctx, x: number, y: number) {
+  ell(c, x + 26, y - 3, 26, 8, 0, '#8c8fa3')
+  ell(c, x + 26, y - 4, 20, 5.5, 0, '#4d4f63')
+  ell(c, x + 28, y - 3, 14, 3, 0, '#3a3c4e')
+  c.fillStyle = 'rgba(255,255,255,.35)'
+  c.beginPath()
+  c.ellipse(x + 26, y - 4, 25, 7.5, 0, Math.PI * 1.1, Math.PI * 1.9)
+  c.lineTo(x + 26, y - 4)
+  c.fill()
+  dot(c, x + 6, y - 9, 2, '#a5a8bb')
+  dot(c, x + 47, y - 8, 1.6, '#a5a8bb')
+}
+
+/** Moon Walkies: a little green alien cat with a fishbowl helmet (34 × 36). */
+function alienCat(c: Ctx, x: number, y: number, t: number) {
+  const w = Math.sin(t * 5)
+  c.strokeStyle = '#4fbf6a'
+  c.lineWidth = 4
+  c.lineCap = 'round'
+  c.beginPath()
+  c.moveTo(x + 28, y - 10)
+  c.quadraticCurveTo(x + 38, y - 16 + w * 3, x + 33, y - 26 + w * 4)
+  c.stroke()
+  ell(c, x + 18, y - 9, 12, 8, 0, '#5fd47a')
+  for (const lx of [10, 16, 22, 27]) {
+    c.fillStyle = '#4fbf6a'
+    rr(c, x + lx - 2, y - 6, 4, 6, 2)
+    c.fill()
+  }
+  dot(c, x + 12, y - 22, 9, '#5fd47a')
+  tri(c, [x + 5, y - 26], [x + 6, y - 34], [x + 11, y - 29], '#5fd47a')
+  tri(c, [x + 13, y - 30], [x + 18, y - 34], [x + 19, y - 26], '#5fd47a')
+  ell(c, x + 9, y - 22, 2.4, 3.2, 0, '#1d1b28')
+  ell(c, x + 15, y - 22, 2.4, 3.2, 0, '#1d1b28')
+  dot(c, x + 9.6, y - 23, 0.9, '#ffffff')
+  dot(c, x + 15.6, y - 23, 0.9, '#ffffff')
+  // Fishbowl helmet and antenna.
+  c.fillStyle = 'rgba(190,225,255,.25)'
+  c.beginPath()
+  c.arc(x + 12, y - 23, 13, 0, Math.PI * 2)
+  c.fill()
+  c.strokeStyle = 'rgba(255,255,255,.8)'
+  c.lineWidth = 1.5
+  c.stroke()
+  c.strokeStyle = '#2a1530'
+  c.lineWidth = 1.2
+  c.beginPath()
+  c.moveTo(x + 12, y - 36)
+  c.lineTo(x + 12, y - 41)
+  c.stroke()
+  dot(c, x + 12, y - 42, 2, '#ffd23f')
+}
+
 /** Animation loop length (seconds) per obstacle; 0 means static. */
 export const OBSTACLE_ANIM: Record<ObstacleType, { period: number; frames: number }> = {
   hydrant: { period: 0, frames: 1 },
@@ -516,6 +574,8 @@ export const OBSTACLE_ANIM: Record<ObstacleType, { period: number; frames: numbe
   pumpkin: { period: (Math.PI * 2) / 6, frames: 6 },
   bat: { period: (Math.PI * 2) / 16, frames: 6 },
   ghost: { period: (Math.PI * 2) / 5, frames: 8 },
+  crater: { period: 0, frames: 1 },
+  alienCat: { period: (Math.PI * 2) / 5, frames: 6 },
 }
 
 export function bone(c: Ctx, x: number, y: number, s: number, fill: string, edge: string) {

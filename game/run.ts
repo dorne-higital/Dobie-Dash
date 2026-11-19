@@ -3,6 +3,7 @@
  * The Engine drives it at a fixed 60 Hz and draws it; tests drive it directly.
  */
 import {
+  physicsFor,
   playableWorlds,
   type BossKind,
   type Box,
@@ -177,7 +178,8 @@ export class Run {
   powerupsUsed = 0
   golden = 0
   cleared: Partial<Record<ObstacleType, number>> = {}
-  private chased = new Set<number>()
+  /** The last score target a chase started for (targets only go up). */
+  private lastChased = -1
   /** Tutorial progress (null when this isn't a tutorial run). */
   tutorial: { step: TutorialStep | 'done'; count: number; doubled: boolean } | null = null
   biscuitsEaten = 0
@@ -229,15 +231,16 @@ export class Run {
   }
 
   /**
-   * The speed to run at: the world's own, except past the last world's gate, where it
-   * keeps climbing with score (content/worlds.json "endless").
+   * The speed to run at: the world's own, except in the last world past its gate (or from
+   * its start, if it has no gate), where it keeps climbing with score up to a cap
+   * (content/worlds.json "endless").
    */
   targetSpeed(score = this.score): number {
     const w = this.world
-    if (this.worldIndex < this.worlds.length - 1 || w.gate == null || score <= w.gate)
-      return w.speed
+    const from = w.gate ?? w.at
+    if (this.worldIndex < this.worlds.length - 1 || score <= from) return w.speed
     const e = this.cfg.endless
-    return Math.min(e.maxSpeed, w.speed + (e.perThousand * (score - w.gate)) / 1000)
+    return Math.min(e.maxSpeed, w.speed + (e.perThousand * (score - from)) / 1000)
   }
 
   get world() {
@@ -353,6 +356,7 @@ export class Run {
       // Patterns must stay clearable at the speed they may meet: the next world's, or a
       // little further up the endless ramp (500 points is far more than a pattern's life).
       nextSpeed: this.worlds[this.worldIndex + 1]?.speed ?? this.targetSpeed(this.score + 500),
+      nextWorld: this.worlds[this.worldIndex + 1],
       tutorial: this.tutorialActive ? (this.tutorial!.step as TutorialStep) : null,
       minion:
         this.chase && this.world.chase.minion
@@ -389,7 +393,7 @@ export class Run {
     // Dog.
     if (this.opts.autoplay) this.autoplay()
     const slip = this.iceUnderDog()
-    const r = stepDog(this.dog, this.cfg.physics, dt, this.pressed, {
+    const r = stepDog(this.dog, physicsFor(this.cfg, this.world), dt, this.pressed, {
       floor: this.floorUnderDog(),
       holding: !!this.opts.holdToJump && this.holding,
       jumpScale: slip?.jumpScale ?? 1,
@@ -572,10 +576,10 @@ export class Run {
       return
     }
     if (c) return
-    const target = gateTarget(this.worldIndex, this.worlds)
-    if (target === null || this.chased.has(target)) return
+    const target = gateTarget(this.worldIndex, this.worlds, this.score)
+    if (target === null || target <= this.lastChased) return
     if (this.score < target - this.cfg.chase.window || this.score >= target) return
-    this.chased.add(target)
+    this.lastChased = target
     const def = this.world.chase
     this.chase = { boss: def.boss, name: def.name, target, since: this.time }
     this.emit('chase', { active: true, boss: def.boss, name: def.name, escaped: false })
@@ -620,14 +624,25 @@ export class Run {
       cuts.push(group.length)
       // Ice for the planner: the patches as they are now, moving at the current speed.
       const ice = iceOpts(this.ice, this.dist)
+      const physics = physicsFor(this.cfg, this.world)
       if (group.length && group[0]!.x - dogX < 520) {
         let plan = null
         for (let i = cuts.length - 1; i >= 0 && !plan; i--)
-          plan = findClearPlan(group.slice(0, cuts[i]), this.cfg, { speed: v, ready: 0, ...ice })
+          plan = findClearPlan(group.slice(0, cuts[i]), this.cfg, {
+            speed: v,
+            ready: 0,
+            physics,
+            ...ice,
+          })
         // Last resort: clear what two taps can, but only commit once that jump is due,
         // so waiting never throws away a better plan.
         for (let n = group.length - 1; n > 0 && !plan; n--) {
-          const p = findClearPlan(group.slice(0, n), this.cfg, { speed: v, ready: 0, ...ice })
+          const p = findClearPlan(group.slice(0, n), this.cfg, {
+            speed: v,
+            ready: 0,
+            physics,
+            ...ice,
+          })
           if (p) {
             if ((p.jump ?? 0) <= 1) plan = p
             break

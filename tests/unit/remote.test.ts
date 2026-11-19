@@ -17,7 +17,7 @@ describe('remote config overrides', () => {
     const problems = applyOverrides(f, {
       worlds: {
         'city-streets': { at: 1800, speed: 320, gap: [1.2, 1.9] },
-        [worlds.worlds.at(-1)!.id]: { gate: 30000 },
+        'haunted-hollow': { speed: 480 },
       },
       continuePrices: [40, 80, 160],
       meter: { growBy: 3 },
@@ -29,7 +29,7 @@ describe('remote config overrides', () => {
     expect(problems).toEqual([])
     const city = f.worlds.worlds.find((w) => w.id === 'city-streets')!
     expect([city.at, city.speed, city.gap]).toEqual([1800, 320, [1.2, 1.9]])
-    expect(f.worlds.worlds.at(-1)!.gate).toBe(30000)
+    expect(f.worlds.worlds.find((w) => w.id === 'haunted-hollow')!.speed).toBe(480)
     expect(f.worlds.continue.prices).toEqual([40, 80, 160])
     expect(f.worlds.meter).toMatchObject({ blocks: 8, growBy: 3, maxBlocks: 40 })
     expect(f.items.items.find((i) => i.id === 'collar:blue')!.price).toBe(120)
@@ -60,8 +60,8 @@ describe('remote config overrides', () => {
   })
 
   it('rejects unknown worlds and items, silly speeds and non-objects', () => {
-    expect(applyOverrides(files(), { worlds: { 'moon-walkies': { at: 32000 } } })).toEqual([
-      'worlds.moon-walkies: no such world',
+    expect(applyOverrides(files(), { worlds: { 'mars-walkies': { at: 40000 } } })).toEqual([
+      'worlds.mars-walkies: no such world',
     ])
     expect(applyOverrides(files(), { worlds: { 'bark-park': { speed: 5000 } } })).toEqual([
       'worlds.bark-park.speed',

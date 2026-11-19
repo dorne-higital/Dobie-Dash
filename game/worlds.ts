@@ -7,15 +7,30 @@ export function worldIndexForScore(score: number, worlds: WorldDef[]) {
   return i
 }
 
-/** The score target ahead of this world: the next world's start, or the last world's gate. */
-export function gateTarget(index: number, all: WorldDef[]): number | null {
-  return all[index + 1]?.at ?? all[index]?.gate ?? null
+/**
+ * The score target ahead: the next world's start, the last world's gate, or (in a last
+ * world with `chaseEvery`, like Moon Walkies' UFO) the next multiple after `score`.
+ */
+export function gateTarget(index: number, all: WorldDef[], score = 0): number | null {
+  const next = all[index + 1]?.at
+  if (next !== undefined) return next
+  const cur = all[index]
+  if (!cur) return null
+  if (cur.gate != null) return cur.gate
+  if (cur.chaseEvery) {
+    const k = Math.floor(Math.max(0, score - cur.at) / cur.chaseEvery) + 1
+    return cur.at + k * cur.chaseEvery
+  }
+  return null
 }
 
-/** How far through the current world (0..1) toward its target; null when there's none. */
+/** How far toward the target ahead (0..1); null when there's none. */
 export function worldProgress(score: number, index: number, all: WorldDef[]) {
   const cur = all[index]
-  const target = gateTarget(index, all)
+  const target = gateTarget(index, all, score)
   if (!cur || target === null) return null
-  return Math.max(0, Math.min(1, (score - cur.at) / (target - cur.at)))
+  // Repeating chases fill from the previous one, not from the world's start.
+  const from =
+    cur.chaseEvery && !all[index + 1] && cur.gate == null ? target - cur.chaseEvery : cur.at
+  return Math.max(0, Math.min(1, (score - from) / (target - from)))
 }

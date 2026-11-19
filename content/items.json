@@ -163,6 +163,17 @@
       }
     },
     {
+      "id": "hat:helmet",
+      "slot": "hat",
+      "name": "Space Helmet",
+      "unlock": {
+        "world": 7
+      },
+      "art": {
+        "hat": "helmet"
+      }
+    },
+    {
       "id": "back:cape",
       "slot": "back",
       "name": "Super Cape",
@@ -276,6 +287,11 @@
       "id": "sticker:ghostHound",
       "boss": "ghostHound",
       "name": "The Ghost Hound"
+    },
+    {
+      "id": "sticker:ufo",
+      "boss": "ufo",
+      "name": "The UFO"
     }
   ]
 }

@@ -16,7 +16,9 @@ import type {
   TutorialStep,
   WavesTwist,
   WorldDef,
+  PhysicsConfig,
 } from './config'
+import { physicsFor } from './config'
 import { maxAirTime, newDog, obstacleBox, stepDog } from './physics'
 import { Rng } from './rng'
 
@@ -38,6 +40,8 @@ export interface ValidateOpts {
   speed: number
   /** Steps after spawn before which the dog may still be busy with the previous pattern. */
   ready: number
+  /** The physics to use (a world's own, e.g. low gravity); cfg.physics if not given. */
+  physics?: PhysicsConfig
   /** Ice patches as screen x ranges at spawn time (they move with the ground). */
   ice?: { x0: number; x1: number }[]
   /** Ground jumps from ice go at this fraction of the normal jump speed. */
@@ -62,7 +66,7 @@ export function findClearPlan(
   opts: ValidateOpts,
 ): ClearPlan | null {
   const dt = 1 / cfg.loop.hz
-  const p = cfg.physics
+  const p = opts.physics ?? cfg.physics
   const hb = cfg.dog.hitbox
   const dogX = cfg.view.dogX
   const ready = Math.max(0, Math.ceil(opts.ready))
@@ -270,6 +274,8 @@ export interface SpawnerState {
   speed: number
   /** Next world's speed, if any: patterns must stay clearable through a speed-up. */
   nextSpeed?: number
+  /** Next world, if any: patterns near the border must clear with its physics too. */
+  nextWorld?: WorldDef
   /** During a gate chase, the boss's minion joins the mix (parcels, crabs, foxes). */
   minion?: { type: ObstacleType; weight: number }
   /** First-run tutorial step: a scripted, gentler sequence. */
@@ -396,9 +402,22 @@ export class Spawner {
 
     // Ice in screen x at this step, and how slippery it is, for every check below.
     const ice = iceOpts(this.icePatches, s.dist)
+    const physics = physicsFor(this.cfg, s.world)
+    const nextPhysics = physicsFor(this.cfg, s.nextWorld)
     const check = (pat: PatternObstacle[]) => {
-      const plan = findClearPlan(pat, this.cfg, { speed: s.speed, ready, ...ice })
+      const plan = findClearPlan(pat, this.cfg, { speed: s.speed, ready, physics, ...ice })
       if (!plan) return null
+      // Onto the moon (or off it): the pattern may be met with the next world's gravity.
+      if (
+        nextPhysics !== physics &&
+        !findClearPlan(pat, this.cfg, {
+          speed: s.nextSpeed ?? s.speed,
+          ready: 0,
+          physics: nextPhysics,
+          ...ice,
+        })
+      )
+        return null
       // The pattern may reach the dog at another speed: the one this world is ramping
       // to, or the next world's if the score target is close. It must clear at those too.
       // A wave or belt just behind it may still be easing the speed back.
@@ -409,7 +428,11 @@ export class Spawner {
             ? [s.speed * tw.slow, s.speed * tw.fast]
             : []
       for (const v of [s.world.speed, s.nextSpeed, ...zone])
-        if (v && v !== s.speed && !findClearPlan(pat, this.cfg, { speed: v, ready: 0, ...ice }))
+        if (
+          v &&
+          v !== s.speed &&
+          !findClearPlan(pat, this.cfg, { speed: v, ready: 0, physics, ...ice })
+        )
           return null
       return plan
     }
@@ -566,7 +589,7 @@ export class Spawner {
     const tw = s.world.twist
     const zone = tw?.kind === 'belts' ? tw.fast : 1
     const fastest = Math.max(s.speed, s.nextSpeed ?? 0) * zone + this.maxExtraSpeed()
-    const air = maxAirTime(pf.height, this.cfg.physics, 1 / this.cfg.loop.hz)
+    const air = maxAirTime(pf.height, physicsFor(this.cfg, s.world), 1 / this.cfg.loop.hz)
     const clearTo = wx1 + (hb.x1 - hb.x0) + fastest * (air + LEDGE_LANDING_SECONDS)
     this.ledge = { wx0, wx1, clearTo }
     const b = this.cfg.spawner.biscuits

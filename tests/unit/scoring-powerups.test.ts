@@ -12,7 +12,7 @@ import {
 import { Rng } from '~/game/rng'
 import { Run } from '~/game/run'
 import { metres, score } from '~/game/scoring'
-import { worldIndexForScore, worldProgress } from '~/game/worlds'
+import { gateTarget, worldIndexForScore, worldProgress } from '~/game/worlds'
 
 const cfg = loadGameConfig()
 
@@ -41,10 +41,14 @@ describe('worlds', () => {
     expect(worldProgress(750, 0, worlds)).toBeCloseTo(0.5)
     expect(worldProgress(1500 + 1250, 1, worlds)).toBeCloseTo(0.5)
     expect(worldProgress(9000, 3, worlds)).toBeCloseTo((9000 - 7500) / (12000 - 7500))
-    // The last world fills toward its gate instead.
+    // The last world (Moon Walkies) fills toward its next UFO, every chaseEvery points.
     const last = worlds.length - 1
-    const { at, gate } = worlds[last]!
-    expect(worldProgress((at + gate!) / 2, last, worlds)).toBeCloseTo(0.5)
+    const { at, chaseEvery } = worlds[last]!
+    expect(chaseEvery).toBeGreaterThan(0)
+    expect(gateTarget(last, worlds, at)).toBe(at + chaseEvery!)
+    expect(gateTarget(last, worlds, at + chaseEvery! + 10)).toBe(at + 2 * chaseEvery!)
+    expect(worldProgress(at + chaseEvery! / 2, last, worlds)).toBeCloseTo(0.5)
+    expect(worldProgress(at + chaseEvery! * 1.25, last, worlds)).toBeCloseTo(0.25)
   })
   it('a run starts in Bark Park and changes world at each score target', () => {
     const c = loadGameConfig()

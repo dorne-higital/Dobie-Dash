@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { loadGameConfig, type GameConfig, type ObstacleType } from '~/game/config'
+import { loadGameConfig, physicsFor, type GameConfig, type ObstacleType } from '~/game/config'
 import { Run } from '~/game/run'
 import { apex, maxAirTime, newDog, stepDog } from '~/game/physics'
 import { findClearPlan, Spawner, type SpawnBatch } from '~/game/spawner'
@@ -166,18 +166,19 @@ describe('fairness end to end', () => {
     }
   }, 60_000)
 
-  it('past the last gate the run keeps going and speeds up, and stays fair', () => {
+  it('in the last world the run keeps going and speeds up, and stays fair', () => {
     const cfg = noPowers()
     const last = cfg.worlds.length - 1
-    const gate = cfg.worlds[last]!.gate!
+    const w = cfg.worlds[last]!
+    const from = w.gate ?? w.at
     for (let seed = 1; seed <= 4; seed++) {
       const run = new Run(cfg, seed, W, { autoplay: true, startWorld: last })
       let i = 0
-      while (run.state === 'running' && run.score < gate + 4000 && i++ < 600 * 60) run.update()
+      while (run.state === 'running' && run.score < from + 8000 && i++ < 600 * 60) run.update()
       expect({ seed, state: run.state }).toEqual({ seed, state: 'running' })
-      expect(run.score).toBeGreaterThanOrEqual(gate + 4000)
+      expect(run.score).toBeGreaterThanOrEqual(from + 8000)
       expect(run.worldIndex).toBe(last)
-      expect(run.speed).toBeGreaterThan(cfg.worlds[last]!.speed + 40)
+      expect(run.speed).toBeGreaterThan(w.speed + 15)
       expect(run.speed).toBeLessThanOrEqual(cfg.endless.maxSpeed)
     }
   }, 60_000)
@@ -460,4 +461,68 @@ describe('Haunted Hollow', () => {
     }
     for (const t of Object.keys(cfg.worlds[wi]!.obstacles)) expect(seen.has(t), t).toBe(true)
   }, 60_000)
+})
+
+describe('Moon Walkies', () => {
+  const moon = () => loadGameConfig().worlds.findIndex((w) => w.twist?.kind === 'lowGravity')
+
+  it('low gravity: the same tap jumps higher and floats longer, on the moon only', () => {
+    const cfg = loadGameConfig()
+    const flight = (p: ReturnType<typeof physicsFor>) => {
+      const d = newDog()
+      stepDog(d, p, 1 / 60, true)
+      let top = 0
+      let steps = 0
+      while (!d.grounded) {
+        stepDog(d, p, 1 / 60, false)
+        top = Math.min(top, d.y)
+        steps++
+      }
+      return { top: -top, steps }
+    }
+    const earth = flight(physicsFor(cfg, cfg.worlds[0]))
+    const lunar = flight(physicsFor(cfg, cfg.worlds[moon()]))
+    expect(lunar.top).toBeGreaterThan(earth.top * 1.2)
+    expect(lunar.steps).toBeGreaterThan(earth.steps * 1.2)
+    for (const w of cfg.worlds)
+      if (w.twist?.kind !== 'lowGravity') expect(physicsFor(cfg, w)).toBe(cfg.physics)
+  })
+
+  it('no gate: a UFO chases you every 4,000 points, and the bot keeps escaping', () => {
+    const cfg = noPowers()
+    const w = cfg.worlds[moon()]!
+    expect(w.gate).toBeNull()
+    const run = new Run(cfg, 2, W, { autoplay: true, startWorld: moon() })
+    const chases: number[] = []
+    for (
+      let i = 0;
+      i < 600 * 60 && run.state === 'running' && run.score < w.at + 3 * w.chaseEvery! + 100;
+      i++
+    ) {
+      run.update()
+      for (const e of run.events.splice(0))
+        if (e.type === 'chase' && e.data.active) {
+          expect(e.data.boss).toBe('ufo')
+          chases.push(run.score)
+        }
+    }
+    expect(run.state).toBe('running')
+    expect(chases.length).toBe(3)
+    chases.forEach((s, k) => {
+      const target = w.at + (k + 1) * w.chaseEvery!
+      expect(s).toBeGreaterThanOrEqual(target - cfg.chase.window)
+      expect(s).toBeLessThan(target)
+    })
+    expect(run.escaped.filter((b) => b === 'ufo').length).toBe(3)
+  }, 60_000)
+
+  it('a planned-tap bot survives the moon and the way onto it from Haunted Hollow', () => {
+    const cfg = noPowers()
+    for (let seed = 1; seed <= 8; seed++) {
+      const run = new Run(cfg, seed, W, { autoplay: true, startWorld: moon() - 1 })
+      for (let i = 0; i < 150 * 60 && run.state === 'running'; i++) run.update()
+      expect({ seed, state: run.state }).toEqual({ seed, state: 'running' })
+      if (seed === 1) expect(run.worldIndex).toBe(moon())
+    }
+  }, 90_000)
 })
