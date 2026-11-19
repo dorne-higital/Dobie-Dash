@@ -171,7 +171,7 @@ pages/run.vue ── mounts ──▶ game/engine.ts  (canvas, rAF, input, 60 Hz
 
 ## Tests
 
-`tests/unit/` (116 tests):
+`tests/unit/` (135 tests):
 
 - **physics, spawner, scoring / power-ups:** as before (fairness bot through all four
   worlds, waves, chases, continues, near misses, pacing).
@@ -191,10 +191,17 @@ pages/run.vue ── mounts ──▶ game/engine.ts  (canvas, rAF, input, 60 Hz
   medals complete the ones below. **notify:** asked from day 2, a week of reminders.
 - **tutorial:** jump → double → biscuits → done, no crash while learning, the double step
   needs a double jump, crashes work again afterwards.
+- **M5:** analytics helpers (run cause, day number); Remote Config overrides (applied,
+  all-or-nothing rejection, live readers see them); save v3 → v4; hold to jump higher (a
+  tap is unchanged, holding goes higher, ledge landing zones allow for it); rooftop
+  ledges; endless speed-up; the growing power meter; a 30-minute soak (nothing grows).
 
 ## What's next
 
-**M5 – Polish and beta**, then **M6 – Launch**.
+**M5 – Polish and beta:** code done. Analytics, crash reports and Remote Config are on
+Firebase (project `dobie-dash-2da2c`). The beta itself is in `docs/beta.md`: about 20
+testers on TestFlight, done when they come back on day 2 and crash-free users are above
+99.5%. Then **M6 – Launch**.
 
-Still to confirm on a real phone: 60 fps on an older iPhone (`/run?bot&fps`), and the M4
-list in `ios/README.md` (purchases in the sandbox, ads, Game Center, iCloud, reminders).
+Still to confirm on a real phone: 60 fps on the oldest iPhone (Settings → Frame-time
+overlay), interruptions pausing the run, iCloud between two phones, and VoiceOver.
