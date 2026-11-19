@@ -347,7 +347,16 @@
         "boss": "van",
         "name": "The mail van",
         "minion": "parcel",
-        "minionWeight": 2.5
+        "minionWeight": 2.5,
+        "fight": {
+          "w": 144,
+          "stomp": {
+            "x0": 36,
+            "x1": 140,
+            "top": 66
+          },
+          "attacks": [["parcel"], ["parcel", "parcel"], ["parcel", "parcel", "parcel"]]
+        }
       },
       "gate": null,
       "about": {
@@ -394,7 +403,16 @@
         "boss": "kingCrab",
         "name": "King Crab",
         "minion": "crab",
-        "minionWeight": 2.5
+        "minionWeight": 2.5,
+        "fight": {
+          "w": 124,
+          "stomp": {
+            "x0": 24,
+            "x1": 104,
+            "top": 52
+          },
+          "attacks": [["crab"], ["crab", "sandcastle"], ["crab", "crab", "sandcastle"]]
+        }
       },
       "gate": null,
       "about": {
@@ -433,7 +451,16 @@
         "boss": "foxPack",
         "name": "The fox pack",
         "minion": "fox",
-        "minionWeight": 2.5
+        "minionWeight": 2.5,
+        "fight": {
+          "w": 170,
+          "stomp": {
+            "x0": 56,
+            "x1": 120,
+            "top": 46
+          },
+          "attacks": [["fox"], ["fox", "bin"], ["fox", "fox", "bin"]]
+        }
       },
       "gate": null,
       "about": {
@@ -478,7 +505,16 @@
         "boss": "avalanche",
         "name": "The avalanche",
         "minion": "snowball",
-        "minionWeight": 2.5
+        "minionWeight": 2.5,
+        "fight": {
+          "w": 166,
+          "stomp": {
+            "x0": 40,
+            "x1": 126,
+            "top": 72
+          },
+          "attacks": [["snowball"], ["snowball", "snowman"], ["snowball", "snowball", "snowman"]]
+        }
       },
       "gate": null,
       "platforms": null,
@@ -523,7 +559,16 @@
         "boss": "wreckingBall",
         "name": "The wrecking ball",
         "minion": "cone",
-        "minionWeight": 2
+        "minionWeight": 2,
+        "fight": {
+          "w": 150,
+          "stomp": {
+            "x0": 80,
+            "x1": 144,
+            "top": 40
+          },
+          "attacks": [["girder"], ["cone", "girder"], ["mixer", "cone", "girder"]]
+        }
       },
       "gate": null,
       "platforms": null,
@@ -563,7 +608,16 @@
         "boss": "ghostHound",
         "name": "The Ghost Hound",
         "minion": "ghost",
-        "minionWeight": 2
+        "minionWeight": 2,
+        "fight": {
+          "w": 172,
+          "stomp": {
+            "x0": 42,
+            "x1": 142,
+            "top": 68
+          },
+          "attacks": [["ghost"], ["ghost", "pumpkin"], ["ghost", "ghost", "pumpkin"]]
+        }
       },
       "gate": null,
       "platforms": null,
@@ -599,7 +653,21 @@
         "boss": "ufo",
         "name": "The UFO",
         "minion": "alienCat",
-        "minionWeight": 2
+        "minionWeight": 2,
+        "fight": {
+          "w": 162,
+          "stomp": {
+            "x0": 24,
+            "x1": 138,
+            "top": 82
+          },
+          "attacks": [
+            ["alienCat"],
+            ["crater", "alienCat"],
+            ["alienCat", "crater", "alienCat"],
+            ["alienCat", "alienCat", "crater", "alienCat"]
+          ]
+        }
       },
       "gate": null,
       "chaseEvery": 4000,

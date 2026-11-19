@@ -588,3 +588,28 @@ describe('boss fights (the mower)', () => {
     expect(jump).toBeLessThan(c.fight.beatBonus + c.fight.flawlessBonus + 20)
   })
 })
+
+describe('every boss fights', () => {
+  it("each world's boss can be knocked out, and dodging alone survives it", () => {
+    const base = noPowers()
+    for (const [wi, w] of base.worlds.entries()) {
+      expect(w.chase.fight, w.name).toBeTruthy()
+      if (wi === 0) continue // the mower has its own tests above
+      for (const stomps of [true, false]) {
+        for (let seed = 1; seed <= 2; seed++) {
+          const c = noPowers()
+          const run = new Run(c, seed, W, { autoplay: true, startWorld: wi, botStomps: stomps })
+          const steps: string[] = []
+          for (let i = 0; i < 400 * 60 && run.state === 'running' && run.escapes < 1; i++) {
+            run.update()
+            for (const e of run.events.splice(0)) if (e.type === 'fight') steps.push(e.data.step)
+          }
+          const tag = `${w.name} seed ${seed} ${stomps ? 'stomping' : 'dodging'}`
+          expect({ tag, state: run.state }).toEqual({ tag, state: 'running' })
+          expect({ tag, escaped: run.escaped }).toEqual({ tag, escaped: [w.chase.boss] })
+          expect({ tag, won: steps.includes('win') }).toEqual({ tag, won: stomps })
+        }
+      }
+    }
+  }, 300_000)
+})

@@ -747,7 +747,11 @@ export class Run {
         bx: behind,
         bx0: behind,
         hits: 0,
-        attacks: 0,
+        // A boss that comes back (the UFO) starts one attack further along each time.
+        attacks: Math.min(
+          this.escaped.filter((b) => b === def.boss).length,
+          def.fight.attacks.length - 1,
+        ),
         flawless: true,
         coach,
         clearFor: 0,
@@ -822,7 +826,7 @@ export class Run {
         f.bx = f.bx0 + (this.fightFront - f.bx0) * ease(f.t / F.enterSeconds)
         if (f.t >= F.enterSeconds) {
           this.fightPhase('warn')
-          if (f.attacks === 0) this.fightEmit('dodge')
+          this.fightEmit('dodge')
         }
         break
       case 'warn':
