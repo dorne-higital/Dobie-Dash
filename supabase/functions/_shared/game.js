@@ -744,6 +744,10 @@ var worlds_default = {
       },
       tip: "Tip: when a boss gets tired, jump on its head. Three hits knocks it out."
     }
+  },
+  bigBark: {
+    _: "Big Bark (M7): saved up from missions and the Pup Pass; at most perRun used in a run. Clears every obstacle on screen.",
+    perRun: 1
   }
 };
 
@@ -1668,11 +1672,38 @@ var Run = class {
     this.record(on ? "h" : "u");
     this.holding = on;
   }
+  /** Big Barks used this run. */
+  barksUsed = 0;
+  /** Big Barks still usable this run (saved ones, up to the per-run limit). */
+  get barksLeft() {
+    return Math.max(0, Math.min(this.opts.bigBarks ?? 0, this.cfg.bigBark.perRun) - this.barksUsed);
+  }
+  /**
+   * Big Bark: knocks away every obstacle on screen. Only while running, and only as many
+   * times as barksLeft allows. Recorded, so replays and the boards' checks match.
+   */
+  bigBark() {
+    if (this.state !== "running" || this.barksLeft <= 0) return false;
+    this.record("b");
+    this.barksUsed++;
+    let cleared = 0;
+    for (const o of this.obstacles)
+      if (!o.dead && o.wx - this.dist < this.viewW + 20) {
+        this.knock(o);
+        cleared++;
+        const y = -(o.def.fly ?? 0) - o.def.h / 2;
+        this.fx.push({ type: "poof", x: o.wx - this.dist + o.def.w / 2, y });
+      }
+    this.fx.push({ type: "bark", x: this.cfg.view.dogX + 20, y: this.dog.y - 40 });
+    this.emit("bark", { cleared, left: this.barksLeft });
+    return true;
+  }
   /** Updates so far, in every state (the clock that inputs are recorded against). */
   ticks = 0;
   /**
    * Everything the player did, as [tick, code]: p press, h/u hold on/off, r revive,
-   * d decline. With the seed and options this replays the run exactly (game/replay.ts).
+   * d decline, b Big Bark. With the seed and options this replays the run exactly
+   * (game/replay.ts).
    */
   inputs = [];
   record(code, tick = this.ticks) {
@@ -2380,23 +2411,45 @@ var Run = class {
 };
 
 // game/replay.ts
-function replay(cfg, r, maxTicks = r.ticks + 600) {
-  const run = new Run(cfg, r.seed, r.viewW, { ...r.opts });
-  let k = 0;
-  const inputs = [...r.inputs].sort((a, b) => a[0] - b[0]);
-  while (run.state !== "ended" && run.ticks < maxTicks) {
-    while (k < inputs.length && inputs[k][0] <= run.ticks) {
-      const code = inputs[k][1];
+var Replayer = class {
+  run;
+  k = 0;
+  inputs;
+  constructor(cfg, r) {
+    this.run = new Run(cfg, r.seed, r.viewW, { ...r.opts });
+    this.inputs = [...r.inputs].sort((a, b) => a[0] - b[0]);
+  }
+  get done() {
+    return this.run.state === "ended";
+  }
+  /** One update. `keep`: leave this step's fx and events on the run (for drawing). */
+  step(keep = false) {
+    const run = this.run;
+    if (keep) {
+      run.events.length = 0;
+      run.fx.length = 0;
+    }
+    while (this.k < this.inputs.length && this.inputs[this.k][0] <= run.ticks) {
+      const code = this.inputs[this.k][1];
       if (code === "p") run.press();
       else if (code === "h") run.setHolding(true);
       else if (code === "u") run.setHolding(false);
       else if (code === "r") run.revive();
       else if (code === "d") run.decline();
-      k++;
+      else if (code === "b") run.bigBark();
+      this.k++;
     }
     run.update();
+    if (!keep) {
+      run.events.length = 0;
+      run.fx.length = 0;
+    }
   }
-  return run;
+};
+function replay(cfg, r, maxTicks = r.ticks + 600) {
+  const p = new Replayer(cfg, r);
+  while (!p.done && p.run.ticks < maxTicks) p.step();
+  return p.run;
 }
 
 // content/names.json
