@@ -19,7 +19,17 @@ function restore() {
       <UiToggle
         v-model="settings.reduceMotion"
         label="Reduce motion"
-        hint="No screen shake or flashes"
+        hint="No screen shake, flashes or bouncing"
+      />
+      <UiToggle
+        v-model="settings.largeText"
+        label="Larger text"
+        hint="Bigger words and buttons outside a run"
+      />
+      <UiToggle
+        v-model="settings.holdToJump"
+        label="Hold to jump higher"
+        hint="Keep your finger down for a bigger jump. A tap still works."
       />
     </div>
     <HubCurrencyGuide />

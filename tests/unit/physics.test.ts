@@ -163,3 +163,35 @@ describe('hitboxes', () => {
       expect(overlaps(dogBox(130, y, hb), obstacleBox(130, cfg.obstacles[t]))).toBe(false)
   })
 })
+
+describe('hold to jump higher', () => {
+  /** Peak height of a ground jump, holding for `holdSteps` steps. */
+  function peakHolding(holdSteps: number, holding = true) {
+    const d = newDog()
+    stepDog(d, p, DT, true, 0, holding && holdSteps > 0)
+    let peak = d.y
+    for (let k = 1; k < 600 && !d.grounded; k++) {
+      stepDog(d, p, DT, false, 0, holding && k < holdSteps)
+      peak = Math.min(peak, d.y)
+    }
+    return -peak
+  }
+
+  it('holding goes higher than a tap, up to a limit', () => {
+    const tap = peakHolding(0)
+    const short = peakHolding(5)
+    const full = peakHolding(600)
+    expect(short).toBeGreaterThan(tap)
+    expect(full).toBeGreaterThan(short)
+    // The hold only lasts maxSeconds, so holding forever is the same as holding that long.
+    expect(full).toBeCloseTo(peakHolding(Math.ceil(p.hold.maxSeconds / DT) + 1), 5)
+  })
+
+  it('a tap is exactly the same jump as before (holding = false)', () => {
+    const d = newDog()
+    stepDog(d, p, DT, true)
+    const plain = -runUntilLanded(d).peak // the old stepDog call, no hold argument
+    expect(peakHolding(600, false)).toBe(plain)
+    expect(peakHolding(0)).toBe(plain)
+  })
+})

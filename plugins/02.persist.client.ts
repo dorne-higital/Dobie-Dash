@@ -40,6 +40,10 @@ export default defineNuxtPlugin(async () => {
     // Sound is switched off for the whole app (content/site.json "sound"); no toggles in Settings.
     audio.setSfx(site.sound && settings.sfx)
     audio.setMusic(site.sound && settings.music)
+    // Accessibility classes read by assets/css/main.css.
+    const html = document.documentElement.classList
+    html.toggle('reduce-motion', settings.reduceMotion)
+    html.toggle('large-text', settings.largeText)
   }
   apply()
 

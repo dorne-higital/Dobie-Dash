@@ -52,7 +52,7 @@ describe('save migrations', () => {
     s.stats.cleared = { cat: 4 }
     expect(migrate(JSON.parse(JSON.stringify(s)))).toEqual(s)
 
-    const partial = { v: 3, wallet: { biscuits: 10 }, missions: { day: '2026-11-18' } }
+    const partial = { v: 4, wallet: { biscuits: 10 }, missions: { day: '2026-11-18' } }
     const m = migrate(partial)
     expect(m.wallet).toEqual({ biscuits: 10, bones: 0 })
     expect(m.missions.day).toBe('2026-11-18')
@@ -70,7 +70,7 @@ describe('save migrations', () => {
     ;(v2.wallet as { biscuits: number }).biscuits = 777
     ;(v2 as { owned: string[] }).owned = ['collar:blue']
     const s = migrate(v2)
-    expect(s.v).toBe(3)
+    expect(s.v).toBe(4) // walked on through v3
     expect(s.wallet.biscuits).toBe(777)
     expect(s.owned).toEqual(['collar:blue'])
     expect(s.purchases).toEqual({ delivered: [] })
@@ -112,5 +112,19 @@ describe('iCloud: which save wins', () => {
     expect(pickSave(at(1, 1, 1), null)?.from).toBe('local')
     expect(pickSave(null, at(1, 1, 1))?.from).toBe('cloud')
     expect(pickSave(null, null)).toBeNull()
+  })
+
+  it('v3 (M4) gains the large-text and hold-to-jump settings, off; keeps the rest', () => {
+    const v3 = { ...defaultSave(), v: 3 } as Record<string, unknown>
+    const settings = { ...(v3.settings as Record<string, unknown>) }
+    delete settings.largeText
+    delete settings.holdToJump
+    settings.reduceMotion = true
+    v3.settings = settings
+    ;(v3.wallet as { bones: number }).bones = 42
+    const s = migrate(v3)
+    expect(s.v).toBe(4)
+    expect(s.settings).toMatchObject({ reduceMotion: true, largeText: false, holdToJump: false })
+    expect(s.wallet.bones).toBe(42)
   })
 })

@@ -119,6 +119,8 @@ export interface RunOptions {
   startWorld?: number
   /** First-run tutorial: jump, double jump, then biscuits; hits don't end the run until done. */
   tutorial?: boolean
+  /** Hold to jump higher (Settings). */
+  holdToJump?: boolean
 }
 
 export class Run {
@@ -238,6 +240,9 @@ export class Run {
   press() {
     if (this.state === 'running') this.pressed = true
   }
+
+  /** The jump is being held down (only counts with hold to jump higher on). */
+  holding = false
 
   summary(): RunSummary {
     return {
@@ -368,7 +373,14 @@ export class Run {
 
     // Dog.
     if (this.opts.autoplay) this.autoplay()
-    const r = stepDog(this.dog, this.cfg.physics, dt, this.pressed, this.floorUnderDog())
+    const r = stepDog(
+      this.dog,
+      this.cfg.physics,
+      dt,
+      this.pressed,
+      this.floorUnderDog(),
+      !!this.opts.holdToJump && this.holding,
+    )
     if (this.ledges.length && this.ledges[0]!.wx1 < this.dist - 300) this.ledges.shift()
     this.pressed = false
     if (r.jumped) {

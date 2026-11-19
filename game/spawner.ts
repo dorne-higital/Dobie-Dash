@@ -139,6 +139,7 @@ export function findClearPlan(
     dog.jumps = 0
     dog.buffer = 0
     dog.coyote = 0
+    dog.held = 0
     for (let k = j; k < j + 400; k++) {
       stepDog(dog, p, dt, k === j || k === d2)
       if (k > passK) {

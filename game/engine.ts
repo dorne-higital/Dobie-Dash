@@ -22,6 +22,8 @@ export interface EngineOptions {
   /** Show the frame-time overlay. */
   showFps?: boolean
   reduceMotion?: boolean
+  /** Hold to jump higher (Settings). */
+  holdToJump?: boolean
   /** Bot plays (dev: `?bot`). */
   autoplay?: boolean
   invincible?: boolean
@@ -86,7 +88,10 @@ export class Engine {
     this.ro = new ResizeObserver(() => this.renderer.setView(this.measure()))
     this.ro.observe(canvas)
     canvas.addEventListener('pointerdown', this.onPointer, { passive: false })
+    window.addEventListener('pointerup', this.onRelease)
+    window.addEventListener('pointercancel', this.onRelease)
     window.addEventListener('keydown', this.onKey)
+    window.addEventListener('keyup', this.onKeyUp)
   }
 
   on<K extends keyof RunEvents>(type: K, fn: (d: RunEvents[K]) => void) {
@@ -100,6 +105,7 @@ export class Engine {
       invincible: this.opts.invincible,
       startWorld: this.opts.startWorld,
       tutorial: this.opts.tutorial,
+      holdToJump: this.opts.holdToJump,
     })
     this.renderer.reset(this.run.world.theme)
     const next = this.run.worlds[this.run.worldIndex + 1]
@@ -178,7 +184,10 @@ export class Engine {
     cancelAnimationFrame(this.raf)
     this.ro?.disconnect()
     this.canvas.removeEventListener('pointerdown', this.onPointer)
+    window.removeEventListener('pointerup', this.onRelease)
+    window.removeEventListener('pointercancel', this.onRelease)
     window.removeEventListener('keydown', this.onKey)
+    window.removeEventListener('keyup', this.onKeyUp)
     this.events.clear()
   }
 
@@ -187,12 +196,24 @@ export class Engine {
   private onPointer = (e: PointerEvent) => {
     e.preventDefault()
     this.press()
+    if (this.run) this.run.holding = true
+  }
+
+  private onRelease = () => {
+    if (this.run) this.run.holding = false
+  }
+
+  private onKeyUp = (e: KeyboardEvent) => {
+    if (e.code === 'Space' || e.code === 'ArrowUp') this.onRelease()
   }
 
   private onKey = (e: KeyboardEvent) => {
     if (e.code === 'Space' || e.code === 'ArrowUp') {
       e.preventDefault()
-      if (!e.repeat) this.press()
+      if (!e.repeat) {
+        this.press()
+        if (this.run) this.run.holding = true
+      }
     }
   }
 

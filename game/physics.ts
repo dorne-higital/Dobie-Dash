@@ -17,6 +17,8 @@ export interface DogBody {
   buffer: number
   /** Seconds left in which a ground jump is still allowed after leaving the ground. */
   coyote: number
+  /** Seconds of this jump spent held (hold to jump higher). */
+  held: number
 }
 
 export type JumpKind = 'ground' | 'double' | null
@@ -27,7 +29,7 @@ export interface StepResult {
 }
 
 export function newDog(): DogBody {
-  return { y: 0, vy: 0, grounded: true, jumps: 0, buffer: 0, coyote: 0 }
+  return { y: 0, vy: 0, grounded: true, jumps: 0, buffer: 0, coyote: 0, held: 0 }
 }
 
 /** Seconds until an airborne dog reaches the floor (ground by default) on its current arc. */
@@ -43,6 +45,7 @@ function tryJump(d: DogBody, p: PhysicsConfig, floor: number): JumpKind {
     d.grounded = false
     d.coyote = 0
     d.jumps = 1
+    d.held = 0
     return 'ground'
   }
   if (d.jumps < 2) {
@@ -52,6 +55,7 @@ function tryJump(d: DogBody, p: PhysicsConfig, floor: number): JumpKind {
     if (falling && timeToGround(d, p, floor) <= d.buffer) return null
     d.vy = p.doubleJumpVelocity
     d.jumps = 2
+    d.held = 0
     return 'double'
   }
   return null
@@ -60,6 +64,7 @@ function tryJump(d: DogBody, p: PhysicsConfig, floor: number): JumpKind {
 /**
  * Advances the dog by one fixed step. `pressed` is true if the player tapped since the
  * previous step. `floor` is the surface under the dog (0, or a ledge top it is above).
+ * `holding`: the jump is held down (only when hold to jump higher is on).
  */
 export function stepDog(
   d: DogBody,
@@ -67,6 +72,7 @@ export function stepDog(
   dt: number,
   pressed: boolean,
   floor = 0,
+  holding = false,
 ): StepResult {
   let jumped: JumpKind = null
   let landed = false
@@ -80,7 +86,9 @@ export function stepDog(
   }
 
   if (!d.grounded) {
-    d.vy += p.gravity * dt
+    const held = holding && d.vy < 0 && d.held < p.hold.maxSeconds
+    if (held) d.held += dt
+    d.vy += p.gravity * (held ? p.hold.gravityScale : 1) * dt
     d.y += d.vy * dt
     d.coyote = Math.max(0, d.coyote - dt)
     if (d.y >= floor) {
@@ -114,18 +122,18 @@ export function leaveGround(d: DogBody, p: PhysicsConfig) {
 }
 
 /**
- * Longest a dog can stay in the air after leaving a ledge `h` high: a jump off its edge
- * and a double jump at the top. The spawner keeps this much clear after every ledge.
+ * Longest a dog can stay in the air after leaving a ledge `h` high: a held jump off its
+ * edge and a held double jump at the top. The spawner keeps this much clear after a ledge.
  */
 export function maxAirTime(h: number, p: PhysicsConfig, dt: number): number {
-  const d: DogBody = { y: -h, vy: 0, grounded: true, jumps: 0, buffer: 0, coyote: 0 }
-  stepDog(d, p, dt, true, 0)
+  const d: DogBody = { y: -h, vy: 0, grounded: true, jumps: 0, buffer: 0, coyote: 0, held: 0 }
+  stepDog(d, p, dt, true, 0, true)
   let k = 1
   let doubled = false
   while (!d.grounded && k < 1000) {
     const press = !doubled && d.vy >= 0
     if (press) doubled = true
-    stepDog(d, p, dt, press, 0)
+    stepDog(d, p, dt, press, 0, true)
     k++
   }
   return k * dt

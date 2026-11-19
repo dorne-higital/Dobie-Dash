@@ -12,6 +12,7 @@ definePageMeta({ layout: 'hub' })
 const cfg = loadGameConfig()
 const player = usePlayerStore()
 const look = useLook()
+const settings = useSettingsStore()
 
 /** Island scenery per world, in order (shipped worlds then the coming-soon ones). */
 const KINDS = ['park', 'city', 'beach', 'night', 'snow', 'site', 'haunted', 'moon']
@@ -74,7 +75,10 @@ const sel = computed(() => all[selected.value]!)
 const card = ref<HTMLElement | null>(null)
 function pick(i: number) {
   selected.value = i
-  void nextTick(() => card.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+  const smooth = !settings.reduceMotion && !matchMedia('(prefers-reduced-motion: reduce)').matches
+  void nextTick(() =>
+    card.value?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'nearest' }),
+  )
 }
 const state = (i: number) => (i <= best.value ? 'reached' : all[i]!.soon ? 'soon' : 'locked')
 

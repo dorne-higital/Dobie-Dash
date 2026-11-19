@@ -148,6 +148,12 @@ export interface PhysicsConfig {
   doubleJumpVelocity: number
   jumpBuffer: number
   coyoteTime: number
+  /**
+   * Hold to jump higher (an accessibility option, off by default): while the jump is held
+   * and the dog is still rising, gravity is scaled down, for at most `maxSeconds` per jump.
+   * A tap jumps exactly as without it.
+   */
+  hold: { gravityScale: number; maxSeconds: number }
 }
 
 export interface BiscuitSpawnConfig {

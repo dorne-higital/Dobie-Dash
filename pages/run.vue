@@ -182,6 +182,7 @@ onMounted(async () => {
     feedback,
     showFps,
     reduceMotion: settings.reduceMotion,
+    holdToJump: settings.holdToJump,
     autoplay: bot,
     invincible: bot,
     startWorld,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { loadGameConfig, type GameConfig, type ObstacleType } from '~/game/config'
 import { Run } from '~/game/run'
-import { apex, newDog, stepDog } from '~/game/physics'
+import { apex, maxAirTime, newDog, stepDog } from '~/game/physics'
 import { findClearPlan, Spawner, type SpawnBatch } from '~/game/spawner'
 
 const W = loadGameConfig().view.logicalWidth
@@ -326,4 +326,17 @@ describe('rooftop ledges', () => {
         expect(onTop).toBeGreaterThan(60 * 10)
       }
   }, 60_000)
+})
+
+describe('hold to jump higher and ledges', () => {
+  it("a ledge's landing zone covers a fully held jump and double jump off its edge", () => {
+    const cfg = loadGameConfig()
+    const p = cfg.physics
+    const dt = 1 / cfg.loop.hz
+    const h = cfg.worlds.find((w) => w.platforms)!.platforms!.height
+    const held = maxAirTime(h, p, dt)
+    const noHold = structuredClone(p)
+    noHold.hold.maxSeconds = 0
+    expect(held).toBeGreaterThan(maxAirTime(h, noHold, dt))
+  })
 })

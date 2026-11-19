@@ -7,7 +7,7 @@
  */
 import type { EarStyle, EyeColour, TailStyle } from '~/game/art/dobie'
 
-export const SAVE_VERSION = 3
+export const SAVE_VERSION = 4
 
 export type Slot = 'collar' | 'hat' | 'eyes' | 'neck' | 'back' | 'trail'
 export const SLOTS: Slot[] = ['collar', 'hat', 'eyes', 'neck', 'back', 'trail']
@@ -51,10 +51,14 @@ export interface SettingsSave {
   reduceMotion: boolean
   /** Frame-time overlay during runs (also on with `?fps`). */
   showFps: boolean
+  /** Bigger text and buttons on every screen outside a run (M5). */
+  largeText: boolean
+  /** Hold the jump to go higher; a tap still jumps as before (M5). */
+  holdToJump: boolean
 }
 
-export interface SaveV3 {
-  v: 3
+export interface SaveV4 {
+  v: 4
   /** Epoch ms of the last write, for picking between this phone's save and iCloud's. */
   savedAt: number
   /** Non-consumable App Store products whose rewards have been given (once each). */
@@ -90,7 +94,12 @@ export interface SaveV3 {
   settings: SettingsSave
 }
 
-export type Save = SaveV3
+export type Save = SaveV4
+/** v3 is v4 without the large-text and hold-to-jump settings (M4). */
+export type SaveV3 = Omit<SaveV4, 'v' | 'settings'> & {
+  v: 3
+  settings: Omit<SettingsSave, 'largeText' | 'holdToJump'>
+}
 /** v2 is v3 without savedAt, purchases, ads and notify (M3). */
 export type SaveV2 = Omit<SaveV3, 'v' | 'savedAt' | 'purchases' | 'ads' | 'notify'> & { v: 2 }
 
@@ -112,7 +121,7 @@ export function emptyStats(): Stats {
 
 export function defaultSave(): Save {
   return {
-    v: 3,
+    v: 4,
     savedAt: 0,
     purchases: { delivered: [] },
     ads: { sessions: 0, runsSinceAd: 0, attAsked: false },
@@ -134,7 +143,15 @@ export function defaultSave(): Save {
     trophies: {},
     stats: emptyStats(),
     flags: { tutorialDone: false, removeAds: false, starterSeen: false },
-    settings: { music: true, sfx: true, haptics: true, reduceMotion: false, showFps: false },
+    settings: {
+      music: true,
+      sfx: true,
+      haptics: true,
+      reduceMotion: false,
+      showFps: false,
+      largeText: false,
+      holdToJump: false,
+    },
   }
 }
 
@@ -193,6 +210,14 @@ const MIGRATIONS: Record<number, (s: AnySave) => AnySave> = {
       purchases: d.purchases,
       ads: d.ads,
       notify: d.notify,
+    } as unknown as AnySave
+  },
+  3: (raw) => {
+    const s = raw as unknown as SaveV3
+    return {
+      ...s,
+      v: 4,
+      settings: { ...s.settings, largeText: false, holdToJump: false },
     } as unknown as AnySave
   },
 }

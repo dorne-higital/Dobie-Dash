@@ -63,3 +63,35 @@ h3,
   font-weight: 400;
   letter-spacing: 0.01em;
 }
+
+/* ---- Accessibility (Settings; classes set in plugins/02.persist.client.ts) ---------------- */
+
+/* Reduce motion: the in-app setting or the iPhone's own. The run canvas has its own switch. */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Larger text: everything on the hub pages and sheets scales up, layout and all. */
+html.large-text .hub-main {
+  zoom: 1.2;
+}
+/* Sheets and cards (pause, keep running, results, rewards) a little less, to fit. */
+html.large-text [role='dialog'] {
+  zoom: 1.12;
+}
+html.large-text .tabbar .label {
+  font-size: 12px;
+}

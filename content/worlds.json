@@ -17,7 +17,11 @@
     "jumpVelocity": -780,
     "doubleJumpVelocity": -700,
     "jumpBuffer": 0.12,
-    "coyoteTime": 0.08
+    "coyoteTime": 0.08,
+    "hold": {
+      "gravityScale": 0.55,
+      "maxSeconds": 0.18
+    }
   },
   "dog": {
     "hitbox": {
