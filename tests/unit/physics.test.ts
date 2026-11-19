@@ -168,10 +168,10 @@ describe('hold to jump higher', () => {
   /** Peak height of a ground jump, holding for `holdSteps` steps. */
   function peakHolding(holdSteps: number, holding = true) {
     const d = newDog()
-    stepDog(d, p, DT, true, 0, holding && holdSteps > 0)
+    stepDog(d, p, DT, true, { holding: holding && holdSteps > 0 })
     let peak = d.y
     for (let k = 1; k < 600 && !d.grounded; k++) {
-      stepDog(d, p, DT, false, 0, holding && k < holdSteps)
+      stepDog(d, p, DT, false, { holding: holding && k < holdSteps })
       peak = Math.min(peak, d.y)
     }
     return -peak

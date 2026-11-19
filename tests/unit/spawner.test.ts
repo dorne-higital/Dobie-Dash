@@ -269,17 +269,17 @@ describe('rooftop ledges', () => {
     const p = loadGameConfig().physics
     const dt = 1 / 60
     const d = newDog()
-    stepDog(d, p, dt, true, 0) // jump from the ground, up through the ledge
+    stepDog(d, p, dt, true) // jump from the ground, up through the ledge
     let landedOnTop = false
     for (let k = 0; k < 120; k++) {
       const floor = d.y <= -100 + 0.5 ? -100 : 0
-      stepDog(d, p, dt, false, floor)
+      stepDog(d, p, dt, false, { floor })
       if (d.grounded && d.y === -100) landedOnTop = true
       if (landedOnTop) break
     }
     expect(landedOnTop).toBe(true)
     // The ledge ends: floor drops to the ground and the dog falls to it.
-    for (let k = 0; k < 120 && !(d.grounded && d.y === 0); k++) stepDog(d, p, dt, false, 0)
+    for (let k = 0; k < 120 && !(d.grounded && d.y === 0); k++) stepDog(d, p, dt, false)
     expect(d.y).toBe(0)
     expect(d.grounded).toBe(true)
   })

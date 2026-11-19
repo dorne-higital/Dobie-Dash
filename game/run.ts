@@ -373,14 +373,10 @@ export class Run {
 
     // Dog.
     if (this.opts.autoplay) this.autoplay()
-    const r = stepDog(
-      this.dog,
-      this.cfg.physics,
-      dt,
-      this.pressed,
-      this.floorUnderDog(),
-      !!this.opts.holdToJump && this.holding,
-    )
+    const r = stepDog(this.dog, this.cfg.physics, dt, this.pressed, {
+      floor: this.floorUnderDog(),
+      holding: !!this.opts.holdToJump && this.holding,
+    })
     if (this.ledges.length && this.ledges[0]!.wx1 < this.dist - 300) this.ledges.shift()
     this.pressed = false
     if (r.jumped) {

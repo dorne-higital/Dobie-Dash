@@ -23,6 +23,16 @@ export interface DogBody {
 
 export type JumpKind = 'ground' | 'double' | null
 
+/** What's under and around the dog this step. */
+export interface StepEnv {
+  /** The surface under the dog: 0 for the ground, or a ledge top it is above (negative). */
+  floor?: number
+  /** The jump is held down (only when hold to jump higher is on). */
+  holding?: boolean
+  /** Ground jumps go this fraction of the normal speed (1; less on ice). */
+  jumpScale?: number
+}
+
 export interface StepResult {
   jumped: JumpKind
   landed: boolean
@@ -39,9 +49,9 @@ export function timeToGround(d: DogBody, p: PhysicsConfig, floor = 0): number {
   return (-d.vy + Math.sqrt(Math.max(0, disc))) / p.gravity
 }
 
-function tryJump(d: DogBody, p: PhysicsConfig, floor: number): JumpKind {
+function tryJump(d: DogBody, p: PhysicsConfig, floor: number, jumpScale: number): JumpKind {
   if (d.grounded || d.coyote > 0) {
-    d.vy = p.jumpVelocity
+    d.vy = p.jumpVelocity * jumpScale
     d.grounded = false
     d.coyote = 0
     d.jumps = 1
@@ -63,17 +73,18 @@ function tryJump(d: DogBody, p: PhysicsConfig, floor: number): JumpKind {
 
 /**
  * Advances the dog by one fixed step. `pressed` is true if the player tapped since the
- * previous step. `floor` is the surface under the dog (0, or a ledge top it is above).
- * `holding`: the jump is held down (only when hold to jump higher is on).
+ * previous step. `env` says what's under the dog (see StepEnv).
  */
 export function stepDog(
   d: DogBody,
   p: PhysicsConfig,
   dt: number,
   pressed: boolean,
-  floor = 0,
-  holding = false,
+  env: StepEnv = {},
 ): StepResult {
+  const floor = env.floor ?? 0
+  const holding = env.holding ?? false
+  const jumpScale = env.jumpScale ?? 1
   let jumped: JumpKind = null
   let landed = false
   if (pressed) d.buffer = p.jumpBuffer
@@ -81,7 +92,7 @@ export function stepDog(
   if (d.grounded && d.y < floor) leaveGround(d, p)
 
   if (d.buffer > 0) {
-    jumped = tryJump(d, p, floor)
+    jumped = tryJump(d, p, floor, jumpScale)
     if (jumped) d.buffer = 0
   }
 
@@ -99,7 +110,7 @@ export function stepDog(
       landed = true
       // Buffered tap: jump straight off the landing.
       if (d.buffer > 0) {
-        jumped = tryJump(d, p, floor)
+        jumped = tryJump(d, p, floor, jumpScale)
         d.buffer = 0
       }
     }
@@ -127,13 +138,13 @@ export function leaveGround(d: DogBody, p: PhysicsConfig) {
  */
 export function maxAirTime(h: number, p: PhysicsConfig, dt: number): number {
   const d: DogBody = { y: -h, vy: 0, grounded: true, jumps: 0, buffer: 0, coyote: 0, held: 0 }
-  stepDog(d, p, dt, true, 0, true)
+  stepDog(d, p, dt, true, { holding: true })
   let k = 1
   let doubled = false
   while (!d.grounded && k < 1000) {
     const press = !doubled && d.vy >= 0
     if (press) doubled = true
-    stepDog(d, p, dt, press, 0, true)
+    stepDog(d, p, dt, press, { holding: true })
     k++
   }
   return k * dt
