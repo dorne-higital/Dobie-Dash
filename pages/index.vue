@@ -48,17 +48,42 @@ function answerReminders(yes: boolean) {
 function run() {
   router.push('/run')
 }
+
+// The dog runs just above "Tap anywhere to run", so the cards and any nudge below it
+// never cover the dog, whatever the phone's shape.
+const home = ref<HTMLElement | null>(null)
+const tap = ref<HTMLElement | null>(null)
+const groundPx = ref<number | null>(null)
+function placeGround() {
+  if (!home.value || !tap.value) return
+  const top = tap.value.getBoundingClientRect().top - home.value.getBoundingClientRect().top
+  groundPx.value = Math.round(top - 6)
+}
+let ro: ResizeObserver | null = null
+onMounted(() => {
+  placeGround()
+  ro = new ResizeObserver(placeGround)
+  if (home.value) ro.observe(home.value)
+})
+watch(askReminders, () => nextTick(placeGround))
+onBeforeUnmount(() => ro?.disconnect())
 </script>
 
 <template>
-  <section class="home" @click="run">
-    <HubRunningDobie class="bg" :sheet="showSheet" :look="look" :theme="theme" />
+  <section ref="home" class="home" @click="run">
+    <HubRunningDobie
+      class="bg"
+      :sheet="showSheet"
+      :look="look"
+      :theme="theme"
+      :ground-px="groundPx"
+    />
     <div class="title">
       <h1 class="logo">Dobie <span>Dash</span></h1>
       <p v-if="player.dog" class="hi">{{ player.dog.name }} is ready</p>
     </div>
     <!-- The whole screen starts a run; this button is the same for VoiceOver and keyboards. -->
-    <button type="button" class="tap" @click.stop="run">Tap anywhere to run</button>
+    <button ref="tap" type="button" class="tap" @click.stop="run">Tap anywhere to run</button>
     <div v-if="askReminders" class="nudge" @click.stop>
       <p>
         <b><UiIcon name="bell" /> Want a nudge?</b> We'll tell you when new missions land and before

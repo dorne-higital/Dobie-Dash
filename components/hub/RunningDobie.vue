@@ -9,8 +9,14 @@ import { drawSprite, runFrame, SpriteCache, type Sprite } from '~/game/render/sp
 import type { Look } from '~/logic/look'
 
 const props = withDefaults(
-  defineProps<{ sheet?: boolean; look?: Look | null; theme?: ThemeKind }>(),
-  { look: null, theme: 'park' },
+  defineProps<{
+    sheet?: boolean
+    look?: Look | null
+    theme?: ThemeKind
+    /** Where the ground goes, in CSS px from the top (so cards below never cover the dog). */
+    groundPx?: number | null
+  }>(),
+  { look: null, theme: 'park', groundPx: null },
 )
 const hero = ref<HTMLCanvasElement | null>(null)
 const sheetCv = ref<HTMLCanvasElement | null>(null)
@@ -31,7 +37,8 @@ function setup(cv: HTMLCanvasElement) {
     lastScale = S
   }
   const H = cv.height / S
-  return { S, W: 600, H, GY: Math.round(H * 0.76) }
+  const GY = props.groundPx ? (props.groundPx * dpr) / S : H * 0.76
+  return { S, W: 600, H, GY: Math.round(Math.min(H - 20, Math.max(H * 0.4, GY))) }
 }
 
 function drawSheet(cv: HTMLCanvasElement, c: SpriteCache) {
@@ -72,6 +79,10 @@ onMounted(async () => {
 
   onResize = () => (view = setup(cv))
   window.addEventListener('resize', onResize)
+  watch(
+    () => props.groundPx,
+    () => (view = setup(cv)),
+  )
   watch(
     () => props.look,
     () => {
