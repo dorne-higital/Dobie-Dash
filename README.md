@@ -92,6 +92,33 @@ The hub's content is also JSON:
 | `content/worlds.json`           | also the Worlds tab text, worlds 5–8 (locked), and the tutorial's steps and words                                                                        | The config is loaded through `services/config`, so Remote Config can later override |
 | it without an App Store update. |
 
+### Changing numbers live (Remote Config)
+
+Firebase → Dobie Dash → Remote Config has one parameter, `overrides` (JSON). The app
+fetches it at launch (waiting at most 2 s; offline it uses the last values it fetched) and
+writes it into the /content values above. It's checked as a whole: if any value is wrong,
+none of it is used and the bundled numbers stay. Only these can change
+(`logic/remote.ts`):
+
+```json
+{
+  "worlds": {
+    "city-streets": { "at": 1500, "speed": 330, "gap": [1.1, 1.8] },
+    "midnight-run": { "gate": 12000 }
+  },
+  "continuePrices": [50, 100, 200],
+  "meter": { "blocks": 8, "growBy": 4, "maxBlocks": 40 },
+  "endless": { "perThousand": 15, "maxSpeed": 560 },
+  "items": { "neck:bandana": { "price": 400 }, "hat:crown": { "bones": 60 } },
+  "breedBones": 80,
+  "ads": { "minSessions": 3, "everyRuns": 3 },
+  "starterAfterRuns": 10
+}
+```
+
+Leave out anything you don't want to change. App Store prices are set in App Store
+Connect, not here.
+
 ## How it fits together
 
 ```

@@ -103,9 +103,10 @@ export interface CrashService {
 }
 
 export interface ConfigService {
-  /** Bundled content/worlds.json merged with any remote overrides. */
+  /** content/worlds.json, with any Remote Config overrides already written into it. */
   game(): GameConfig
-  refresh(): Promise<void>
+  /** Remote Config's `overrides` JSON (logic/remote.ts), or null if none or offline. */
+  remoteOverrides(): Promise<unknown | null>
 }
 
 export interface Services {
