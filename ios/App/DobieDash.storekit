@@ -138,12 +138,27 @@
       "type": "NonConsumable"
     },
     {
-      "displayPrice": "4.99",
+      "displayPrice": "2.99",
       "familyShareable": false,
       "internalID": "1000010",
       "localizations": [
         {
-          "description": "All 12 breeds, now and every new one.",
+          "description": "A sparkly top hat, a sequin bow tie and a streamers trail.",
+          "displayName": "Party Pack",
+          "locale": "en_GB"
+        }
+      ],
+      "productID": "uk.co.danhorne.dobiedash.pack.party",
+      "referenceName": "Party Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "4.99",
+      "familyShareable": false,
+      "internalID": "1000011",
+      "localizations": [
+        {
+          "description": "Every breed, now and every new one.",
           "displayName": "Every Breed",
           "locale": "en_GB"
         }
@@ -155,7 +170,7 @@
     {
       "displayPrice": "0.99",
       "familyShareable": false,
-      "internalID": "1000011",
+      "internalID": "1000012",
       "localizations": [
         {
           "description": "Breed: lab",
@@ -170,7 +185,7 @@
     {
       "displayPrice": "0.99",
       "familyShareable": false,
-      "internalID": "1000012",
+      "internalID": "1000013",
       "localizations": [
         {
           "description": "Breed: golden",
@@ -185,7 +200,7 @@
     {
       "displayPrice": "0.99",
       "familyShareable": false,
-      "internalID": "1000013",
+      "internalID": "1000014",
       "localizations": [
         {
           "description": "Breed: spaniel",
@@ -200,7 +215,7 @@
     {
       "displayPrice": "0.99",
       "familyShareable": false,
-      "internalID": "1000014",
+      "internalID": "1000015",
       "localizations": [
         {
           "description": "Breed: collie",
@@ -215,7 +230,7 @@
     {
       "displayPrice": "0.99",
       "familyShareable": false,
-      "internalID": "1000015",
+      "internalID": "1000016",
       "localizations": [
         {
           "description": "Breed: husky",
@@ -230,7 +245,7 @@
     {
       "displayPrice": "0.99",
       "familyShareable": false,
-      "internalID": "1000016",
+      "internalID": "1000017",
       "localizations": [
         {
           "description": "Breed: corgi",
@@ -245,7 +260,7 @@
     {
       "displayPrice": "0.99",
       "familyShareable": false,
-      "internalID": "1000017",
+      "internalID": "1000018",
       "localizations": [
         {
           "description": "Breed: dachshund",
@@ -260,7 +275,7 @@
     {
       "displayPrice": "0.99",
       "familyShareable": false,
-      "internalID": "1000018",
+      "internalID": "1000019",
       "localizations": [
         {
           "description": "Breed: dalmatian",
@@ -275,7 +290,7 @@
     {
       "displayPrice": "0.99",
       "familyShareable": false,
-      "internalID": "1000019",
+      "internalID": "1000020",
       "localizations": [
         {
           "description": "Breed: frenchie",
@@ -290,7 +305,7 @@
     {
       "displayPrice": "0.99",
       "familyShareable": false,
-      "internalID": "1000020",
+      "internalID": "1000021",
       "localizations": [
         {
           "description": "Breed: greyhound",
@@ -305,7 +320,7 @@
     {
       "displayPrice": "0.99",
       "familyShareable": false,
-      "internalID": "1000021",
+      "internalID": "1000022",
       "localizations": [
         {
           "description": "Breed: jack",
@@ -320,7 +335,7 @@
     {
       "displayPrice": "0.99",
       "familyShareable": false,
-      "internalID": "1000022",
+      "internalID": "1000023",
       "localizations": [
         {
           "description": "Breed: cockapoo",
@@ -335,7 +350,7 @@
     {
       "displayPrice": "0.99",
       "familyShareable": false,
-      "internalID": "1000023",
+      "internalID": "1000024",
       "localizations": [
         {
           "description": "Breed: staffie",

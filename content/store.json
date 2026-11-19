@@ -86,6 +86,16 @@
       "blurb": "Unlock the premium track: trails, collars, a backpack, a daisy chain and 280 Golden Bones."
     },
     {
+      "id": "pack.party",
+      "type": "non-consumable",
+      "title": "Party Pack",
+      "gbp": "£2.99",
+      "grants": {
+        "items": ["hat:tophat", "neck:sparklebow", "trail:streamers"]
+      },
+      "blurb": "A sparkly top hat, a sequin bow tie and a streamers trail."
+    },
+    {
       "id": "breeds.all",
       "type": "non-consumable",
       "title": "Every Breed",

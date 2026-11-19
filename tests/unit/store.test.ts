@@ -181,3 +181,39 @@ describe('between-run ads', () => {
     expect(needsTrackingPrompt(s)).toBe(false)
   })
 })
+
+describe('outfit packs and the Pup Pass (M7)', () => {
+  it('the Party Pack is a £2.99 non-consumable with a hat, bow tie and trail', () => {
+    const p = product('pack.party')!
+    expect(p).toMatchObject({ type: 'non-consumable', gbp: '£2.99' })
+    expect(p.grants.items).toEqual(['hat:tophat', 'neck:sparklebow', 'trail:streamers'])
+    expect(product('pass.s1')).toMatchObject({ type: 'non-consumable', gbp: '£4.99' })
+  })
+  it('buying the pack gives all three, once', () => {
+    const s = defaultSave()
+    expect(deliver(s, 'pack.party')).toEqual(product('pack.party')!.grants)
+    expect(s.owned).toEqual(
+      expect.arrayContaining(['hat:tophat', 'neck:sparklebow', 'trail:streamers']),
+    )
+    expect(deliver(s, 'pack.party')).toBeNull()
+  })
+  it('a restore on a new phone gives the pack back', () => {
+    const s = defaultSave()
+    expect(reconcile(s, ['uk.co.danhorne.dobiedash.pack.party']).restored).toEqual(['pack.party'])
+    expect(s.owned).toContain('trail:streamers')
+  })
+  it('a refund (or a hand-edited save) takes the pack items off, worn or not', () => {
+    const s = defaultSave()
+    deliver(s, 'pack.party')
+    equip(s, 'hat:tophat')
+    const r = reconcile(s, [])
+    expect(r.revoked).toContain('pack.party')
+    expect(s.owned).not.toContain('hat:tophat')
+    expect(s.owned).not.toContain('trail:streamers')
+    expect(s.equipped.hat).toBeNull()
+    const edited = defaultSave()
+    edited.owned.push('neck:sparklebow')
+    reconcile(edited, [])
+    expect(edited.owned).not.toContain('neck:sparklebow')
+  })
+})

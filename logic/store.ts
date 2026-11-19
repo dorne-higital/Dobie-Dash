@@ -15,6 +15,8 @@ export interface ProductGrants {
   biscuits?: number
   bones?: number
   item?: string
+  /** Several items at once (outfit packs, M7). */
+  items?: string[]
   flag?: 'removeAds'
   /** A breed key, or "all". */
   breeds?: string
@@ -66,6 +68,7 @@ function applyGrants(s: StoreState, g: ProductGrants) {
   s.wallet.biscuits += g.biscuits ?? 0
   s.wallet.bones += g.bones ?? 0
   if (g.item) grant(s, g.item)
+  for (const id of g.items ?? []) grant(s, id)
   if (g.flag === 'removeAds') s.flags.removeAds = true
   if (g.breeds === 'all') grant(s, 'breed:all')
   else if (g.breeds) grant(s, `breed:${g.breeds}`)
@@ -89,13 +92,17 @@ export function deliver(s: StoreState, id: string): ProductGrants | null {
 }
 
 /** Things only real money can unlock, so a hand-edited save can't keep them. */
-function paidOnly(p: ProductDef): { item?: string; flag?: 'removeAds'; breed?: string } {
+function paidOnly(p: ProductDef): { items: string[]; flag?: 'removeAds' } {
   const g = p.grants
   return {
-    // The bandana (starter) can also be bought with biscuits, so it isn't paid-only.
-    item: g.item === 'collar:gold' ? g.item : undefined,
+    items: [
+      // The bandana (starter) can also be bought with biscuits, so it isn't paid-only.
+      ...(g.item === 'collar:gold' ? [g.item] : []),
+      // Outfit pack items are only sold in their pack.
+      ...(g.items ?? []),
+      ...(g.breeds === 'all' ? ['breed:all'] : []),
+    ],
     flag: g.flag,
-    breed: g.breeds === 'all' ? 'breed:all' : undefined,
   }
 }
 
@@ -122,8 +129,8 @@ export function reconcile(s: StoreState, owned: Iterable<string>) {
       s.flags.removeAds = false
       took = true
     }
-    for (const id of [paid.item, paid.breed]) {
-      if (id && s.owned.includes(id)) {
+    for (const id of paid.items) {
+      if (s.owned.includes(id)) {
         s.owned = s.owned.filter((o) => o !== id)
         for (const slot of Object.keys(s.equipped) as (keyof typeof s.equipped)[])
           if (s.equipped[slot] === id) s.equipped[slot] = null

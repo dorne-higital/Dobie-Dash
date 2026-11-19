@@ -1,5 +1,9 @@
 <script setup lang="ts">
-/** Store: Remove Ads, the starter pack, biscuit and bone packs, the Gold Collar and breeds. */
+/**
+ * Store: Remove Ads, the starter pack, the Pup Pass, outfit packs, biscuit and bone packs,
+ * the Gold Collar and breeds.
+ */
+import { item } from '~/logic/items'
 import { Capacitor } from '@capacitor/core'
 import site from '~/content/site.json'
 import { product, type ProductGrants } from '~/logic/store'
@@ -8,7 +12,8 @@ const player = usePlayerStore()
 const { price, busy, message, loadPrices, buy, restore } = usePurchases()
 const native = Capacitor.isNativePlatform()
 const dev = import.meta.dev
-const got = ref<{ title: string; grants: ProductGrants } | null>(null)
+const got = ref<{ id: string; title: string; grants: ProductGrants } | null>(null)
+const id = (g: { id: string }) => g.id
 const { analytics } = useServices()
 const online = useOnline()
 watch(online, (now) => {
@@ -25,10 +30,11 @@ const owned = (id: string) => player.purchases.delivered.includes(id)
 const groups = computed(() => [
   {
     title: 'Specials',
-    items: ['removeads', 'starter', 'collar.gold', 'breeds.all'].filter(
+    items: ['removeads', 'starter', 'pass.s1', 'collar.gold', 'breeds.all'].filter(
       (id) => !(id === 'starter' && owned('starter')),
     ),
   },
+  { title: 'Outfit packs', items: ['pack.party'] },
   { title: 'Biscuits', items: ['biscuits.bag', 'biscuits.barrel'] },
   { title: 'Golden Bones', items: ['bones.pouch', 'bones.box', 'bones.crate'] },
 ])
@@ -37,6 +43,8 @@ const ICON: Record<string, string> = {
   starter: 'backpack',
   'collar.gold': 'collar',
   'breeds.all': 'breeds',
+  'pass.s1': 'ticket',
+  'pack.party': 'party',
   'biscuits.bag': 'bag',
   'biscuits.barrel': 'barrel',
   'bones.pouch': 'pouch',
@@ -46,7 +54,7 @@ const ICON: Record<string, string> = {
 
 async function tap(id: string) {
   const g = await buy(id, 'store')
-  if (g) got.value = { title: product(id)!.title, grants: g }
+  if (g) got.value = { id, title: product(id)!.title, grants: g }
 }
 </script>
 
@@ -82,13 +90,23 @@ async function tap(id: string) {
     <HubRewardSheet
       v-if="got"
       :title="`${got.title}!`"
-      :reward="{ biscuits: got.grants.biscuits, bones: got.grants.bones, item: got.grants.item }"
+      :reward="{
+        biscuits: got.grants.biscuits,
+        bones: got.grants.bones,
+        item: got.grants.items
+          ? got.grants.items.map((i) => item(i)?.name ?? i).join(', ')
+          : got.grants.item,
+      }"
       :note="
         got.grants.flag === 'removeAds'
           ? 'No more ads between runs.'
           : got.grants.breeds
             ? 'New breeds are ready in My dog.'
-            : undefined
+            : got.grants.items
+              ? 'Find them in the Wardrobe.'
+              : id(got) === 'pass.s1'
+                ? 'Premium rewards are ready in Missions → Pup Pass.'
+                : undefined
       "
       @close="got = null"
     />
