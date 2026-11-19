@@ -326,7 +326,7 @@ describe('rooftop ledges', () => {
           seed,
           state: 'running',
         })
-        expect(onTop).toBeGreaterThan(60 * 10)
+        expect(onTop).toBeGreaterThan(60 * 8) // less up top now: no rooftops during a boss fight
       }
   }, 60_000)
 })
@@ -510,7 +510,7 @@ describe('Moon Walkies', () => {
     expect(chases.length).toBe(3)
     chases.forEach((s, k) => {
       const target = w.at + (k + 1) * w.chaseEvery!
-      expect(s).toBeGreaterThanOrEqual(target - cfg.chase.window)
+      expect(s).toBeGreaterThanOrEqual(target - cfg.fight.window)
       expect(s).toBeLessThan(target)
     })
     expect(run.escaped.filter((b) => b === 'ufo').length).toBe(3)

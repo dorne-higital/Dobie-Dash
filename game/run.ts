@@ -901,10 +901,60 @@ export class Run {
       this.fightPhase('beaten')
       this.fightEmit('win')
       this.endChase()
+      // Obstacles come back now, but the dog is still bouncing off the knock-out (a long
+      // float on the moon): nothing may arrive before it has landed.
+      const land = this.stepsToLand()
+      const v = this.scrollSpeed
+      this.spawner.holdUntil(
+        this.dist + this.cfg.view.dogX + (land * this.dt + 0.6) * v + 60,
+        this.step + land,
+      )
     } else {
       this.fightPhase('hurt')
       this.fightEmit('hit')
     }
+  }
+
+  /**
+   * Bot: if the dog would land on (or fly into) an obstacle, the step to double jump on
+   * that avoids it until it lands; null when no tap is needed or none helps.
+   */
+  private rescueTap(): number | null {
+    const p = physicsFor(this.cfg, this.world)
+    const hb = this.cfg.dog.hitbox
+    const dogX = this.cfg.view.dogX
+    const v = this.scrollSpeed
+    const dt = this.dt
+    const live = this.obstacles.filter((o) => !o.dead && o.wx - this.dist < dogX + 700)
+    if (!live.length) return null
+    const hits = (k: number | null) => {
+      const d = { ...this.dog }
+      for (let i = 0; i < 300; i++) {
+        stepDog(d, p, dt, i === k)
+        const db = dogBox(dogX, d.y, hb)
+        for (const o of live) {
+          const x = o.wx - this.dist - (v + (o.def.extraSpeed ?? 0)) * dt * (i + 1)
+          if (overlaps(db, obstacleBox(x, o.def))) return true
+        }
+        if (d.grounded && (k === null || i > k)) return false
+      }
+      return false
+    }
+    if (!hits(null)) return null
+    for (let k = 0; k < 90; k++) if (!hits(k)) return k
+    return null
+  }
+
+  /** Steps until the dog lands if nobody taps (physics as in this world). */
+  private stepsToLand() {
+    const d = { ...this.dog }
+    const p = physicsFor(this.cfg, this.world)
+    let n = 0
+    while (!d.grounded && n < 600) {
+      stepDog(d, p, this.dt, false)
+      n++
+    }
+    return n
   }
 
   private stompHits(prevY: number, y: number, vy: number, bx: number, f: Fight) {
@@ -947,6 +997,11 @@ export class Run {
       if (this.taps.delete(this.step)) this.pressed = true
       return
     }
+    // In the air with the double jump left and about to land on something: use it.
+    if (!this.dog.grounded && this.dog.jumps < 2 && this.taps.size === 0) {
+      const k = this.rescueTap()
+      if (k !== null) this.taps.add(this.step + k)
+    }
     // Taps planned at one speed go stale while a world change ramps the speed: replan.
     if (this.dog.grounded && this.scrollSpeed !== this.tapSpeed) this.taps.clear()
     // Leaving a wave or belt, the speed is still easing: plans made now would be for a
@@ -965,14 +1020,16 @@ export class Run {
       const arrive = (x: number, o: Obstacle) => (x - dogX) / (v + (o.def.extraSpeed ?? 0))
       ahead.sort((a, b) => arrive(a.wx - this.dist, a) - arrive(b.wx - this.dist, b))
       // Clusters: obstacles that reach the dog within 160 px of each other. Plan for as
-      // many clusters (inside 0.75 s) as two taps can clear, but never split a cluster.
+      // many clusters (inside 0.75 s, longer where jumps float) as two taps can clear, but
+      // never split a cluster.
+      const horizon = (0.75 * this.cfg.physics.gravity) / physicsFor(this.cfg, this.world).gravity
       const group: PatternObstacle[] = []
       const cuts: number[] = []
       let end = -Infinity
       for (const o of ahead) {
         const x = o.wx - this.dist
         const t = arrive(x, o)
-        if (group.length && t - end > 0.75) break
+        if (group.length && t - end > horizon) break
         if (group.length && t - end > 160 / v) cuts.push(group.length)
         // Runs before this step's physics, so this step is the validator's step 0.
         group.push({ type: o.type, x })

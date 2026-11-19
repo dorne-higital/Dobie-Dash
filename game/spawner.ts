@@ -321,9 +321,9 @@ export class Spawner {
   }
 
   /** After a continue: nothing new until world x `wx` (the cleared stretch stays clear). */
-  holdUntil(wx: number) {
+  holdUntil(wx: number, readyStep = 0) {
     this.nextAt = Math.max(this.nextAt, wx)
-    this.readyStep = 0
+    this.readyStep = readyStep
   }
 
   /** Call once per step after `dist` advances. Returns anything that should appear now. */
