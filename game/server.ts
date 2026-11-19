@@ -7,6 +7,8 @@ import { replay, type RunRecord } from './replay'
 
 export { loadGameConfig, replay }
 export { nameProblem } from '../logic/names'
+/** Board rules (attempts, prizes) from content/supabase.json, so the server uses the same. */
+export { default as boardRules } from '../content/supabase.json'
 export type { RunRecord }
 
 /**

@@ -751,6 +751,28 @@ var worlds_default = {
   }
 };
 
+// content/events.json
+var events_default = {
+  version: 1,
+  _: "Seasonal events (M7). start/end are UTC dates (end is the first day it's over). Remote Config can move them or switch one off: events.<id>.start / end / off. Present chance is gameplay (fingerprinted); the dates are not.",
+  events: [
+    {
+      id: "winter",
+      name: "Winter Walkies",
+      start: "2026-12-01",
+      end: "2027-01-06",
+      snow: true,
+      presents: { chance: 0.07 },
+      blurb: "Snow in every world! Find the presents hidden among the biscuits.",
+      rewards: [
+        { at: 10, item: "hat:santa" },
+        { at: 30, item: "hat:antlers" },
+        { at: 60, item: "trail:snow" }
+      ]
+    }
+  ]
+};
+
 // game/config.ts
 var worldPhysics = /* @__PURE__ */ new WeakMap();
 function physicsFor(cfg, world) {
@@ -763,7 +785,7 @@ function physicsFor(cfg, world) {
   return p;
 }
 function loadGameConfig(overrides) {
-  const base = JSON.parse(JSON.stringify(worlds_default));
+  const base = JSON.parse(JSON.stringify({ ...worlds_default, events: events_default.events }));
   return overrides ? { ...base, ...overrides } : base;
 }
 function playableWorlds(cfg) {
@@ -1616,6 +1638,11 @@ var Run = class {
     this.dt = 1 / cfg.loop.hz;
     this.spawner = new Spawner(cfg, seed, viewW);
     this.viewW = viewW;
+    const ev = opts.event ? cfg.events?.find((e) => e.id === opts.event) : void 0;
+    if (ev && ev.presents.chance > 0) {
+      this.presentRng = new Rng((seed ^ 6221086) >>> 0);
+      this.presentChance = ev.presents.chance;
+    }
     const sw = Math.min(Math.max(0, opts.startWorld ?? 0), this.worlds.length - 1);
     this.worldIndex = sw;
     this.scoreOffset = this.worlds[sw].at;
@@ -1674,6 +1701,10 @@ var Run = class {
   }
   /** Big Barks used this run. */
   barksUsed = 0;
+  /** Presents found (seasonal event). */
+  presents = 0;
+  presentRng = null;
+  presentChance = 0;
   /** Big Barks still usable this run (saved ones, up to the per-run limit). */
   get barksLeft() {
     return Math.max(0, Math.min(this.opts.bigBarks ?? 0, this.cfg.bigBark.perRun) - this.barksUsed);
@@ -1735,7 +1766,8 @@ var Run = class {
       jumps: this.jumps,
       powerups: this.powerupsUsed,
       golden: this.golden,
-      cleared: { ...this.cleared }
+      cleared: { ...this.cleared },
+      presents: this.presents
     };
   }
   emit(type, data) {
@@ -1839,7 +1871,14 @@ var Run = class {
       const glide2 = this.glideSpan();
       for (const b0 of batch.biscuits) {
         const b = glide2 && b0.wx > glide2.wx0 && b0.wx < glide2.wx1 ? { ...b0, y: glide2.y } : b0;
-        this.biscuits.push({ ...b, pwx: b.wx, py: b.y, ph: b.wx * 0.37 % (Math.PI * 2) });
+        const present = !!this.presentRng && !b.gold && this.presentRng.chance(this.presentChance);
+        this.biscuits.push({
+          ...b,
+          ...present ? { present } : {},
+          pwx: b.wx,
+          py: b.y,
+          ph: b.wx * 0.37 % (Math.PI * 2)
+        });
       }
     }
     const glide = this.glideSpan();
@@ -1935,8 +1974,14 @@ var Run = class {
       if (ex * ex + ey * ey < reach * reach) {
         this.biscuitsEaten++;
         const pe = eatBiscuit(this.power, b.gold, this.spawner.rng, this.cfg);
-        this.fx.push({ type: "eat", x: sx, y: b.y, gold: b.gold });
-        this.emit("biscuit", { count: this.biscuitsEaten, meter: this.power.meter, gold: b.gold });
+        if (b.present) this.presents++;
+        this.fx.push({ type: "eat", x: sx, y: b.y, gold: b.gold, present: b.present });
+        this.emit("biscuit", {
+          count: this.biscuitsEaten,
+          meter: this.power.meter,
+          gold: b.gold,
+          present: b.present
+        });
         if (b.gold) this.golden++;
         if (pe) {
           if (pe.active) this.powerupsUsed++;
@@ -2541,9 +2586,29 @@ var NAME_PROBLEM_TEXT = {
   word: "That name isn't allowed. Try another."
 };
 
+// content/supabase.json
+var supabase_default = {
+  url: "https://kdsfnkisjpeoicpeqeof.supabase.co",
+  publishableKey: "sb_publishable_TpzmmsqC0UtbZY44e3BA3w_l-PufKMl",
+  tiers: ["Puppy", "Good Boy", "Top Dog", "Alpha", "Legend"],
+  leagueMoves: 5,
+  dailyAttempts: {
+    free: 1,
+    ads: 3
+  },
+  dailyBones: 10,
+  cup: {
+    _: "Weekend Cup (M7): Friday 00:00 to Monday 00:00 UTC, one course for everyone. The prize is paid by roll_cups() in supabase/migrations (keep bones in step).",
+    attempts: 5,
+    bones: 20,
+    topPercent: 10
+  }
+};
+
 // game/server.ts
 function configFingerprint(cfg = loadGameConfig()) {
-  const json = JSON.stringify(cfg);
+  const events = (cfg.events ?? []).map((e) => ({ id: e.id, presents: e.presents }));
+  const json = JSON.stringify({ ...cfg, events });
   let h = 2166136261;
   for (let i = 0; i < json.length; i++) {
     h ^= json.charCodeAt(i);
@@ -2552,6 +2617,7 @@ function configFingerprint(cfg = loadGameConfig()) {
   return h.toString(36);
 }
 export {
+  supabase_default as boardRules,
   configFingerprint,
   loadGameConfig,
   nameProblem,

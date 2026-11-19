@@ -60,7 +60,15 @@ const startPower = (POWER_KINDS as readonly string[]).includes(String(route.quer
   : undefined
 // Daily Dash: today's shared course (its seed from the server), on the Daily Dash board.
 const daily = 'daily' in route.query
+// Weekend Cup (M7): this weekend's shared course, on the cup's board.
+const cup = !daily && 'cup' in route.query
 let dailySeed: number | null = null
+let cupSeed: number | null = null
+/** The shared course's seed (Daily Dash or Cup), or undefined for a fresh course. */
+const sharedSeed = () =>
+  daily && dailySeed !== null ? dailySeed : cup && cupSeed !== null ? cupSeed : undefined
+const boardKind = () =>
+  daily && dailySeed !== null ? 'daily' : cup && cupSeed !== null ? 'cup' : 'normal'
 const boards = useBoards()
 const online = useOnline()
 /** A normal run that counts (not a test world, test power or the bot). */
@@ -141,7 +149,7 @@ function start() {
   const barks = barksForRun()
   engine?.setBigBarks(barks)
   barksLeft.value = Math.min(barks, config.game().bigBark.perRun)
-  engine?.start(daily && dailySeed !== null ? dailySeed : undefined)
+  engine?.start(sharedSeed())
   // Only the first run from ?tutorial is a tutorial; "Play again" is a normal run.
   engine?.setTutorial(false)
   analytics.track('run_start', { run: runNumber(), world: startWorld ?? 0 })
@@ -247,6 +255,7 @@ onMounted(async () => {
   }
   if (!canvas.value) return
   if (daily) dailySeed = (await boards.dailyToday())?.seed ?? null
+  if (cup) cupSeed = (await boards.cupNow())?.seed ?? null
   // Bot runs race rivals too (for testing); they are never submitted.
   const rivals = (counts || bot) && online.value ? await boards.rivals(daily) : null
   engine = new Engine(canvas.value, config.game(), {
@@ -276,8 +285,7 @@ onMounted(async () => {
       // Off to the boards to be checked (queued if offline).
       const rec = engine?.record() ?? null
       lastRecord.value = rec
-      if (rec && counts && r.score > 0)
-        void boards.submit(rec, r.score, daily && dailySeed !== null ? 'daily' : 'normal')
+      if (rec && counts && r.score > 0) void boards.submit(rec, r.score, boardKind())
       newBest.value = got.newBest
       earned.value = [
         ...got.unlocked.map((id) =>

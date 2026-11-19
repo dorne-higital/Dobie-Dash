@@ -4,6 +4,7 @@
  * the League tab. Writes only ever go through the Edge Functions (submit-run, profile).
  */
 import { Capacitor } from '@capacitor/core'
+import { cupEnds, cupFriday } from '~/logic/cups'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import sb from '~/content/supabase.json'
 import { configFingerprint } from '~/game/server'
@@ -34,7 +35,7 @@ export interface BoardPlayer {
 interface Pending {
   record: RunRecord
   score: number
-  kind: 'normal' | 'daily'
+  kind: 'normal' | 'daily' | 'cup'
   at: number
 }
 
@@ -125,7 +126,11 @@ export function useBoards() {
   const nameRejected = useState<string | null>('boards-name-rejected', () => null)
 
   /** Sends a finished run to be checked; kept and retried later if it can't be sent. */
-  async function submit(record: RunRecord, score: number, kind: 'normal' | 'daily' = 'normal') {
+  async function submit(
+    record: RunRecord,
+    score: number,
+    kind: 'normal' | 'daily' | 'cup' = 'normal',
+  ) {
     const p = readPending()
     p.push({ record, score, kind, at: Date.now() })
     writePending(p)
@@ -182,6 +187,32 @@ export function useBoards() {
       .maybeSingle()
     const rows = await daily()
     return dash ? { day, seed: dash.seed as number, rows } : null
+  }
+
+  const cupBoard = () => rpc<BoardRow>('cup_board')
+
+  /**
+   * This weekend's cup (Friday to Sunday, UTC): its name, course seed, when it ends, and
+   * the board. Null on Monday to Thursday (or offline).
+   */
+  async function cupNow() {
+    if (!cupFriday(new Date()) || !(await signIn())) return null
+    const { data: f } = await db().rpc('current_cup')
+    if (!f) return null
+    const { data: cup } = await db()
+      .from('cups')
+      .select('friday, seed, name, closed')
+      .eq('friday', f as string)
+      .maybeSingle()
+    if (!cup || cup.closed) return null
+    const ends = cupEnds(cup.friday as string)
+    return {
+      friday: cup.friday as string,
+      seed: cup.seed as number,
+      name: cup.name as string,
+      ends,
+      rows: await cupBoard(),
+    }
   }
 
   async function addFriend(code: string) {
@@ -314,6 +345,7 @@ export function useBoards() {
     friends,
     daily,
     dailyToday,
+    cupNow,
     addFriend,
     report,
     claimRewards,

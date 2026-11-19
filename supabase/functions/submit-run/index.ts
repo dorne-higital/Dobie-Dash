@@ -2,7 +2,7 @@
 // (seed, view width, options and every input); this replays it with the game's own code
 // and records the replayed score. Anything that doesn't replay to the claimed score is
 // refused, so a forged score can't get on the boards.
-import { configFingerprint, loadGameConfig, replay } from '../_shared/game.js'
+import { boardRules, configFingerprint, loadGameConfig, replay } from '../_shared/game.js'
 import { admin, caller, cors, ensurePlayer, json } from '../_shared/http.ts'
 
 /** Seed, view width, options and every input of a run (see game/replay.ts). */
@@ -22,15 +22,16 @@ interface RunRecord {
 
 const cfg = loadGameConfig()
 const FINGERPRINT = configFingerprint(cfg)
-/** Daily Dash: one free attempt plus up to three from ads. */
-const DAILY_ATTEMPTS = 4
+/** Daily Dash: the free attempt plus the ones from ads; Weekend Cup attempts. */
+const DAILY_ATTEMPTS = boardRules.dailyAttempts.free + boardRules.dailyAttempts.ads
+const CUP_ATTEMPTS = boardRules.cup.attempts
 const MAX_TICKS = 60 * 60 * 40 // 40 minutes of play
 
 interface Body {
   record: RunRecord
   claimed: { score: number }
   fingerprint: string
-  kind?: 'normal' | 'daily'
+  kind?: 'normal' | 'daily' | 'cup'
 }
 
 function valid(r: RunRecord | undefined): r is RunRecord {
@@ -68,11 +69,21 @@ Deno.serve(async (req) => {
   // Played with different gameplay numbers (an older or newer app): can't check it here.
   if (body.fingerprint !== FINGERPRINT) return json({ ok: false, reason: 'version' }, 409)
 
-  const kind = body.kind === 'daily' ? 'daily' : 'normal'
+  const kind = body.kind === 'daily' || body.kind === 'cup' ? body.kind : 'normal'
   const today = new Date().toISOString().slice(0, 10)
   if (kind === 'daily') {
     const { data: dash } = await db.from('daily_dash').select('seed').eq('day', today).maybeSingle()
     if (!dash || dash.seed !== body.record.seed) return json({ ok: false, reason: 'daily' }, 409)
+  }
+  let cupFriday: string | null = null
+  if (kind === 'cup') {
+    const { data: f } = await db.rpc('current_cup')
+    const { data: cup } = f
+      ? await db.from('cups').select('friday, seed, closed').eq('friday', f).maybeSingle()
+      : { data: null }
+    if (!cup || cup.closed || cup.seed !== body.record.seed)
+      return json({ ok: false, reason: 'cup' }, 409)
+    cupFriday = cup.friday
   }
 
   // Only the options that change the simulation, nothing else from the client.
@@ -109,6 +120,23 @@ Deno.serve(async (req) => {
       w: s.world,
       secs: s.seconds,
       rec,
+    })
+    if (error) return json({ ok: false, reason: 'db', detail: error.message }, 500)
+  } else if (kind === 'cup') {
+    const { data: entry } = await db
+      .from('cup_entries')
+      .select('*')
+      .eq('friday', cupFriday)
+      .eq('player_id', user.id)
+      .maybeSingle()
+    if (entry && entry.attempts >= CUP_ATTEMPTS) return json({ ok: false, reason: 'attempts' }, 429)
+    const better = !entry || s.score > entry.score
+    const { error } = await db.from('cup_entries').upsert({
+      friday: cupFriday,
+      player_id: user.id,
+      attempts: (entry?.attempts ?? 0) + 1,
+      score: better ? s.score : entry!.score,
+      record: better ? rec : entry!.record,
     })
     if (error) return json({ ok: false, reason: 'db', detail: error.message }, 500)
   } else {

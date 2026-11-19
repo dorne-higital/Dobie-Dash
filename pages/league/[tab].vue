@@ -36,6 +36,10 @@ const loading = ref(false)
 const failed = ref(false)
 const dailySeed = ref<number | null>(null)
 const dailyUsed = ref(0)
+/** Weekend Cup (Friday to Sunday): shown in the Daily Dash tab with its own board. */
+const cupInfo = ref<{ friday: string; seed: number; name: string; ends: number } | null>(null)
+const dashMode = ref<'daily' | 'cup'>('daily')
+const cupUsed = ref(0)
 
 async function load() {
   loading.value = true
@@ -53,13 +57,16 @@ async function load() {
   } else if (tab.value === 'friends') rows.value = await boards.friends()
   else if (tab.value === 'league') rows.value = await boards.league()
   else {
-    const d = await boards.dailyToday()
+    const [d, c] = await Promise.all([boards.dailyToday(), boards.cupNow()])
     dailySeed.value = d?.seed ?? null
-    rows.value = d?.rows ?? []
+    cupInfo.value = c ? { friday: c.friday, seed: c.seed, name: c.name, ends: c.ends } : null
+    if (!c) dashMode.value = 'daily'
+    readCupUsed()
+    rows.value = dashMode.value === 'cup' && c ? c.rows : (d?.rows ?? [])
   }
   loading.value = false
 }
-watch([tab, when], load, { immediate: true })
+watch([tab, when, dashMode], load, { immediate: true })
 onMounted(() => void boards.claimRewards())
 
 /** Is my own row outside the list shown (World board)? Then show it under the list. */
@@ -154,6 +161,39 @@ async function playDaily() {
   await router.push('/run?daily')
 }
 
+// Weekend Cup: a few goes each (content/supabase.json cup.attempts), counted on the server.
+const CUP_KEY = 'dobiedash:cup-used'
+const cupLeft = computed(() => Math.max(0, sb.cup.attempts - cupUsed.value))
+const cupDaysLeft = computed(() =>
+  cupInfo.value
+    ? Math.max(1, Math.ceil((cupInfo.value.ends - now.value.getTime()) / 86_400_000))
+    : 0,
+)
+function readCupUsed() {
+  try {
+    const v = JSON.parse(localStorage.getItem(CUP_KEY) ?? 'null') as {
+      friday: string
+      n: number
+    } | null
+    cupUsed.value = v && v.friday === cupInfo.value?.friday ? v.n : 0
+  } catch {
+    cupUsed.value = 0
+  }
+}
+async function playCup() {
+  if (!cupInfo.value || cupLeft.value <= 0) return
+  cupUsed.value++
+  try {
+    localStorage.setItem(
+      CUP_KEY,
+      JSON.stringify({ friday: cupInfo.value.friday, n: cupUsed.value }),
+    )
+  } catch {
+    /* fine: the server still counts attempts */
+  }
+  await router.push('/run?cup')
+}
+
 const nameNote = computed(() =>
   boards.nameRejected.value ? NAME_PROBLEM_TEXT[boards.nameRejected.value as NameProblem] : null,
 )
@@ -220,7 +260,41 @@ const faceLook = (r: BoardRow) => (r.me ? look.value : lookFromBoard(r.dog))
       </form>
     </div>
 
-    <div v-if="tab === 'dash'" class="dash">
+    <div v-if="tab === 'dash' && cupInfo" class="cupswitch" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        :aria-selected="dashMode === 'daily'"
+        :class="{ on: dashMode === 'daily' }"
+        @click="dashMode = 'daily'"
+      >
+        Today's Dash
+      </button>
+      <button
+        type="button"
+        role="tab"
+        :aria-selected="dashMode === 'cup'"
+        :class="{ on: dashMode === 'cup' }"
+        @click="dashMode = 'cup'"
+      >
+        <UiIcon name="trophy" /> Weekend Cup
+      </button>
+    </div>
+
+    <div v-if="tab === 'dash' && dashMode === 'cup' && cupInfo" class="dash cup">
+      <h2>{{ cupInfo.name }}</h2>
+      <p>
+        One course for everyone this weekend, {{ sb.cup.attempts }} goes each. Your best go counts.
+        On Monday the top {{ sb.cup.topPercent }}% win {{ sb.cup.bones }} Golden Bones.
+        {{ cupDaysLeft }} day{{ cupDaysLeft > 1 ? 's' : '' }} left.
+      </p>
+      <UiButton :disabled="cupLeft <= 0" @click="playCup">
+        <template v-if="cupLeft <= 0">No goes left this weekend</template>
+        <template v-else>Play the cup ({{ cupLeft }} left)</template>
+      </UiButton>
+    </div>
+
+    <div v-else-if="tab === 'dash'" class="dash">
       <p>
         One course for everyone today. Your best go counts. The top 10% win
         {{ sb.dailyBones }} Golden Bones at midnight (UK time in winter).
@@ -230,6 +304,9 @@ const faceLook = (r: BoardRow) => (r.me ? look.value : lookFromBoard(r.dog))
         <template v-else-if="dailyUsed < sb.dailyAttempts.free">Play today's Dash</template>
         <template v-else>Watch an ad for another go ({{ attemptsLeft }} left)</template>
       </UiButton>
+      <small v-if="!cupInfo" class="cupnext"
+        ><UiIcon name="trophy" /> A Weekend Cup runs every Friday to Sunday.</small
+      >
     </div>
 
     <section v-if="native && !boards.linked.value && tab !== 'dash'" class="keep">
@@ -607,5 +684,54 @@ h1 {
   color: var(--muted);
   text-align: center;
   word-break: break-word;
+}
+.cupswitch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px;
+}
+.cupswitch button {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 6px;
+  background: none;
+  font: 900 14px var(--body);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.cupswitch button.on {
+  background: var(--gold);
+  color: var(--plum);
+}
+.cupswitch :deep(.ui-icon) {
+  width: 18px;
+  height: 18px;
+}
+.dash.cup {
+  border: 2px solid var(--gold);
+}
+.dash.cup h2 {
+  margin: 0;
+  font-size: 22px;
+}
+.cupnext {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+.cupnext :deep(.ui-icon) {
+  width: 16px;
+  height: 16px;
 }
 </style>
