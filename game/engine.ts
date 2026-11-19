@@ -4,6 +4,7 @@
  * (run:end, biscuit, world, power) plus an optional feedback port for haptics.
  */
 import type { GameConfig, PowerKind, PowerLevels } from './config'
+import { activate } from './powerups'
 import type { Accessories, Dog } from './art/dobie'
 import { Emitter } from './events'
 import type { TrailKind } from './render/trails'
@@ -33,6 +34,8 @@ export interface EngineOptions {
   look?: { dog: Dog; acc: Accessories; trail: TrailKind | null }
   /** Testing only: start in this world (0-based). */
   startWorld?: number
+  /** Testing only (`?power=frisbee`): start with this power on. */
+  startPower?: PowerKind
   /** First-run tutorial run. */
   tutorial?: boolean
   /** CSS px of the top safe area (status bar / Dynamic Island). */
@@ -112,6 +115,7 @@ export class Engine {
       holdToJump: this.opts.holdToJump,
       powerLevels: this.opts.powerLevels,
     })
+    if (this.opts.startPower) activate(this.run.power, this.opts.startPower, this.cfg)
     this.renderer.reset(this.run.world.theme)
     const next = this.run.worlds[this.run.worldIndex + 1]
     if (next) this.renderer.prepareTheme(next.theme)

@@ -11,6 +11,7 @@ import { lookFor } from '~/logic/look'
 import { shouldOfferStarter } from '~/logic/store'
 import { MEDALS } from '~/logic/trophies'
 import type { RunSummary } from '~/game/run'
+import { POWER_KINDS, type PowerKind } from '~/game/config'
 import { runCause } from '~/logic/events'
 
 definePageMeta({ layout: 'run' })
@@ -47,6 +48,12 @@ const continueSheet = ref<{ adFinished: () => void } | null>(null)
 const bot = 'bot' in route.query
 // Testing: `?world=3` starts in Sunny Beach. Such runs don't count towards best or stats.
 const startWorld = Number(route.query.world) > 1 ? Number(route.query.world) - 1 : undefined
+// Testing: `?power=frisbee` starts with that power on (also not recorded).
+const startPower = (POWER_KINDS as readonly string[]).includes(String(route.query.power))
+  ? (String(route.query.power) as PowerKind)
+  : undefined
+/** A normal run that counts (not a test world, test power or the bot). */
+const counts = startWorld === undefined && !startPower && !bot
 const showFps = import.meta.dev || 'fps' in route.query || settings.showFps
 
 let engine: Engine | null = null
@@ -150,7 +157,7 @@ function declineContinue() {
 function goHome() {
   // Quitting from the pause sheet ends the run without a results card: count it.
   const s = phase.value === 'paused' ? pauseInfo.value.summary : null
-  if (s && startWorld === undefined && !bot)
+  if (s && counts)
     analytics.track('run_end', {
       score: s.score,
       world: s.world,
@@ -204,6 +211,7 @@ onMounted(async () => {
     autoplay: bot,
     invincible: bot,
     startWorld,
+    startPower,
     tutorial,
     look: lookFor(player.dog, player),
     safeTop: safeProbe.value?.offsetHeight ?? 0,
@@ -212,7 +220,7 @@ onMounted(async () => {
   engine.on('run:end', async (r) => {
     earned.value = []
     newBest.value = false
-    if (startWorld === undefined) {
+    if (startWorld === undefined && !startPower) {
       const got = player.recordRun(r)
       newBest.value = got.newBest
       earned.value = [
@@ -230,7 +238,7 @@ onMounted(async () => {
     }
     result.value = r
     phase.value = 'results'
-    if (startWorld === undefined && !bot)
+    if (counts)
       analytics.track('run_end', {
         score: r.score,
         world: r.world,
@@ -271,8 +279,7 @@ onMounted(async () => {
     phase.value = 'continue'
   })
   engine.on('world', (w) => {
-    if (startWorld === undefined && !bot)
-      analytics.track('world_reached', { world: w.index, run: runNumber() })
+    if (counts) analytics.track('world_reached', { world: w.index, run: runNumber() })
   })
   document.addEventListener('visibilitychange', onHidden)
   window.addEventListener('pagehide', pause)
@@ -322,7 +329,7 @@ onBeforeUnmount(() => {
       :new-best="newBest"
       :earned="earned"
       :dog-name="player.dog?.name"
-      :can-double="startWorld === undefined && !bot"
+      :can-double="counts"
       @again="start"
       @home="goHome"
     />

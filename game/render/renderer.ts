@@ -5,7 +5,7 @@
  */
 import type { BossKind, LampsTwist, ThemeKind, TwistDef } from '../config'
 import type { Fx, Run } from '../run'
-import { clamp, dot, rr, sparkle, text, BODY_FONT, TAU, type Ctx } from './draw'
+import { clamp, dot, ell, rr, sparkle, text, BODY_FONT, TAU, type Ctx } from './draw'
 import { drawTheme } from './backgrounds'
 import { BOSS_BOX, BOSS_FRAMES, BOSS_PERIOD } from './bosses'
 import {
@@ -455,6 +455,17 @@ export class Renderer {
       c.restore()
       if (b.gold) drawGoldSparkle(c, x, y, t)
     }
+    // Super Sniff: golden biscuits glow so you can see them coming.
+    if (run.power.sniff > 0)
+      for (const b of run.biscuits) {
+        if (!b.gold) continue
+        const x = lerp(b.pwx, b.wx) - dist
+        const y = GY + lerp(b.py, b.y)
+        const pulse = this.reduceMotion ? 0.5 : 0.5 + 0.5 * Math.sin(t * 6 + b.ph)
+        c.globalAlpha = 0.25 + 0.2 * pulse
+        dot(c, x, y, 22 + pulse * 6, '#ffd23f')
+        c.globalAlpha = 1
+      }
 
     this.drawBoss(run, t)
     for (const p of this.trailParts) drawTrailParticle(c, p, GY)
@@ -577,6 +588,23 @@ export class Renderer {
     else if (!run.dog.grounded) spr = D.jump[jumpFrame(clamp(run.dog.vy / 3000, -0.18, 0.2))]!
     else spr = D.run[runFrame(run.runPhase)]!
     drawSprite(c, spr, 0, 0)
+    if (playing && run.power.frisbee > 0) {
+      // Frisbee Fetch: the frisbee in Dobie's mouth, with a rush of air underneath.
+      const m = run.cfg.dog.mouth
+      ell(c, m.x + 10, m.y + 3, 14, 4.5, -0.1, '#ffc61a')
+      ell(c, m.x + 10, m.y + 2, 8, 2.4, -0.1, '#ffe48a')
+      if (!this.reduceMotion) {
+        c.strokeStyle = 'rgba(255,255,255,.7)'
+        c.lineWidth = 2
+        for (let i = 0; i < 3; i++) {
+          const k = (t * 3 + i / 3) % 1
+          c.beginPath()
+          c.moveTo(-20 - k * 40, 6 + i * 6)
+          c.lineTo(-4 - k * 40, 6 + i * 6)
+          c.stroke()
+        }
+      }
+    }
     c.restore()
   }
 

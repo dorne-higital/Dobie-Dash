@@ -103,8 +103,8 @@ export function drawHud(
   }
   text(c, label, L.W / 2, ly + 11.5, 12, '#ffffff', { font: BODY_FONT, weight: 900 })
 
-  // Active power pills.
-  let ay = py + 56
+  // Active power pills, stacked under the world pill so they never cover it.
+  let ay = Math.max(py + 56, ly + 30)
   const P = cfg.powerups
   const pill = (name: string, col: string, frac: number | null) => {
     c.fillStyle = col
