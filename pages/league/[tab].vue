@@ -4,10 +4,12 @@
  * player's best world beside their name. Weekly leagues and the Daily Dash arrive with
  * the backend in v1.1.
  */
+import site from '~/content/site.json'
 import { loadGameConfig } from '~/game/config'
 import type { Board, LeaderboardEntry } from '~/services/types'
 
 definePageMeta({ layout: 'hub' })
+const online = useOnline()
 
 const TABS = [
   { key: 'world', label: 'World' },
@@ -50,7 +52,8 @@ watch([tab, when], load, { immediate: true })
         </button>
       </div>
 
-      <div v-if="!gc.me.value && !loading" class="empty">
+      <p v-if="!online" class="empty offline" role="status">{{ site.offline.league }}</p>
+      <div v-else-if="!gc.me.value && !loading" class="empty">
         <p>Leaderboards use Game Center. Sign in to see how you rank.</p>
         <UiButton @click="load">Sign in to Game Center</UiButton>
         <small>In the browser, leaderboards are in the iPhone app.</small>

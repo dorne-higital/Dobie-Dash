@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** Store: Remove Ads, the starter pack, biscuit and bone packs, the Gold Collar and breeds. */
 import { Capacitor } from '@capacitor/core'
+import site from '~/content/site.json'
 import { product, type ProductGrants } from '~/logic/store'
 
 const player = usePlayerStore()
@@ -9,6 +10,10 @@ const native = Capacitor.isNativePlatform()
 const dev = import.meta.dev
 const got = ref<{ title: string; grants: ProductGrants } | null>(null)
 const { analytics } = useServices()
+const online = useOnline()
+watch(online, (now) => {
+  if (now) void loadPrices() // back online: fetch the real prices
+})
 onMounted(() => {
   void loadPrices()
   // Which screen opened the Store: the page we came from (e.g. "/" from the coin pills).
@@ -47,6 +52,7 @@ async function tap(id: string) {
 
 <template>
   <div class="store">
+    <p v-if="!online" class="note offline" role="status">{{ site.offline.store }}</p>
     <p v-if="!native && !dev" class="note">
       Purchases are made in the iPhone app. Everything you buy there is saved to iCloud.
     </p>
@@ -154,5 +160,13 @@ li.own {
   color: var(--fg);
   font-weight: 900;
   text-align: center;
+}
+.note.offline {
+  background: #fff1f1;
+  border: 1px solid var(--collar);
+  border-radius: 14px;
+  padding: 10px 12px;
+  color: var(--fg);
+  font-weight: 800;
 }
 </style>

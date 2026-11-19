@@ -36,5 +36,9 @@
     "email": "hello@danhorne.co.uk",
     "subject": "Dobie Dash feedback",
     "hint": "Found a bug or have an idea? Tell Dan."
+  },
+  "offline": {
+    "store": "You're offline. The Store needs a connection to show prices and buy. Your game and everything you own still work.",
+    "league": "You're offline. Leaderboards need a connection. Your runs still count and will show up next time you're online."
   }
 }
