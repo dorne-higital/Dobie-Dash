@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "_": "Seasonal events (M7). start/end are UTC dates (end is the first day it's over). Remote Config can move them or switch one off: events.<id>.start / end / off. Present chance is gameplay (fingerprinted); the dates are not.",
+  "events": [
+    {
+      "id": "winter",
+      "name": "Winter Walkies",
+      "start": "2026-12-01",
+      "end": "2027-01-06",
+      "snow": true,
+      "presents": { "chance": 0.07 },
+      "blurb": "Snow in every world! Find the presents hidden among the biscuits.",
+      "rewards": [
+        { "at": 10, "item": "hat:santa" },
+        { "at": 30, "item": "hat:antlers" },
+        { "at": 60, "item": "trail:snow" }
+      ]
+    }
+  ]
+}

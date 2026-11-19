@@ -5,7 +5,7 @@
 import { DOBIE, pup, type Accessories, type Dog } from '../art/dobie'
 import { OBSTACLE_TYPES, type BossKind, type ObstacleType, type ThemeKind } from '../config'
 import { buildTheme, cloud, type Frame as ViewFrame, type ThemeCache } from './backgrounds'
-import { bone, drawBiscuit, drawObstacle, OBSTACLE_ANIM } from './obstacles'
+import { bone, drawBiscuit, drawPresent, drawObstacle, OBSTACLE_ANIM } from './obstacles'
 import { makeCanvas, type Ctx } from './draw'
 import { BOSS_BOX, BOSS_FRAMES, BOSS_PERIOD, drawBoss } from './bosses'
 
@@ -88,6 +88,9 @@ export class SpriteCache {
   readonly obstacles: Record<ObstacleType, Sprite[]>
   readonly biscuit: Sprite
   readonly goldBiscuit: Sprite
+  /** Winter Walkies present (M7), and a snowflake for the falling snow. */
+  readonly present: Sprite
+  readonly flake: Sprite
   readonly hudBone: Sprite
   readonly cloud: Sprite
   private themes = new Map<ThemeKind, ThemeCache>()
@@ -110,6 +113,13 @@ export class SpriteCache {
     this.obstacles = obs
     this.biscuit = bake(60, 44, 30, 22, scale, (c) => drawBiscuit(c, 0, 0, false))
     this.goldBiscuit = bake(60, 44, 30, 22, scale, (c) => drawBiscuit(c, 0, 0, true))
+    this.present = bake(40, 40, 20, 20, scale, (c) => drawPresent(c, 0, 0))
+    this.flake = bake(10, 10, 5, 5, scale, (c) => {
+      c.fillStyle = 'rgba(255,255,255,.9)'
+      c.beginPath()
+      c.arc(0, 0, 4, 0, Math.PI * 2)
+      c.fill()
+    })
     this.hudBone = bake(30, 22, 15, 11, scale, (c) => bone(c, 0, 0, 1, '#e3ad62', '#a8702f'))
     // Baked at the largest on-screen size (1.6×) so scaling down stays crisp.
     this.cloud = bake(100, 70, 25, 40, scale * 1.6, (c) =>

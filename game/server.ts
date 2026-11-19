@@ -15,7 +15,9 @@ export type { RunRecord }
  * gameplay, redeploy the functions with it).
  */
 export function configFingerprint(cfg = loadGameConfig()): string {
-  const json = JSON.stringify(cfg)
+  // Event dates can move (Remote Config) without changing how a run plays: leave them out.
+  const events = (cfg.events ?? []).map((e) => ({ id: e.id, presents: e.presents }))
+  const json = JSON.stringify({ ...cfg, events })
   let h = 2166136261
   for (let i = 0; i < json.length; i++) {
     h ^= json.charCodeAt(i)

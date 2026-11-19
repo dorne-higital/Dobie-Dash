@@ -243,9 +243,9 @@ export class Renderer {
           vy: -70,
           life: 0.6,
           max: 0.6,
-          col: fx.gold ? '#ffd23f' : '#ffffff',
+          col: fx.present ? '#ff6b6f' : fx.gold ? '#ffd23f' : '#ffffff',
           r: 0,
-          txt: fx.gold ? 'GOLDEN!' : `+${run.cfg.scoring.biscuit}`,
+          txt: fx.present ? 'PRESENT!' : fx.gold ? 'GOLDEN!' : `+${run.cfg.scoring.biscuit}`,
         })
         break
       case 'stomp':
@@ -530,7 +530,12 @@ export class Renderer {
       c.save()
       c.translate(x, y)
       c.rotate(Math.sin(t * 3 + b.ph) * 0.25)
-      drawSprite(c, b.gold ? this.sprites.goldBiscuit : this.sprites.biscuit, 0, 0)
+      drawSprite(
+        c,
+        b.present ? this.sprites.present : b.gold ? this.sprites.goldBiscuit : this.sprites.biscuit,
+        0,
+        0,
+      )
       c.restore()
       if (b.gold) drawGoldSparkle(c, x, y, t)
     }
@@ -575,6 +580,8 @@ export class Renderer {
       c.fillRect(0, 0, W, H)
     }
 
+    if (this.snow) this.drawSnow(c, W, H, frameDt)
+
     drawHud(c, run, best, run.cfg, this.sprites, {
       W,
       safeTop: V.safeTop,
@@ -582,6 +589,36 @@ export class Renderer {
     })
     if (this.banner) drawBanner(c, this.banner, W, GY)
     if (stats) this.drawStats(stats)
+  }
+
+  /** Winter Walkies: snow falling over every world (render only). */
+  snow = false
+  private flakes: { x: number; y: number; r: number; v: number; ph: number }[] = []
+  private drawSnow(c: CanvasRenderingContext2D, W: number, H: number, dt: number) {
+    const want = this.reduceMotion ? 25 : 70
+    while (this.flakes.length < want)
+      this.flakes.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: 1.5 + Math.random() * 2.5,
+        v: 30 + Math.random() * 50,
+        ph: Math.random() * 6.28,
+      })
+    const s = this.sprites.flake
+    for (const f of this.flakes) {
+      if (!this.reduceMotion) {
+        f.y += f.v * dt
+        f.ph += dt * 1.5
+        f.x += (Math.sin(f.ph) * 12 - 25) * dt
+      }
+      if (f.y > H + 5) {
+        f.y = -5
+        f.x = Math.random() * W
+      }
+      if (f.x < -5) f.x = W + 5
+      // Baked flake, scaled to this flake's size (no path drawing per frame).
+      c.drawImage(s.cv, f.x - f.r, f.y - f.r, f.r * 2, f.r * 2)
+    }
   }
 
   private updateTrail(run: Run, dt: number) {

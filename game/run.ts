@@ -26,6 +26,7 @@ import {
   type PowerState,
 } from './powerups'
 import { metres, score } from './scoring'
+import { Rng } from './rng'
 import {
   findClearPlan,
   iceOpts,
@@ -67,6 +68,8 @@ export interface Biscuit {
   pwx: number
   py: number
   gold: boolean
+  /** A present (seasonal event): scores like a biscuit, counts toward the event. */
+  present?: boolean
   ph: number
 }
 
@@ -99,12 +102,14 @@ export interface RunSummary {
   golden: number
   /** Obstacles cleared without touching, by type ("Jump 3 cats in one run"). */
   cleared: Partial<Record<ObstacleType, number>>
+  /** Presents found (seasonal event, M7). */
+  presents?: number
 }
 
 /** The only events that leave the engine for Vue. */
 export interface RunEvents {
   'run:end': RunSummary
-  biscuit: { count: number; meter: number; gold: boolean }
+  biscuit: { count: number; meter: number; gold: boolean; present?: boolean }
   world: { index: number; id: string; name: string }
   power: PowerEvent
   /** Tutorial: a new step started, the player bumped into something, or it's done. */
@@ -132,7 +137,7 @@ export type RunEvent = { [K in keyof RunEvents]: { type: K; data: RunEvents[K] }
 /** Visual / haptic cues for the renderer (not part of the Vue contract). */
 export type Fx =
   | { type: 'jump' | 'double' | 'land' | 'crash' | 'splash' | 'revive' | 'skid' }
-  | { type: 'eat'; x: number; y: number; gold: boolean }
+  | { type: 'eat'; x: number; y: number; gold: boolean; present?: boolean }
   | { type: 'smash' | 'pop' | 'nearMiss' | 'stomp'; x: number; y: number }
   /** Big Bark: the shockwave from the dog, and each obstacle it knocks away (no points). */
   | { type: 'bark' | 'poof'; x: number; y: number }
@@ -162,6 +167,8 @@ export interface RunOptions {
   botStomps?: boolean
   /** Big Barks the player has saved (M7); at most cfg.bigBark.perRun can be used. */
   bigBarks?: number
+  /** A seasonal event that's on (its id, from content/events.json): presents appear. */
+  event?: string
 }
 
 export type FightPhase =
@@ -272,6 +279,11 @@ export class Run {
     this.dt = 1 / cfg.loop.hz
     this.spawner = new Spawner(cfg, seed, viewW)
     this.viewW = viewW
+    const ev = opts.event ? cfg.events?.find((e) => e.id === opts.event) : undefined
+    if (ev && ev.presents.chance > 0) {
+      this.presentRng = new Rng((seed ^ 0x5eed1e) >>> 0)
+      this.presentChance = ev.presents.chance
+    }
     const sw = Math.min(Math.max(0, opts.startWorld ?? 0), this.worlds.length - 1)
     this.worldIndex = sw
     this.scoreOffset = this.worlds[sw]!.at
@@ -340,6 +352,10 @@ export class Run {
 
   /** Big Barks used this run. */
   barksUsed = 0
+  /** Presents found (seasonal event). */
+  presents = 0
+  private presentRng: Rng | null = null
+  private presentChance = 0
 
   /** Big Barks still usable this run (saved ones, up to the per-run limit). */
   get barksLeft() {
@@ -408,6 +424,7 @@ export class Run {
       powerups: this.powerupsUsed,
       golden: this.golden,
       cleared: { ...this.cleared },
+      presents: this.presents,
     }
   }
 
@@ -527,7 +544,15 @@ export class Run {
       const glide = this.glideSpan()
       for (const b0 of batch.biscuits) {
         const b = glide && b0.wx > glide.wx0 && b0.wx < glide.wx1 ? { ...b0, y: glide.y } : b0
-        this.biscuits.push({ ...b, pwx: b.wx, py: b.y, ph: (b.wx * 0.37) % (Math.PI * 2) })
+        // Event presents: their own seeded roll, so the course is the same with or without.
+        const present = !!this.presentRng && !b.gold && this.presentRng.chance(this.presentChance)
+        this.biscuits.push({
+          ...b,
+          ...(present ? { present } : {}),
+          pwx: b.wx,
+          py: b.y,
+          ph: (b.wx * 0.37) % (Math.PI * 2),
+        })
       }
     }
 
@@ -636,8 +661,14 @@ export class Run {
       if (ex * ex + ey * ey < reach * reach) {
         this.biscuitsEaten++
         const pe = eatBiscuit(this.power, b.gold, this.spawner.rng, this.cfg)
-        this.fx.push({ type: 'eat', x: sx, y: b.y, gold: b.gold })
-        this.emit('biscuit', { count: this.biscuitsEaten, meter: this.power.meter, gold: b.gold })
+        if (b.present) this.presents++
+        this.fx.push({ type: 'eat', x: sx, y: b.y, gold: b.gold, present: b.present })
+        this.emit('biscuit', {
+          count: this.biscuitsEaten,
+          meter: this.power.meter,
+          gold: b.gold,
+          present: b.present,
+        })
         if (b.gold) this.golden++
         if (pe) {
           if (pe.active) this.powerupsUsed++

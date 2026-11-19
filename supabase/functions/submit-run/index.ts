@@ -14,6 +14,7 @@ interface RunRecord {
     coachFight?: boolean
     powerLevels?: Record<string, number>
     bigBarks?: number
+    event?: string
   }
   inputs: [number, string][]
   ticks: number
@@ -86,6 +87,10 @@ Deno.serve(async (req) => {
       powerLevels: body.record.opts?.powerLevels ?? {},
       // Big Barks: never more than the per-run limit, whatever the app claims.
       bigBarks: Math.max(0, Math.min(cfg.bigBark.perRun, Number(body.record.opts?.bigBarks) || 0)),
+      // A known event only (presents score like biscuits, so it can't change the score).
+      event: cfg.events.some((e: { id: string }) => e.id === body.record.opts?.event)
+        ? body.record.opts?.event
+        : undefined,
     },
   }
   const run = replay(cfg, rec, rec.ticks + 600)

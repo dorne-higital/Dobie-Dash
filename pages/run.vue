@@ -14,6 +14,7 @@ import type { RunSummary } from '~/game/run'
 import type { RunRecord } from '~/game/replay'
 import { POWER_KINDS, type PowerKind } from '~/game/config'
 import { runCause } from '~/logic/events'
+import { activeEvent, EVENTS, isOn, nextReward, recordPresents } from '~/logic/calendar'
 
 definePageMeta({ layout: 'run' })
 
@@ -65,6 +66,11 @@ const online = useOnline()
 /** A normal run that counts (not a test world, test power or the bot). */
 const counts = startWorld === undefined && !startPower && !bot
 const showFps = import.meta.dev || 'fps' in route.query || settings.showFps
+// Seasonal event (Winter Walkies): on by date (Remote Config can move it); `?event=winter`
+// tries it out of season (not counted).
+const event =
+  activeEvent(new Date()) ?? EVENTS.find((e) => e.id === String(route.query.event)) ?? null
+const eventCounts = computed(() => !!event && isOn(event, new Date()))
 /** Big Barks usable this run (saved ones, up to the per-run limit). `?bark` gives one to test. */
 const barksLeft = ref(0)
 function barksForRun() {
@@ -110,6 +116,21 @@ const feedback: FeedbackPort = {
   music: (world, tempo) => audio.music(world, tempo),
 }
 let botTimer: ReturnType<typeof setTimeout> | undefined
+
+/** Banks this run's presents toward the event; the results card lines. */
+function presentLines(n: number): string[] {
+  if (!event || !n) return []
+  if (!eventCounts.value) return [`${n} present${n > 1 ? 's' : ''} found (trying the event)`]
+  const items = recordPresents(player, event, n)
+  const next = nextReward(player, event)
+  return [
+    `${n} present${n > 1 ? 's' : ''} found`,
+    ...items.map((id) => `${item(id)?.name} unlocked`),
+    ...(next
+      ? [`${player.event.presents} / ${next.at} presents to the ${item(next.item)?.name}`]
+      : []),
+  ]
+}
 
 function start() {
   runBiscuits.value = 0
@@ -236,6 +257,7 @@ onMounted(async () => {
     holdToJump: settings.holdToJump,
     coachFight: !player.flags.fightCoached,
     powerLevels: { ...player.upgrades },
+    event: event?.id,
     autoplay: bot,
     invincible: bot,
     startWorld,
@@ -266,6 +288,7 @@ onMounted(async () => {
               : `${item(id)?.name} unlocked`,
         ),
         ...(got.bones ? [`+${got.bones} Golden Bones for the knock-out`] : []),
+        ...presentLines(r.presents ?? 0),
         ...(got.passTiers.length
           ? [`Pup Pass tier ${got.passTiers[got.passTiers.length - 1]! + 1} reached`]
           : []),

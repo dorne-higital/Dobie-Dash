@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core'
 import items from '~/content/items.json'
 import store from '~/content/store.json'
 import pass from '~/content/pass-s1.json'
+import events from '~/content/events.json'
 import worlds from '~/content/worlds.json'
 import { applyOverrides, type ContentFiles } from '~/logic/remote'
 import { createWebServices } from '~/services'
@@ -57,7 +58,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     new Promise<null>((r) => setTimeout(() => r(null), REMOTE_WAIT_MS)),
   ])
   if (remote) {
-    const files = { worlds, items, store, pass } as unknown as ContentFiles
+    const files = { worlds, items, store, pass, events } as unknown as ContentFiles
     const problems = applyOverrides(files, remote)
     if (problems.length) crash.log(`Remote Config ignored: ${problems.join(', ')}`)
   }

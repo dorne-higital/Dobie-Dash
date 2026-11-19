@@ -74,6 +74,7 @@ function doChest() {
     <UiSegmented base="/missions" :tabs="TABS" :current="tab" />
 
     <template v-if="tab === 'daily'">
+      <HubEventCard />
       <div class="streak">
         <div class="sh">
           <b>Login streak</b>

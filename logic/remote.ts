@@ -23,6 +23,8 @@ export interface RemoteOverrides {
   starterAfterRuns?: number
   /** Pup Pass season dates (M7): start as a UTC date, YYYY-MM-DD. */
   pass?: { start?: string; weeks?: number }
+  /** Seasonal events by id (M7): move the dates (UTC, end exclusive) or switch one off. */
+  events?: Record<string, { start?: string; end?: string; off?: boolean }>
 }
 
 /** The parts of the /content files that overrides write into (mutated in place). */
@@ -40,6 +42,8 @@ export interface ContentFiles {
   }
   /** content/pass-s1.json (optional so older callers still type-check). */
   pass?: { start: string; weeks: number }
+  /** content/events.json (optional, like pass). */
+  events?: { events: { id: string; start: string; end: string; off?: boolean }[] }
 }
 
 const isDate = (v: unknown): v is string =>
@@ -157,6 +161,27 @@ function writeOverrides(f: ContentFiles, o: RemoteOverrides): string[] {
         Object.assign(f.pass, { start: ps.start, weeks: ps.weeks })
       else bad.push('pass')
     }
+  }
+  for (const [id, e] of Object.entries(o.events ?? {})) {
+    const ev = f.events?.events.find((x) => x.id === id)
+    if (!ev) {
+      bad.push(`events.${id}: no such event`)
+      continue
+    }
+    const next = { start: e.start ?? ev.start, end: e.end ?? ev.end }
+    if (
+      !isDate(next.start) ||
+      !isDate(next.end) ||
+      Date.parse(next.end) <= Date.parse(next.start)
+    ) {
+      bad.push(`events.${id}`)
+      continue
+    }
+    if (e.off !== undefined && typeof e.off !== 'boolean') {
+      bad.push(`events.${id}.off`)
+      continue
+    }
+    Object.assign(ev, next, e.off !== undefined ? { off: e.off } : {})
   }
   return bad
 }

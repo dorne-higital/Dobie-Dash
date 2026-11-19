@@ -634,6 +634,27 @@ export function drawBiscuit(c: Ctx, x: number, y: number, gold: boolean) {
   c.restore()
 }
 
+/** A present (Winter Walkies) centred on (x, y): a red box with a gold ribbon and bow. */
+export function drawPresent(c: Ctx, x: number, y: number) {
+  c.save()
+  c.translate(x, y)
+  c.fillStyle = '#e5484d'
+  rr(c, -10, -6, 20, 15, 3)
+  c.fill()
+  c.fillStyle = '#c93a3f'
+  rr(c, -11.5, -9, 23, 5, 2)
+  c.fill()
+  c.fillStyle = '#ffd23f'
+  c.fillRect(-2, -9, 4, 18)
+  c.fillRect(-11.5, -7.5, 23, 2.6)
+  dot(c, -4.5, -11, 3.6, '#ffd23f')
+  dot(c, 4.5, -11, 3.6, '#ffd23f')
+  dot(c, 0, -10, 2.4, '#e8a800')
+  c.fillStyle = 'rgba(255,255,255,.35)'
+  c.fillRect(-8, -3, 3, 9)
+  c.restore()
+}
+
 export function drawGoldSparkle(c: Ctx, x: number, y: number, t: number) {
   sparkle(c, x + 12, y - 10, 4 + Math.sin(t * 8) * 1.5, '#ffffff', t * 2)
 }

@@ -38,6 +38,8 @@ export interface EngineOptions {
   coachFight?: boolean
   /** Big Barks the player has saved (M7). */
   bigBarks?: number
+  /** Seasonal event on now (its id): presents in runs, and snow if the event has it. */
+  event?: string
   /** Bot plays (dev: `?bot`). */
   autoplay?: boolean
   invincible?: boolean
@@ -149,7 +151,9 @@ export class Engine {
       powerLevels: this.opts.powerLevels,
       coachFight: this.opts.coachFight,
       bigBarks: this.opts.tutorial ? 0 : this.opts.bigBarks,
+      event: this.opts.tutorial ? undefined : this.opts.event,
     })
+    this.renderer.snow = !!this.cfg.events?.find((e) => e.id === this.opts.event)?.snow
     if (this.opts.startPower) activate(this.run.power, this.opts.startPower, this.cfg)
     const g = this.rivals.ghost
     this.ghost =

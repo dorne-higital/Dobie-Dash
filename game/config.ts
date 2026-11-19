@@ -3,6 +3,7 @@
  * code never hard-codes gameplay values.
  */
 import raw from '../content/worlds.json'
+import eventsRaw from '../content/events.json'
 
 /** Every obstacle, in one list: the type, the sprite cache and the tests all come from it. */
 export const OBSTACLE_TYPES = [
@@ -340,6 +341,8 @@ export interface GameConfig {
   fight: FightConfig
   /** Big Bark (M7): how many saved Big Barks can be used in one run. */
   bigBark: { perRun: number }
+  /** Seasonal events (content/events.json, M7). */
+  events: GameEvent[]
   spawner: SpawnerConfig
   /**
    * Biscuits to fill the power meter: `blocks` for the first power-up in a run, then
@@ -420,8 +423,24 @@ export function physicsFor(cfg: GameConfig, world: WorldDef | null | undefined):
 }
 
 /** Deep-ish clone so tests and remote overrides never mutate the bundled JSON. */
+/** A seasonal event (content/events.json): dates, snow, presents and their rewards. */
+export interface GameEvent {
+  id: string
+  name: string
+  /** UTC dates; `end` is the first day it's over. */
+  start: string
+  end: string
+  /** Switched off from Remote Config. */
+  off?: boolean
+  snow: boolean
+  /** Chance that a normal biscuit is a present instead (same points as a biscuit). */
+  presents: { chance: number }
+  blurb: string
+  rewards: { at: number; item: string }[]
+}
+
 export function loadGameConfig(overrides?: Partial<GameConfig>): GameConfig {
-  const base = JSON.parse(JSON.stringify(raw)) as GameConfig
+  const base = JSON.parse(JSON.stringify({ ...raw, events: eventsRaw.events })) as GameConfig
   return overrides ? { ...base, ...overrides } : base
 }
 
