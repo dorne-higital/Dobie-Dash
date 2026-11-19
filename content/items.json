@@ -4,10 +4,10 @@
     "free": ["doberman"],
     "bones": 80,
     "iap": "breed.{breed}",
-    "gbp": "\u00a30.99",
+    "gbp": "£0.99",
     "bundle": {
       "iap": "breeds.all",
-      "gbp": "\u00a34.99"
+      "gbp": "£4.99"
     }
   },
   "items": [
@@ -61,7 +61,7 @@
       "slot": "collar",
       "name": "Gold Collar",
       "iap": "collar.gold",
-      "gbp": "\u00a30.99",
+      "gbp": "£0.99",
       "art": {
         "gold": true
       }
@@ -127,6 +127,17 @@
       "bones": 60,
       "art": {
         "hat": "crown"
+      }
+    },
+    {
+      "id": "hat:bobble",
+      "slot": "hat",
+      "name": "Bobble Hat",
+      "unlock": {
+        "world": 4
+      },
+      "art": {
+        "hat": "bobble"
       }
     },
     {
@@ -228,6 +239,11 @@
       "id": "sticker:foxPack",
       "boss": "foxPack",
       "name": "The Fox Pack"
+    },
+    {
+      "id": "sticker:avalanche",
+      "boss": "avalanche",
+      "name": "The Avalanche"
     }
   ]
 }

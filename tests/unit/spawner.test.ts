@@ -162,7 +162,7 @@ describe('fairness end to end', () => {
       const run = new Run(cfg, seed, W, { autoplay: true })
       for (let i = 0; i < 300 * 60 && run.state === 'running'; i++) run.update()
       expect({ seed, state: run.state }).toEqual({ seed, state: 'running' })
-      expect(run.worldIndex).toBe(3)
+      expect(run.worldIndex).toBeGreaterThanOrEqual(3)
     }
   }, 60_000)
 
@@ -339,4 +339,58 @@ describe('hold to jump higher and ledges', () => {
     noHold.hold.maxSeconds = 0
     expect(held).toBeGreaterThan(maxAirTime(h, noHold, dt))
   })
+})
+
+describe('Snowy Peaks ice', () => {
+  const snowIndex = () => loadGameConfig().worlds.findIndex((w) => w.twist?.kind === 'ice')
+
+  it('a jump from ice is lower than a normal jump; double jumps are not affected', () => {
+    const cfg = loadGameConfig()
+    const tw = cfg.worlds[snowIndex()]!.twist
+    if (tw?.kind !== 'ice') throw new Error('Snowy Peaks should have ice')
+    const peak = (scale: number) => {
+      const d = newDog()
+      stepDog(d, cfg.physics, 1 / 60, true, { jumpScale: scale })
+      let top = 0
+      while (!d.grounded) {
+        stepDog(d, cfg.physics, 1 / 60, false)
+        top = Math.min(top, d.y)
+      }
+      return -top
+    }
+    expect(peak(tw.jumpScale)).toBeLessThan(peak(1) * 0.85)
+    const d = newDog()
+    d.grounded = false
+    d.jumps = 1
+    d.y = -50
+    stepDog(d, cfg.physics, 1 / 60, true, { jumpScale: 0.5 })
+    expect(d.vy).toBeCloseTo(cfg.physics.doubleJumpVelocity + cfg.physics.gravity / 60, 5)
+  })
+
+  it('places ice patches in Snowy Peaks only', () => {
+    const cfg = noPowers()
+    for (const [wi, w] of cfg.worlds.entries()) {
+      const ice = spawnFor(cfg, 4, wi, 60).filter((b) => b.batch.ice)
+      if (w.twist?.kind === 'ice') expect(ice.length).toBeGreaterThan(4)
+      else expect(ice).toEqual([])
+    }
+  })
+
+  it('a planned-tap bot survives Snowy Peaks, taking off from ice', () => {
+    const cfg = noPowers()
+    for (let seed = 1; seed <= 8; seed++) {
+      const run = new Run(cfg, seed, W, { autoplay: true, startWorld: snowIndex() })
+      let iceJumps = 0
+      for (let i = 0; i < 120 * 60 && run.state === 'running'; i++) {
+        const hb = cfg.dog.hitbox
+        const feet = run.dist + cfg.view.dogX + (hb.x0 + hb.x1) / 2
+        const onIce = run.ice.some((r) => feet >= r.wx0 && feet <= r.wx1)
+        run.update()
+        if (onIce && run.fx.some((f) => f.type === 'jump')) iceJumps++
+        run.fx.length = 0
+      }
+      expect({ seed, state: run.state }).toEqual({ seed, state: 'running' })
+      if (seed <= 2) expect(iceJumps).toBeGreaterThan(0)
+    }
+  }, 60_000)
 })

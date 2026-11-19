@@ -219,3 +219,79 @@ export function drawLedges(
     c.restore()
   }
 }
+
+// ---- ice patches (Snowy Peaks) --------------------------------------------------------
+
+/** A glossy strip of ice along the path: tileable middle and a rounded end (mirrored). */
+export interface IceSprites {
+  tile: HTMLCanvasElement
+  cap: HTMLCanvasElement
+  scale: number
+}
+
+const ICE_TILE = 96
+const ICE_CAP = 12
+const ICE_TOP = 4 // above the ground line
+const ICE_H = 16
+
+function iceBody(c: Ctx, x0: number, w: number) {
+  const g = c.createLinearGradient(0, -ICE_TOP, 0, ICE_H - ICE_TOP)
+  g.addColorStop(0, '#f2fbff')
+  g.addColorStop(0.4, '#bfe6fb')
+  g.addColorStop(1, '#8cc9ee')
+  c.fillStyle = g
+  c.fillRect(x0, -ICE_TOP, w, ICE_H)
+  // Shine streaks (spacing divides the tile width so it tiles).
+  c.fillStyle = 'rgba(255,255,255,.9)'
+  for (let x = x0 + 10; x < x0 + w; x += 32) {
+    c.beginPath()
+    c.moveTo(x, -ICE_TOP + 2)
+    c.lineTo(x + 10, -ICE_TOP + 2)
+    c.lineTo(x + 4, ICE_H - ICE_TOP - 3)
+    c.lineTo(x - 6, ICE_H - ICE_TOP - 3)
+    c.fill()
+  }
+  c.fillStyle = 'rgba(255,255,255,.95)'
+  c.fillRect(x0, -ICE_TOP, w, 1.5)
+}
+
+export function bakeIce(scale: number): IceSprites {
+  const t = makeCanvas(ICE_TILE, ICE_H, scale)
+  t.c.translate(0, ICE_TOP)
+  iceBody(t.c, 0, ICE_TILE)
+  const k = makeCanvas(ICE_CAP, ICE_H, scale)
+  k.c.translate(0, ICE_TOP)
+  k.c.save()
+  k.c.beginPath()
+  k.c.ellipse(ICE_CAP, ICE_H / 2 - ICE_TOP, ICE_CAP, ICE_H / 2, 0, Math.PI / 2, Math.PI * 1.5)
+  k.c.clip()
+  iceBody(k.c, 0, ICE_CAP)
+  k.c.restore()
+  return { tile: t.cv, cap: k.cv, scale }
+}
+
+export function drawIce(
+  c: Ctx,
+  sp: IceSprites,
+  patches: { wx0: number; wx1: number }[],
+  dist: number,
+  GY: number,
+  W: number,
+) {
+  const y = GY - ICE_TOP
+  for (const p of patches) {
+    const x0 = p.wx0 - dist
+    const x1 = p.wx1 - dist
+    if (x1 < -ICE_CAP || x0 > W + ICE_CAP) continue
+    for (let x = x0; x < Math.min(x1, W); x += ICE_TILE) {
+      const tw = Math.min(ICE_TILE, x1 - x)
+      c.drawImage(sp.tile, 0, 0, tw * sp.scale, ICE_H * sp.scale, x, y, tw, ICE_H)
+    }
+    c.drawImage(sp.cap, x0 - ICE_CAP, y, ICE_CAP, ICE_H)
+    c.save()
+    c.translate(x1 + ICE_CAP, y)
+    c.scale(-1, 1)
+    c.drawImage(sp.cap, 0, 0, ICE_CAP, ICE_H)
+    c.restore()
+  }
+}

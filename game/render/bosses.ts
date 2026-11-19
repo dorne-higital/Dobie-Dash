@@ -187,9 +187,67 @@ function foxPack(c: Ctx, t: number) {
   dot(c, 112, -27, 1.8, '#ffd23f')
 }
 
+/** Snowy Peaks: a tumbling wall of snow with rocks caught up in it. */
+function avalanche(c: Ctx, t: number) {
+  const roll = t * 9
+  const lumps: [number, number, number][] = [
+    [18, -26, 26],
+    [52, -40, 34],
+    [92, -32, 30],
+    [124, -20, 22],
+    [40, -12, 20],
+    [80, -10, 22],
+    [110, -58, 18],
+    [70, -66, 22],
+  ]
+  for (const [i, [x, y, r]] of lumps.entries()) {
+    const b = Math.sin(roll + i * 1.7) * 3
+    dot(c, x, y + b, r, i % 3 ? '#f4f8ff' : '#e3edf9')
+    dot(c, x - r * 0.3, y + b - r * 0.35, r * 0.35, '#ffffff')
+  }
+  // Rocks and a tree trunk tumbling in it.
+  const spin = roll * 0.7
+  for (const [x, y, r] of [
+    [60, -24, 7],
+    [100, -48, 6],
+    [30, -44, 5],
+  ] as const) {
+    c.save()
+    c.translate(x, y)
+    c.rotate(spin)
+    rr(c, -r, -r * 0.8, r * 2, r * 1.6, 3)
+    c.fillStyle = '#8c8a99'
+    c.fill()
+    c.restore()
+  }
+  c.save()
+  c.translate(84, -78)
+  c.rotate(-spin * 0.5)
+  c.fillStyle = '#7a4a2a'
+  c.fillRect(-16, -3, 32, 6)
+  c.restore()
+  // Spray off the front.
+  for (let i = 0; i < 5; i++) {
+    const k = (t * 2 + i / 5) % 1
+    dot(c, 140 + k * 26, -30 - i * 9 + k * 10, 4 * (1 - k), 'rgba(255,255,255,.9)')
+  }
+  // Angry eyes in the snow.
+  ell(c, 98, -40, 5, 3.5, 0, '#1d1b28')
+  ell(c, 118, -40, 5, 3.5, 0, '#1d1b28')
+  c.strokeStyle = '#1d1b28'
+  c.lineWidth = 2.5
+  c.beginPath()
+  c.moveTo(90, -49)
+  c.lineTo(102, -45)
+  c.moveTo(126, -49)
+  c.lineTo(114, -45)
+  c.stroke()
+}
+
 export function drawBoss(c: Ctx, kind: BossKind, t: number) {
   if (kind === 'mower') mower(c, t)
   else if (kind === 'van') van(c, t)
   else if (kind === 'kingCrab') kingCrab(c, t)
+  else if (kind === 'avalanche') avalanche(c, t)
   else foxPack(c, t)
 }

@@ -1,5 +1,5 @@
 /**
- * The four world backgrounds, ported from the prototype's drawBG.
+ * The world backgrounds (the first four ported from the prototype's drawBG).
  *
  * The prototype redrew every hill, building and window each frame. Here each parallax layer
  * is drawn once into a tileable strip (period P, items indexed by i mod n so it wraps) and
@@ -49,6 +49,16 @@ export const THEMES: Record<ThemeKind, ThemeColors> = {
     ground: '#f6dc96',
     dirt: '#ecc678',
     dirt2: '#e0b768',
+  },
+  snow: {
+    sky: ['#8fc4f2', '#c8e3fa', '#f2f8ff'],
+    sun: '#fffbe8',
+    far: '#b3c7e0',
+    far2: '#d7e3f2',
+    mid: '#3d6b58',
+    ground: '#f4f8ff',
+    dirt: '#e2ebf7',
+    dirt2: '#c8d7ea',
   },
   night: {
     sky: ['#0b1233', '#1c2460', '#3a3584'],
@@ -216,6 +226,68 @@ const LAYERS: Record<ThemeKind, LayerDef[]> = {
     },
   ],
   city: [buildingsFar, buildingsNear(false), lamps(false)],
+  snow: [
+    {
+      // Far peaks with snowy tops.
+      factor: 0.12,
+      spacing: 230,
+      top: () => -230,
+      bottom: () => 0,
+      item: (c, x, i, f, T) => {
+        const h = 150 + hash(i) * 80
+        const cx = x + 115
+        c.fillStyle = T.far
+        c.beginPath()
+        c.moveTo(cx - 150, f.GY)
+        c.lineTo(cx, f.GY - h)
+        c.lineTo(cx + 150, f.GY)
+        c.fill()
+        c.fillStyle = '#ffffff'
+        c.beginPath()
+        c.moveTo(cx - 40, f.GY - h + h * 0.27)
+        c.lineTo(cx, f.GY - h)
+        c.lineTo(cx + 40, f.GY - h + h * 0.27)
+        c.lineTo(cx + 20, f.GY - h + h * 0.22)
+        c.lineTo(cx + 4, f.GY - h + h * 0.3)
+        c.lineTo(cx - 14, f.GY - h + h * 0.22)
+        c.fill()
+      },
+    },
+    {
+      // Rolling snowy hills.
+      factor: 0.3,
+      spacing: 200,
+      top: () => -60,
+      bottom: () => 0,
+      item: (c, x, i, f, T) => ell(c, x + 100, f.GY + 20, 140, 40 + hash(i + 2) * 35, 0, T.far2),
+    },
+    {
+      // Pines with snow on their branches.
+      factor: 0.55,
+      spacing: 120,
+      top: () => -96,
+      bottom: () => 0,
+      item: (c, x, i, f, T) => {
+        if (hash(i) < 0.3) return
+        const h = 60 + hash(i + 1) * 30
+        const cx = x + 60
+        c.fillStyle = '#6b4a2e'
+        c.fillRect(cx - 3, f.GY - 12, 6, 12)
+        for (let k = 0; k < 3; k++) {
+          const top = f.GY - h + k * (h / 4)
+          const half = 12 + k * 7
+          tri3(c, cx, top, half, h / 2.4, T.mid)
+          c.fillStyle = '#ffffff'
+          c.beginPath()
+          c.moveTo(cx - half * 0.55, top + h / 4.2)
+          c.lineTo(cx, top + 2)
+          c.lineTo(cx + half * 0.55, top + h / 4.2)
+          c.lineTo(cx, top + h / 6)
+          c.fill()
+        }
+      },
+    },
+  ],
   night: [buildingsFar, buildingsNear(true), lamps(true)],
   beach: [
     {
@@ -308,6 +380,25 @@ const GROUND_LAYERS: Record<ThemeKind, LayerDef[]> = {
   ],
   city: roadMarks(false),
   night: roadMarks(true),
+  snow: [
+    {
+      // Snow lumps and blue shadows on the path.
+      factor: 1,
+      spacing: 46,
+      top: () => 6,
+      bottom: (f) => f.H - f.GY,
+      item: (c, x, i, f) =>
+        ell(
+          c,
+          x + hash(i) * 40,
+          f.GY + 20 + hash(i + 1) * (f.H - f.GY - 36),
+          4 + hash(i + 2) * 7,
+          1.5 + hash(i + 3) * 2,
+          0,
+          'rgba(150,180,220,.35)',
+        ),
+    },
+  ],
 }
 
 export interface Strip {
@@ -360,6 +451,11 @@ export function buildTheme(kind: ThemeKind, f: Frame, scale: number): ThemeCache
     dot(c, f.W * 0.76, sy, sr * 1.6, 'rgba(255,255,255,.18)')
     dot(c, f.W * 0.76, sy, sr, T.sun)
   }
+  if (kind === 'snow') {
+    // Falling snow (still, baked into the sky).
+    for (let i = 0; i < 70; i++)
+      dot(c, hash(i + 3) * f.W, hash(i + 77) * f.GY, 1 + hash(i + 9) * 1.6, 'rgba(255,255,255,.85)')
+  }
   if (kind === 'beach') {
     c.fillStyle = T.far
     c.fillRect(0, f.GY - 46, f.W, 48)
@@ -372,6 +468,16 @@ export function buildTheme(kind: ThemeKind, f: Frame, scale: number): ThemeCache
     strips: LAYERS[kind].map((d) => buildStrip(d, f, T, scale)),
     ground: GROUND_LAYERS[kind].map((d) => buildStrip(d, f, T, scale)),
   }
+}
+
+/** A triangle of pine needles: apex at (cx, top), `half` wide each side, `h` tall. */
+function tri3(c: Ctx, cx: number, top: number, half: number, h: number, col: string) {
+  c.fillStyle = col
+  c.beginPath()
+  c.moveTo(cx, top)
+  c.lineTo(cx + half, top + h)
+  c.lineTo(cx - half, top + h)
+  c.fill()
 }
 
 function blitStrip(c: Ctx, s: Strip, dist: number, W: number) {

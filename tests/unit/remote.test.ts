@@ -17,7 +17,7 @@ describe('remote config overrides', () => {
     const problems = applyOverrides(f, {
       worlds: {
         'city-streets': { at: 1800, speed: 320, gap: [1.2, 1.9] },
-        'midnight-run': { gate: 13000 },
+        'snowy-peaks': { gate: 18000 },
       },
       continuePrices: [40, 80, 160],
       meter: { growBy: 3 },
@@ -29,7 +29,7 @@ describe('remote config overrides', () => {
     expect(problems).toEqual([])
     const city = f.worlds.worlds.find((w) => w.id === 'city-streets')!
     expect([city.at, city.speed, city.gap]).toEqual([1800, 320, [1.2, 1.9]])
-    expect(f.worlds.worlds.at(-1)!.gate).toBe(13000)
+    expect(f.worlds.worlds.at(-1)!.gate).toBe(18000)
     expect(f.worlds.continue.prices).toEqual([40, 80, 160])
     expect(f.worlds.meter).toMatchObject({ blocks: 8, growBy: 3, maxBlocks: 40 })
     expect(f.items.items.find((i) => i.id === 'collar:blue')!.price).toBe(120)

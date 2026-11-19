@@ -22,7 +22,14 @@ import {
   type PowerState,
 } from './powerups'
 import { metres, score } from './scoring'
-import { findClearPlan, Spawner, type Ledge, type PatternObstacle } from './spawner'
+import {
+  findClearPlan,
+  iceOpts,
+  Spawner,
+  type IcePatch,
+  type Ledge,
+  type PatternObstacle,
+} from './spawner'
 import { gateTarget, worldIndexForScore } from './worlds'
 
 export interface Obstacle {
@@ -103,7 +110,7 @@ export type RunEvent = { [K in keyof RunEvents]: { type: K; data: RunEvents[K] }
 
 /** Visual / haptic cues for the renderer (not part of the Vue contract). */
 export type Fx =
-  | { type: 'jump' | 'double' | 'land' | 'crash' | 'splash' | 'revive' }
+  | { type: 'jump' | 'double' | 'land' | 'crash' | 'splash' | 'revive' | 'skid' }
   | { type: 'eat'; x: number; y: number; gold: boolean }
   | { type: 'smash' | 'pop' | 'nearMiss'; x: number; y: number }
 
@@ -147,6 +154,8 @@ export class Run {
   waves: { wx0: number; wx1: number; slow: number }[] = []
   /** Rooftop ledges in play (City Streets, Midnight Run). */
   ledges: Ledge[] = []
+  /** Ice patches in play (Snowy Peaks). */
+  ice: IcePatch[] = []
   /** Current wave speed multiplier (1 out of the water). */
   waveMul = 1
   private inWave = false
@@ -367,16 +376,21 @@ export class Run {
       }
       if (batch.wave) this.waves.push(batch.wave)
       if (batch.ledge) this.ledges.push(batch.ledge)
+      if (batch.ice) this.ice.push(batch.ice)
       for (const b of batch.biscuits)
         this.biscuits.push({ ...b, pwx: b.wx, py: b.y, ph: (b.wx * 0.37) % (Math.PI * 2) })
     }
 
     // Dog.
     if (this.opts.autoplay) this.autoplay()
+    const slip = this.iceUnderDog()
     const r = stepDog(this.dog, this.cfg.physics, dt, this.pressed, {
       floor: this.floorUnderDog(),
       holding: !!this.opts.holdToJump && this.holding,
+      jumpScale: slip?.jumpScale ?? 1,
     })
+    if (r.landed && slip) this.fx.push({ type: 'skid' })
+    if (this.ice.length && this.ice[0]!.wx1 < this.dist - 300) this.ice.shift()
     if (this.ledges.length && this.ledges[0]!.wx1 < this.dist - 300) this.ledges.shift()
     this.pressed = false
     if (r.jumped) {
@@ -491,6 +505,13 @@ export class Run {
     return 0
   }
 
+  /** The ice patch under the middle of the dog's feet, if any (same rule as the spawner). */
+  private iceUnderDog(): IcePatch | undefined {
+    const hb = this.cfg.dog.hitbox
+    const x = this.dist + this.cfg.view.dogX + (hb.x0 + hb.x1) / 2
+    return this.ice.find((r) => x >= r.wx0 && x <= r.wx1)
+  }
+
   /** Scrapes past an obstacle without touching it: +10 and a moment of slow motion. */
   private checkNearMiss(o: Obstacle, db: Box, ob: Box) {
     if (o.passed) return
@@ -589,14 +610,16 @@ export class Run {
         end = Math.max(end, arrive(x + o.def.w, o))
       }
       cuts.push(group.length)
+      // Ice for the planner: the patches as they are now, moving at the current speed.
+      const ice = iceOpts(this.ice, this.dist)
       if (group.length && group[0]!.x - dogX < 520) {
         let plan = null
         for (let i = cuts.length - 1; i >= 0 && !plan; i--)
-          plan = findClearPlan(group.slice(0, cuts[i]), this.cfg, { speed: v, ready: 0 })
+          plan = findClearPlan(group.slice(0, cuts[i]), this.cfg, { speed: v, ready: 0, ...ice })
         // Last resort: clear what two taps can, but only commit once that jump is due,
         // so waiting never throws away a better plan.
         for (let n = group.length - 1; n > 0 && !plan; n--) {
-          const p = findClearPlan(group.slice(0, n), this.cfg, { speed: v, ready: 0 })
+          const p = findClearPlan(group.slice(0, n), this.cfg, { speed: v, ready: 0, ...ice })
           if (p) {
             if ((p.jump ?? 0) <= 1) plan = p
             break

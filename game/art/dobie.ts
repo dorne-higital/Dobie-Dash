@@ -405,7 +405,7 @@ export interface Accessories {
   bandana?: boolean
   eyes?: 'specs' | 'shades'
   shades?: boolean
-  hat?: 'party' | 'beanie' | 'crown'
+  hat?: 'party' | 'beanie' | 'crown' | 'bobble'
   crown?: boolean
   cape?: boolean
   back?: 'cape'
@@ -726,6 +726,22 @@ export function head(
     rr(c, -17, -11, 34, 6, 3)
     c.fill()
     dot(c, 0, -25, 4.5, '#fff8ee')
+  }
+  if (acc.hat === 'bobble') {
+    // Snowy Peaks reward: a striped woolly hat with a big pompom.
+    c.fillStyle = '#e5484d'
+    c.beginPath()
+    c.arc(0, -8, 16.5, Math.PI * 1.02, Math.PI * 1.98)
+    c.closePath()
+    c.fill()
+    c.fillStyle = '#fff8ee'
+    c.fillRect(-15, -17, 30, 3)
+    c.fillRect(-11, -22, 22, 2.5)
+    c.fillStyle = '#c93a3f'
+    rr(c, -17, -11, 34, 6, 3)
+    c.fill()
+    dot(c, 0, -26, 6, '#fff8ee')
+    dot(c, -2, -28, 2.2, '#ffffff')
   }
   if (acc.crown || acc.hat === 'crown') {
     c.fillStyle = '#ffc61a'

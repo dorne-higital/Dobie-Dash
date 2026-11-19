@@ -28,18 +28,23 @@ describe('scoring', () => {
 
 describe('worlds', () => {
   const worlds = cfg.worlds
-  it('changes world at 1,500, 4,000 and 7,500', () => {
+  it('changes world at 1,500, 4,000, 7,500 and 12,000', () => {
     expect(worldIndexForScore(0, worlds)).toBe(0)
     expect(worldIndexForScore(1499, worlds)).toBe(0)
     expect(worldIndexForScore(1500, worlds)).toBe(1)
     expect(worldIndexForScore(4000, worlds)).toBe(2)
-    expect(worldIndexForScore(99999, worlds)).toBe(3)
+    expect(worldIndexForScore(11999, worlds)).toBe(3)
+    expect(worldIndexForScore(12000, worlds)).toBe(4)
+    expect(worldIndexForScore(99999, worlds)).toBe(worlds.length - 1)
   })
   it('world pill fills toward the next target', () => {
     expect(worldProgress(750, 0, worlds)).toBeCloseTo(0.5)
     expect(worldProgress(1500 + 1250, 1, worlds)).toBeCloseTo(0.5)
-    // The last world fills toward its gate (12,000) instead.
     expect(worldProgress(9000, 3, worlds)).toBeCloseTo((9000 - 7500) / (12000 - 7500))
+    // The last world fills toward its gate instead.
+    const last = worlds.length - 1
+    const { at, gate } = worlds[last]!
+    expect(worldProgress((at + gate!) / 2, last, worlds)).toBeCloseTo(0.5)
   })
   it('a run starts in Bark Park and changes world at each score target', () => {
     const c = loadGameConfig()
@@ -56,7 +61,9 @@ describe('worlds', () => {
           at.push(run.score)
         }
     }
-    expect(seen).toEqual(['City Streets', 'Sunny Beach', 'Midnight Run'])
+    // At least to Midnight Run in 6 minutes, in order, each at its target.
+    expect(seen.length).toBeGreaterThanOrEqual(3)
+    expect(seen).toEqual(c.worlds.slice(1, seen.length + 1).map((w) => w.name))
     c.worlds.slice(1).forEach((w, i) => expect(at[i]).toBeGreaterThanOrEqual(w.at))
     // At Midnight Run's speed, or above it once past the last gate (the endless ramp).
     expect(run.speed).toBeGreaterThanOrEqual(c.worlds[3]!.speed)

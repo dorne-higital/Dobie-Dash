@@ -158,6 +158,10 @@ export function drawObstacle(c: Ctx, type: ObstacleType, x: number, y: number, t
     c.fillStyle = '#ffc61a'
     c.fillRect(x + 2, y - 16, 3, 16)
     tri(c, [x - 3, y - 18], [x + 10, y - 18], [x + 3.5, y - 26], '#ff7a1a')
+  } else if (type === 'snowman') {
+    snowman(c, x, y)
+  } else if (type === 'snowball') {
+    snowball(c, x, y, t)
   } else if (type === 'crab') {
     const k = Math.sin(t * 14)
     c.strokeStyle = '#c93a3f'
@@ -299,6 +303,53 @@ export function drawObstacle(c: Ctx, type: ObstacleType, x: number, y: number, t
   }
 }
 
+/** Snowy Peaks: a snowman with a top hat, carrot and scarf (34 × 46). */
+function snowman(c: Ctx, x: number, y: number) {
+  ell(c, x + 17, y - 1, 15, 3, 0, 'rgba(120,150,190,.35)')
+  dot(c, x + 17, y - 13, 13, '#f4f8ff')
+  dot(c, x + 17, y - 32, 9.5, '#ffffff')
+  ell(c, x + 21, y - 16, 7, 9, 0.3, 'rgba(160,190,225,.45)')
+  c.fillStyle = '#e5484d'
+  rr(c, x + 7, y - 25, 20, 5, 2.5)
+  c.fill()
+  rr(c, x + 20, y - 25, 5, 11, 2)
+  c.fill()
+  dot(c, x + 13, y - 34, 1.4, '#1d1b28')
+  dot(c, x + 20, y - 34, 1.4, '#1d1b28')
+  tri(c, [x + 17, y - 32], [x + 17, y - 29], [x + 28, y - 31], '#ff8a1a')
+  for (const yy of [-16, -10]) dot(c, x + 17, y + yy, 1.5, '#1d1b28')
+  c.fillStyle = '#1d1b28'
+  c.fillRect(x + 9, y - 42, 16, 2.5)
+  c.fillRect(x + 11.5, y - 46, 11, 4.5)
+  c.strokeStyle = '#7a4a2a'
+  c.lineWidth = 1.8
+  c.beginPath()
+  c.moveTo(x + 6, y - 20)
+  c.lineTo(x - 2, y - 27)
+  c.moveTo(x + 28, y - 20)
+  c.lineTo(x + 35, y - 25)
+  c.stroke()
+}
+
+/** Snowy Peaks: a big snowball rolling toward Dobie (30 × 30), with a spray of snow. */
+function snowball(c: Ctx, x: number, y: number, t: number) {
+  const a = t * 6
+  for (let i = 0; i < 3; i++) {
+    const k = (t * 1.5 + i / 3) % 1
+    dot(c, x + 30 + k * 16, y - 4 - k * 8 + i * 2, 3.2 * (1 - k), 'rgba(255,255,255,.85)')
+  }
+  dot(c, x + 15, y - 15, 15, '#eef4fd')
+  c.save()
+  c.translate(x + 15, y - 15)
+  c.rotate(-a)
+  ell(c, 5, -4, 6, 4, 0.4, '#ffffff')
+  ell(c, -6, 5, 4, 3, -0.3, 'rgba(160,190,225,.6)')
+  dot(c, 7, 7, 2, 'rgba(160,190,225,.6)')
+  dot(c, -7, -6, 1.6, 'rgba(160,190,225,.6)')
+  c.restore()
+  ell(c, x + 19, y - 9, 9, 5, 0.2, 'rgba(160,190,225,.35)')
+}
+
 /** Animation loop length (seconds) per obstacle; 0 means static. */
 export const OBSTACLE_ANIM: Record<ObstacleType, { period: number; frames: number }> = {
   hydrant: { period: 0, frames: 1 },
@@ -315,6 +366,8 @@ export const OBSTACLE_ANIM: Record<ObstacleType, { period: number; frames: numbe
   bin: { period: 0, frames: 1 },
   fox: { period: (Math.PI * 2) / 16, frames: 8 },
   parcel: { period: 0, frames: 1 },
+  snowman: { period: 0, frames: 1 },
+  snowball: { period: (Math.PI * 2) / 6, frames: 8 },
 }
 
 export function bone(c: Ctx, x: number, y: number, s: number, fill: string, edge: string) {

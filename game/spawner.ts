@@ -37,6 +37,10 @@ export interface ValidateOpts {
   speed: number
   /** Steps after spawn before which the dog may still be busy with the previous pattern. */
   ready: number
+  /** Ice patches as screen x ranges at spawn time (they move with the ground). */
+  ice?: { x0: number; x1: number }[]
+  /** Ground jumps from ice go at this fraction of the normal jump speed. */
+  iceJumpScale?: number
 }
 
 const MAX_DOUBLE_DELAY = 40
@@ -83,6 +87,19 @@ export function findClearPlan(
   }
   const gx0 = dogX + hb.x0
   const gx1 = dogX + hb.x1
+
+  // Ice: is the middle of the dog's feet over a patch on step k? (Patches move with the ground.)
+  const ice = opts.ice ?? []
+  const iceScale = opts.iceJumpScale ?? 1
+  const feetX = dogX + (hb.x0 + hb.x1) / 2
+  const groundStep = opts.speed * dt
+  const onIce = (k: number) => {
+    for (const r of ice) {
+      const off = groundStep * k
+      if (feetX >= r.x0 - off && feetX <= r.x1 - off) return true
+    }
+    return false
+  }
 
   /** Does the dog box (at height y) hit any obstacle on step k? */
   const hit = (k: number, y: number) => {
@@ -141,7 +158,15 @@ export function findClearPlan(
     dog.coyote = 0
     dog.held = 0
     for (let k = j; k < j + 400; k++) {
-      stepDog(dog, p, dt, k === j || k === d2)
+      // Same rule as Run: feet over ice this step means ground jumps (and a jump buffered
+      // on landing) are slippery. Double jumps aren't affected.
+      stepDog(
+        dog,
+        p,
+        dt,
+        k === j || k === d2,
+        ice.length && onIce(k) ? { jumpScale: iceScale } : {},
+      )
       if (k > passK) {
         if (dog.grounded) return k
       } else if (hit(k, dog.y)) return null
@@ -192,11 +217,32 @@ export interface SpawnBatch {
   biscuits: SpawnedBiscuit[]
   /** Absolute step numbers of the taps that clear this batch (used by bots and tests). */
   plan: PlannedTaps | null
-  pattern: PatternType | 'breather' | 'wave' | 'ledge'
+  pattern: PatternType | 'breather' | 'wave' | 'ledge' | 'ice'
   /** World-x span of a wave (Sunny Beach twist). */
   wave?: { wx0: number; wx1: number; slow: number }
+  /** An ice patch (Snowy Peaks twist): world-x span and how slippery jumps from it are. */
+  ice?: IcePatch
   /** A ledge to run along: world-x span, height of its top and the world's look. */
   ledge?: Ledge
+}
+
+export interface IcePatch {
+  wx0: number
+  wx1: number
+  /** Ground jumps from this patch go at this fraction of the normal jump speed. */
+  jumpScale: number
+}
+
+/** Ice patches (world x) as the validator's options at distance `dist`. */
+export function iceOpts(
+  patches: IcePatch[],
+  dist: number,
+): Pick<ValidateOpts, 'ice' | 'iceJumpScale'> {
+  if (!patches.length) return {}
+  return {
+    ice: patches.map((r) => ({ x0: r.wx0 - dist, x1: r.wx1 - dist })),
+    iceJumpScale: Math.min(...patches.map((r) => r.jumpScale)),
+  }
 }
 
 export interface Ledge {
@@ -237,6 +283,10 @@ export class Spawner {
   private waveWorld = ''
   private nextLedge = Infinity
   private ledgeWorld = ''
+  private nextIce = Infinity
+  private iceWorld = ''
+  /** Ice patches placed so far that may still be under or ahead of the dog (world x). */
+  private icePatches: IcePatch[] = []
   /** The latest ledge: no fliers near it, and nothing in the landing zone up to clearTo. */
   private ledge: { wx0: number; wx1: number; clearTo: number } | null = null
 
@@ -296,6 +346,22 @@ export class Spawner {
       }
     }
 
+    if (!tut && tw?.kind === 'ice') {
+      if (this.iceWorld !== s.world.id) {
+        this.iceWorld = s.world.id
+        this.nextIce = s.time + this.rng.range(tw.every[0], tw.every[1])
+      } else if (s.time >= this.nextIce) {
+        this.nextIce = s.time + this.rng.range(tw.every[0], tw.every[1])
+        const wx0 = this.nextAt + tw.leadIn * s.speed
+        const wx1 = wx0 + this.rng.range(tw.seconds[0], tw.seconds[1]) * s.speed
+        const patch = { wx0, wx1, jumpScale: tw.jumpScale }
+        this.icePatches.push(patch)
+        return { obstacles: [], biscuits: [], plan: null, pattern: 'ice', ice: patch }
+      }
+    }
+    // Patches the dog has left behind no longer matter.
+    while (this.icePatches.length && this.icePatches[0]!.wx1 < s.dist) this.icePatches.shift()
+
     // No rooftops during a boss chase: it should stay busy, and the landing zone after a
     // ledge would empty it.
     const pf = s.minion ? null : s.world.platforms
@@ -314,15 +380,18 @@ export class Spawner {
     const x0 = base - s.dist // screen x at this step
     const ready = this.readyStep - s.step
 
+    // Ice in screen x at this step, and how slippery it is, for every check below.
+    const ice = iceOpts(this.icePatches, s.dist)
     const check = (pat: PatternObstacle[]) => {
-      const plan = findClearPlan(pat, this.cfg, { speed: s.speed, ready })
+      const plan = findClearPlan(pat, this.cfg, { speed: s.speed, ready, ...ice })
       if (!plan) return null
       // The pattern may reach the dog at another speed: the one this world is ramping
       // to, or the next world's if the score target is close. It must clear at those too.
       // A wave just behind it may still be easing the speed back up.
       const slowed = tw?.kind === 'waves' ? s.speed * tw.slow : undefined
       for (const v of [s.world.speed, s.nextSpeed, slowed])
-        if (v && v !== s.speed && !findClearPlan(pat, this.cfg, { speed: v, ready: 0 })) return null
+        if (v && v !== s.speed && !findClearPlan(pat, this.cfg, { speed: v, ready: 0, ...ice }))
+          return null
       return plan
     }
     let kind: PatternType = intro || tut ? 'single' : this.rng.weighted(s.world.patterns)

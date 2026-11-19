@@ -199,6 +199,17 @@
       "w": 30,
       "h": 26,
       "inset": 4
+    },
+    "snowman": {
+      "w": 34,
+      "h": 46,
+      "inset": 5
+    },
+    "snowball": {
+      "w": 30,
+      "h": 30,
+      "inset": 5,
+      "extraSpeed": 90
     }
   },
   "worlds": [
@@ -345,7 +356,7 @@
         "minion": "fox",
         "minionWeight": 2.5
       },
-      "gate": 12000,
+      "gate": null,
       "about": {
         "colour": "#3a3584",
         "obstacles": "Owls, wheelie bins, foxes",
@@ -358,17 +369,49 @@
         "height": 100,
         "leadIn": 0.4
       }
+    },
+    {
+      "id": "snowy-peaks",
+      "name": "Snowy Peaks",
+      "at": 12000,
+      "speed": 420,
+      "gap": [0.95, 1.6],
+      "enabled": true,
+      "theme": "snow",
+      "obstacles": {
+        "snowman": 1,
+        "snowball": 1.1
+      },
+      "patterns": {
+        "single": 3,
+        "pair": 1.5,
+        "flier": 1,
+        "triple": 0.6
+      },
+      "twist": {
+        "kind": "ice",
+        "every": [5, 9],
+        "seconds": [1.2, 2.2],
+        "jumpScale": 0.86,
+        "leadIn": 0.3
+      },
+      "chase": {
+        "boss": "avalanche",
+        "name": "The avalanche",
+        "minion": "snowball",
+        "minionWeight": 2.5
+      },
+      "gate": 17500,
+      "platforms": null,
+      "about": {
+        "colour": "#8fb8e8",
+        "obstacles": "Snowmen, rolling snowballs",
+        "twist": "Ice patches: jumps from ice are lower",
+        "boss": "An avalanche"
+      }
     }
   ],
   "comingSoon": [
-    {
-      "name": "Snowy Peaks",
-      "at": 12000,
-      "colour": "#8fb8e8",
-      "obstacles": "Snowmen, rolling snowballs",
-      "twist": "Ice patches make you slide",
-      "boss": "An avalanche"
-    },
     {
       "name": "Building Site",
       "at": 17500,

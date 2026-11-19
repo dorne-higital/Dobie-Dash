@@ -10,12 +10,15 @@ import { drawTheme } from './backgrounds'
 import { BOSS_BOX, BOSS_FRAMES, BOSS_PERIOD } from './bosses'
 import {
   bakeDarkness,
+  bakeIce,
   bakeLedge,
   bakeWaves,
   drawDarkness,
+  drawIce,
   drawLedges,
   drawWaves,
   type Darkness,
+  type IceSprites,
   type LedgeSprites,
   type WaveSprites,
 } from './twists'
@@ -81,6 +84,7 @@ export class Renderer {
   private prevTheme: ThemeKind | null = null
   private fade = 0
   private waveSprites: WaveSprites
+  private iceSprites: IceSprites
   private dark: Darkness | null = null
   private ledgeSprites = new Map<string, LedgeSprites>()
   /** Rooftop ledge art per world look and height, baked on first use. */
@@ -103,6 +107,7 @@ export class Renderer {
   ) {
     this.sprites = new SpriteCache(view.S, look ?? undefined)
     this.waveSprites = bakeWaves(view.S)
+    this.iceSprites = bakeIce(view.S)
   }
 
   setView(v: View) {
@@ -111,6 +116,7 @@ export class Renderer {
     if (rescale) {
       this.sprites = new SpriteCache(v.S, this.look ?? undefined)
       this.waveSprites = bakeWaves(v.S)
+      this.iceSprites = bakeIce(v.S)
       this.ledgeSprites.clear()
     }
   }
@@ -198,6 +204,21 @@ export class Renderer {
         break
       case 'land':
         this.squash = 1
+        break
+      case 'skid':
+        // Landing on ice: a spray of snow sliding off the back.
+        this.squash = 1
+        for (let i = 0; i < 6; i++)
+          this.parts.push({
+            x: dogX + r(-16, 10),
+            y: run.dog.y - 2,
+            vx: r(-160, -60),
+            vy: r(-50, 0),
+            life: 0.35,
+            max: 0.35,
+            col: 'rgba(235,246,255,.95)',
+            r: r(1.5, 3.5),
+          })
         break
       case 'eat':
         for (let i = 0; i < 7; i++)
@@ -360,6 +381,7 @@ export class Renderer {
 
     if (run.waves.length) drawWaves(c, this.waveSprites, run.waves, dist, GY, W, t)
     if (run.ledges.length) drawLedges(c, this.ledge, run.ledges, dist, GY, W)
+    if (run.ice.length) drawIce(c, this.iceSprites, run.ice, dist, GY, W)
 
     // Obstacles.
     for (const o of run.obstacles) {

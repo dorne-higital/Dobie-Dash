@@ -4,23 +4,8 @@
  */
 import raw from '../content/worlds.json'
 
-export type ObstacleType =
-  | 'hydrant'
-  | 'cone'
-  | 'puddle'
-  | 'fence'
-  | 'cat'
-  | 'skateboarder'
-  | 'manhole'
-  | 'crab'
-  | 'sandcastle'
-  | 'seagull'
-  | 'owl'
-  | 'bin'
-  | 'fox'
-  | 'parcel'
-
-export const OBSTACLE_TYPES: ObstacleType[] = [
+/** Every obstacle, in one list: the type, the sprite cache and the tests all come from it. */
+export const OBSTACLE_TYPES = [
   'hydrant',
   'cone',
   'puddle',
@@ -35,9 +20,12 @@ export const OBSTACLE_TYPES: ObstacleType[] = [
   'bin',
   'fox',
   'parcel',
-]
+  'snowman',
+  'snowball',
+] as const
+export type ObstacleType = (typeof OBSTACLE_TYPES)[number]
 export type PatternType = 'single' | 'pair' | 'triple' | 'flier'
-export type ThemeKind = 'park' | 'city' | 'beach' | 'night'
+export type ThemeKind = 'park' | 'city' | 'beach' | 'night' | 'snow'
 export type PowerKind = 'zoomies' | 'magnet' | 'shield'
 
 export interface Box {
@@ -80,7 +68,24 @@ export interface LampsTwist {
   pool: number
 }
 
-export type TwistDef = WavesTwist | LampsTwist
+/**
+ * Ice patches on the path (Snowy Peaks): you can land on them, but jumps from ice are
+ * slippery and lower. Obstacles may sit on or after ice; the spawner proves them clearable
+ * with the lower jump wherever the dog would be standing on ice.
+ */
+export interface IceTwist {
+  kind: 'ice'
+  /** Seconds between patches (random in range). */
+  every: [number, number]
+  /** Length of a patch, in seconds of running at world speed (random in range). */
+  seconds: [number, number]
+  /** Ground jumps from ice go at this fraction of the normal jump speed. */
+  jumpScale: number
+  /** Clear running (seconds) before a patch starts. */
+  leadIn: number
+}
+
+export type TwistDef = WavesTwist | LampsTwist | IceTwist
 
 /**
  * Ledges (rooftops of low buildings) to run along: an optional higher path, never needed.
@@ -98,7 +103,7 @@ export interface PlatformsDef {
   leadIn: number
 }
 
-export type BossKind = 'mower' | 'van' | 'kingCrab' | 'foxPack'
+export type BossKind = 'mower' | 'van' | 'kingCrab' | 'foxPack' | 'avalanche'
 
 /** Gate chase: in the last `chase.window` points before the target, a boss chases you. */
 export interface ChaseDef {
