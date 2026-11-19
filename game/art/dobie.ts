@@ -405,7 +405,7 @@ export interface Accessories {
   bandana?: boolean
   eyes?: 'specs' | 'shades'
   shades?: boolean
-  hat?: 'party' | 'beanie' | 'crown' | 'bobble' | 'hardhat'
+  hat?: 'party' | 'beanie' | 'crown' | 'bobble' | 'hardhat' | 'witch'
   crown?: boolean
   cape?: boolean
   back?: 'cape'
@@ -758,6 +758,24 @@ export function head(
     c.fillStyle = 'rgba(255,255,255,.45)'
     rr(c, -10, -21, 5, 7, 2)
     c.fill()
+  }
+  if (acc.hat === 'witch') {
+    // Haunted Hollow reward: a floppy witch hat with a purple band and buckle.
+    c.fillStyle = '#2e2440'
+    c.beginPath()
+    c.moveTo(-10, -14)
+    c.quadraticCurveTo(-2, -30, 8, -42)
+    c.quadraticCurveTo(14, -38, 12, -34)
+    c.quadraticCurveTo(8, -26, 11, -14)
+    c.closePath()
+    c.fill()
+    ell(c, 0, -13, 20, 4.5, 0, '#2e2440')
+    c.fillStyle = '#8a5cf6'
+    rr(c, -10, -19, 21, 5, 2)
+    c.fill()
+    c.strokeStyle = '#ffd23f'
+    c.lineWidth = 1.5
+    c.strokeRect(-1, -19, 5, 5)
   }
   if (acc.crown || acc.hat === 'crown') {
     c.fillStyle = '#ffc61a'

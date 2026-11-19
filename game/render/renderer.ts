@@ -388,6 +388,10 @@ export class Renderer {
     if (run.ice.length) drawIce(c, this.iceSprites, run.ice, dist, GY, W)
 
     // Obstacles.
+    // Haunted Hollow: ghosts fade between faint and solid (only how they look; they're
+    // always solid to hit) and are fully solid once they're close.
+    const gt = run.world.twist?.kind === 'ghosts' ? run.world.twist : null
+    const dogX = run.cfg.view.dogX
     for (const o of run.obstacles) {
       const x = lerp(o.pwx, o.wx) - dist
       const fly = o.def.fly ?? 0
@@ -424,7 +428,13 @@ export class Renderer {
         c.restore()
         continue
       }
-      drawSprite(c, spr, x, GY - fly)
+      if (gt && o.type === 'ghost') {
+        const near = x - dogX < gt.solidWithin
+        const wave = 0.5 + 0.5 * Math.cos(((t + o.ph) / gt.period) * TAU)
+        c.globalAlpha = near ? 1 : gt.minAlpha + (1 - gt.minAlpha) * wave
+        drawSprite(c, spr, x, GY - fly)
+        c.globalAlpha = 1
+      } else drawSprite(c, spr, x, GY - fly)
     }
 
     // Midnight Run: only the lamps light the path (fades in with the world).

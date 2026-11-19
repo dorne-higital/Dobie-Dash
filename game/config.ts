@@ -24,10 +24,13 @@ export const OBSTACLE_TYPES = [
   'snowball',
   'mixer',
   'girder',
+  'pumpkin',
+  'bat',
+  'ghost',
 ] as const
 export type ObstacleType = (typeof OBSTACLE_TYPES)[number]
 export type PatternType = 'single' | 'pair' | 'triple' | 'flier'
-export type ThemeKind = 'park' | 'city' | 'beach' | 'night' | 'snow' | 'site'
+export type ThemeKind = 'park' | 'city' | 'beach' | 'night' | 'snow' | 'site' | 'haunted'
 export type PowerKind = 'zoomies' | 'magnet' | 'shield'
 
 export interface Box {
@@ -110,7 +113,21 @@ export interface BeltsTwist {
   after: number
 }
 
-export type TwistDef = WavesTwist | LampsTwist | IceTwist | BeltsTwist
+/**
+ * Ghosts (Haunted Hollow) drift between faint and solid as they come. It's only how they
+ * look: they're always solid to hit, and they turn fully solid when they get close.
+ */
+export interface GhostsTwist {
+  kind: 'ghosts'
+  /** Faintest a ghost gets (alpha). */
+  minAlpha: number
+  /** Seconds for one fade out and back in. */
+  period: number
+  /** Within this many points of the dog a ghost is always fully solid. */
+  solidWithin: number
+}
+
+export type TwistDef = WavesTwist | LampsTwist | IceTwist | BeltsTwist | GhostsTwist
 
 /**
  * Ledges (rooftops of low buildings) to run along: an optional higher path, never needed.
@@ -128,7 +145,8 @@ export interface PlatformsDef {
   leadIn: number
 }
 
-export type BossKind = 'mower' | 'van' | 'kingCrab' | 'foxPack' | 'avalanche' | 'wreckingBall'
+export type BossKind =
+  'mower' | 'van' | 'kingCrab' | 'foxPack' | 'avalanche' | 'wreckingBall' | 'ghostHound'
 
 /** Gate chase: in the last `chase.window` points before the target, a boss chases you. */
 export interface ChaseDef {

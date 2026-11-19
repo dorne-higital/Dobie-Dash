@@ -158,6 +158,12 @@ export function drawObstacle(c: Ctx, type: ObstacleType, x: number, y: number, t
     c.fillStyle = '#ffc61a'
     c.fillRect(x + 2, y - 16, 3, 16)
     tri(c, [x - 3, y - 18], [x + 10, y - 18], [x + 3.5, y - 26], '#ff7a1a')
+  } else if (type === 'pumpkin') {
+    pumpkin(c, x, y, t)
+  } else if (type === 'bat') {
+    bat(c, x, y, t)
+  } else if (type === 'ghost') {
+    ghost(c, x, y, t)
   } else if (type === 'mixer') {
     mixer(c, x, y, t)
   } else if (type === 'girder') {
@@ -416,6 +422,77 @@ function girder(c: Ctx, x: number, y: number, t: number) {
   for (const bx of [3, 53]) dot(c, x + bx, y - 7, 1.4, '#1d1b28')
 }
 
+/** Haunted Hollow: a carved pumpkin with a glowing face (34 × 30). */
+function pumpkin(c: Ctx, x: number, y: number, t: number) {
+  const glow = (0.75 + Math.sin(t * 6) * 0.25).toFixed(2)
+  const face = `rgba(255,214,90,${glow})`
+  for (const [dx, rx] of [
+    [8, 10],
+    [26, 10],
+    [17, 12],
+  ] as const)
+    ell(c, x + dx, y - 13, rx, 13, 0, dx === 17 ? '#ff8a1a' : '#e5741a')
+  c.fillStyle = '#4a7a2e'
+  rr(c, x + 15, y - 31, 4, 7, 2)
+  c.fill()
+  tri(c, [x + 9, y - 17], [x + 12, y - 22], [x + 15, y - 17], face)
+  tri(c, [x + 19, y - 17], [x + 22, y - 22], [x + 25, y - 17], face)
+  c.fillStyle = face
+  c.beginPath()
+  c.moveTo(x + 8, y - 11)
+  c.lineTo(x + 26, y - 11)
+  c.lineTo(x + 23, y - 6)
+  c.lineTo(x + 20, y - 9)
+  c.lineTo(x + 17, y - 6)
+  c.lineTo(x + 14, y - 9)
+  c.lineTo(x + 11, y - 6)
+  c.closePath()
+  c.fill()
+}
+
+/** Haunted Hollow: a bat flapping toward Dobie (34 × 20). */
+function bat(c: Ctx, x: number, y: number, t: number) {
+  const f = Math.sin(t * 16)
+  c.fillStyle = '#2e2440'
+  for (const side of [-1, 1]) {
+    const cx = x + 17
+    c.beginPath()
+    c.moveTo(cx, y - 11)
+    c.quadraticCurveTo(cx + side * 9, y - 18 - f * 6, cx + side * 17, y - 14 - f * 7)
+    c.quadraticCurveTo(cx + side * 13, y - 10, cx + side * 14, y - 6 - f * 2)
+    c.quadraticCurveTo(cx + side * 9, y - 8, cx + side * 5, y - 5)
+    c.closePath()
+    c.fill()
+  }
+  ell(c, x + 17, y - 10, 6, 7, 0, '#3d3256')
+  tri(c, [x + 12, y - 15], [x + 13, y - 21], [x + 16, y - 16], '#3d3256')
+  tri(c, [x + 18, y - 16], [x + 21, y - 21], [x + 22, y - 15], '#3d3256')
+  dot(c, x + 14.5, y - 11, 1.6, '#ffd23f')
+  dot(c, x + 19.5, y - 11, 1.6, '#ffd23f')
+}
+
+/** Haunted Hollow: a little sheet ghost bobbing along (32 × 40). */
+function ghost(c: Ctx, x: number, y: number, t: number) {
+  const b = Math.sin(t * 5) * 2
+  ell(c, x + 16, y - 1, 12, 2.5, 0, 'rgba(60,30,90,.25)')
+  c.fillStyle = '#f4f0ff'
+  c.beginPath()
+  c.moveTo(x + 2, y - 4 + b)
+  c.lineTo(x + 2, y - 24 + b)
+  c.arc(x + 16, y - 24 + b, 14, Math.PI, 0)
+  c.lineTo(x + 30, y - 4 + b)
+  for (let k = 0; k < 4; k++) {
+    const wx = x + 30 - (k + 1) * 7
+    c.quadraticCurveTo(wx + 3.5, y - 9 + b + (k % 2 ? 4 : -1), wx, y - 4 + b)
+  }
+  c.closePath()
+  c.fill()
+  ell(c, x + 22, y - 18 + b, 6, 12, 0, 'rgba(180,160,230,.35)')
+  ell(c, x + 11, y - 26 + b, 2.6, 3.6, 0, '#2e2440')
+  ell(c, x + 20, y - 26 + b, 2.6, 3.6, 0, '#2e2440')
+  ell(c, x + 15.5, y - 19 + b, 3, 2.4, 0, '#2e2440')
+}
+
 /** Animation loop length (seconds) per obstacle; 0 means static. */
 export const OBSTACLE_ANIM: Record<ObstacleType, { period: number; frames: number }> = {
   hydrant: { period: 0, frames: 1 },
@@ -436,6 +513,9 @@ export const OBSTACLE_ANIM: Record<ObstacleType, { period: number; frames: numbe
   snowball: { period: (Math.PI * 2) / 6, frames: 8 },
   mixer: { period: 0.4, frames: 6 },
   girder: { period: (Math.PI * 2) / 3, frames: 8 },
+  pumpkin: { period: (Math.PI * 2) / 6, frames: 6 },
+  bat: { period: (Math.PI * 2) / 16, frames: 6 },
+  ghost: { period: (Math.PI * 2) / 5, frames: 8 },
 }
 
 export function bone(c: Ctx, x: number, y: number, s: number, fill: string, edge: string) {

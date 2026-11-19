@@ -152,6 +152,17 @@
       }
     },
     {
+      "id": "hat:witch",
+      "slot": "hat",
+      "name": "Witch Hat",
+      "unlock": {
+        "world": 6
+      },
+      "art": {
+        "hat": "witch"
+      }
+    },
+    {
       "id": "back:cape",
       "slot": "back",
       "name": "Super Cape",
@@ -260,6 +271,11 @@
       "id": "sticker:wreckingBall",
       "boss": "wreckingBall",
       "name": "The Wrecking Ball"
+    },
+    {
+      "id": "sticker:ghostHound",
+      "boss": "ghostHound",
+      "name": "The Ghost Hound"
     }
   ]
 }

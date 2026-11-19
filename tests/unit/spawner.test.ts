@@ -443,3 +443,21 @@ describe('Building Site belts', () => {
     }
   }, 60_000)
 })
+
+describe('Haunted Hollow', () => {
+  it('ghosts, pumpkins and bats all turn up, and a planned-tap bot survives it', () => {
+    const cfg = noPowers()
+    const wi = cfg.worlds.findIndex((w) => w.twist?.kind === 'ghosts')
+    expect(wi).toBeGreaterThan(0)
+    const seen = new Set<string>()
+    for (let seed = 1; seed <= 8; seed++) {
+      const run = new Run(cfg, seed, W, { autoplay: true, startWorld: wi })
+      for (let i = 0; i < 120 * 60 && run.state === 'running'; i++) {
+        run.update()
+        for (const o of run.obstacles) seen.add(o.type)
+      }
+      expect({ seed, state: run.state }).toEqual({ seed, state: 'running' })
+    }
+    for (const t of Object.keys(cfg.worlds[wi]!.obstacles)) expect(seen.has(t), t).toBe(true)
+  }, 60_000)
+})

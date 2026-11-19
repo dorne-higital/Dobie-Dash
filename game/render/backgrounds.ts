@@ -60,6 +60,16 @@ export const THEMES: Record<ThemeKind, ThemeColors> = {
     dirt: '#e2ebf7',
     dirt2: '#c8d7ea',
   },
+  haunted: {
+    sky: ['#1a0f2e', '#3b1f5c', '#6b3f8a'],
+    sun: '#f4f0d0',
+    far: '#2a1a44',
+    far2: '#3a2558',
+    mid: '#24162f',
+    ground: '#4a3a5c',
+    dirt: '#2f2440',
+    dirt2: '#3d3054',
+  },
   site: {
     sky: ['#7cc0ee', '#b4dcf5', '#fde9c4'],
     sun: '#fff3c4',
@@ -236,6 +246,89 @@ const LAYERS: Record<ThemeKind, LayerDef[]> = {
     },
   ],
   city: [buildingsFar, buildingsNear(false), lamps(false)],
+  haunted: [
+    {
+      // Dark hills with a crooked house on some of them.
+      factor: 0.15,
+      spacing: 260,
+      top: () => -150,
+      bottom: () => 0,
+      item: (c, x, i, f, T) => {
+        ell(c, x + 130, f.GY + 10, 170, 60 + hash(i) * 40, 0, T.far)
+        if (hash(i + 5) < 0.55) return
+        const hx = x + 110
+        const hy = f.GY - 60 - hash(i) * 30
+        c.fillStyle = T.far2
+        c.save()
+        c.translate(hx, hy)
+        c.rotate(-0.05)
+        c.fillRect(-26, -40, 52, 42)
+        c.beginPath()
+        c.moveTo(-32, -40)
+        c.lineTo(0, -70)
+        c.lineTo(32, -40)
+        c.fill()
+        c.fillRect(12, -76, 8, 24)
+        c.fillStyle = '#ffd86b'
+        c.fillRect(-16, -30, 8, 9)
+        c.fillRect(8, -30, 8, 9)
+        c.fillRect(-4, -54, 7, 7)
+        c.restore()
+      },
+    },
+    {
+      // Bare twisted trees.
+      factor: 0.4,
+      spacing: 170,
+      top: () => -120,
+      bottom: () => 0,
+      item: (c, x, i, f, T) => {
+        if (hash(i) < 0.35) return
+        const cx = x + 80
+        const h = 80 + hash(i + 1) * 30
+        c.strokeStyle = T.mid
+        c.lineCap = 'round'
+        c.lineWidth = 8
+        c.beginPath()
+        c.moveTo(cx, f.GY)
+        c.quadraticCurveTo(cx - 6, f.GY - h * 0.5, cx + 4, f.GY - h)
+        c.stroke()
+        c.lineWidth = 4
+        for (const [a, b, d] of [
+          [0.55, -1, 34],
+          [0.7, 1, 30],
+          [0.85, -1, 22],
+          [0.4, 1, 26],
+        ] as const) {
+          const y = f.GY - h * a
+          c.beginPath()
+          c.moveTo(cx, y)
+          c.quadraticCurveTo(cx + b * d * 0.6, y - 4, cx + b * d, y - 16)
+          c.stroke()
+        }
+      },
+    },
+    {
+      // Gravestones.
+      factor: 0.7,
+      spacing: 90,
+      top: () => -34,
+      bottom: () => 0,
+      item: (c, x, i, f) => {
+        const k = hash(i)
+        // No background pumpkins: they'd look like the real ones you have to jump.
+        if (k < 0.3) return
+        const gx = x + 30 + hash(i + 2) * 30
+        const h = 22 + hash(i + 3) * 10
+        c.fillStyle = '#6b6280'
+        rr(c, gx, f.GY - h, 18, h + 2, 8)
+        c.fill()
+        c.fillStyle = 'rgba(0,0,0,.25)'
+        c.fillRect(gx + 5, f.GY - h + 8, 8, 2)
+        c.fillRect(gx + 5, f.GY - h + 13, 8, 2)
+      },
+    },
+  ],
   site: [
     buildingsFar,
     {
@@ -466,6 +559,7 @@ const GROUND_LAYERS: Record<ThemeKind, LayerDef[]> = {
   city: roadMarks(false),
   night: roadMarks(true),
   site: [pebbles],
+  haunted: [pebbles],
   snow: [
     {
       // Snow lumps and blue shadows on the path.
@@ -521,7 +615,7 @@ export function buildTheme(kind: ThemeKind, f: Frame, scale: number): ThemeCache
   const { cv: sky, c } = makeCanvas(f.W, f.GY + 2, scale)
   c.fillStyle = grad(c, 0, 0, 0, f.GY, T.sky)
   c.fillRect(0, 0, f.W, f.GY + 2)
-  if (kind === 'night') {
+  if (kind === 'night' || kind === 'haunted') {
     for (let i = 0; i < 110; i++) {
       const x = hash(i) * f.W
       const y = hash(i + 99) * f.GY * 0.85
@@ -529,8 +623,16 @@ export function buildTheme(kind: ThemeKind, f: Frame, scale: number): ThemeCache
       dot(c, x, y, hash(i + 7) > 0.85 ? 1.8 : 1, '#ffffff')
     }
     c.globalAlpha = 1
-    dot(c, f.W * 0.76, f.GY * 0.3, 34, T.sun)
-    dot(c, f.W * 0.76 + 11, f.GY * 0.3 - 7, 30, T.sky[1])
+    if (kind === 'haunted') {
+      // A big full moon with a glow (and a bat or two across it).
+      dot(c, f.W * 0.7, f.GY * 0.28, 80, 'rgba(244,240,208,.12)')
+      dot(c, f.W * 0.7, f.GY * 0.28, 48, T.sun)
+      dot(c, f.W * 0.7 - 14, f.GY * 0.28 - 10, 8, 'rgba(0,0,0,.07)')
+      dot(c, f.W * 0.7 + 16, f.GY * 0.28 + 12, 11, 'rgba(0,0,0,.06)')
+    } else {
+      dot(c, f.W * 0.76, f.GY * 0.3, 34, T.sun)
+      dot(c, f.W * 0.76 + 11, f.GY * 0.3 - 7, 30, T.sky[1])
+    }
   } else {
     const sy = kind === 'city' ? f.GY * 0.66 : f.GY * 0.3
     const sr = kind === 'city' ? 52 : 34
@@ -596,7 +698,7 @@ export function drawTheme(
   const { W, H, GY } = th.frame
   const T = th.colors
   c.drawImage(th.sky, 0, 0, W, GY + 2)
-  if (th.kind !== 'night' && cloudSprite) {
+  if (th.kind !== 'night' && th.kind !== 'haunted' && cloudSprite) {
     const off = dist * 0.06
     const sp = 240
     const start = Math.floor(off / sp) - 1

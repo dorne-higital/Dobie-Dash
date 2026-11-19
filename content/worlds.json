@@ -222,6 +222,24 @@
       "inset": 3,
       "fly": 96,
       "extraSpeed": 40
+    },
+    "pumpkin": {
+      "w": 34,
+      "h": 30,
+      "inset": 4
+    },
+    "bat": {
+      "w": 34,
+      "h": 20,
+      "inset": 3,
+      "fly": 98,
+      "extraSpeed": 80
+    },
+    "ghost": {
+      "w": 32,
+      "h": 40,
+      "inset": 5,
+      "extraSpeed": 40
     }
   },
   "worlds": [
@@ -458,7 +476,7 @@
         "minion": "cone",
         "minionWeight": 2
       },
-      "gate": 24000,
+      "gate": null,
       "platforms": null,
       "about": {
         "colour": "#f2a93b",
@@ -466,17 +484,49 @@
         "twist": "Conveyor belts speed you up or slow you down",
         "boss": "A wrecking ball"
       }
+    },
+    {
+      "id": "haunted-hollow",
+      "name": "Haunted Hollow",
+      "at": 24000,
+      "speed": 470,
+      "gap": [0.9, 1.5],
+      "enabled": true,
+      "theme": "haunted",
+      "obstacles": {
+        "pumpkin": 1,
+        "ghost": 1,
+        "bat": 0.8
+      },
+      "patterns": {
+        "single": 3,
+        "pair": 1.5,
+        "flier": 1,
+        "triple": 0.5
+      },
+      "twist": {
+        "kind": "ghosts",
+        "minAlpha": 0.18,
+        "period": 1.6,
+        "solidWithin": 190
+      },
+      "chase": {
+        "boss": "ghostHound",
+        "name": "The Ghost Hound",
+        "minion": "ghost",
+        "minionWeight": 2
+      },
+      "gate": 32000,
+      "platforms": null,
+      "about": {
+        "colour": "#7b5a9c",
+        "obstacles": "Pumpkins, bats, ghosts",
+        "twist": "Ghosts fade in and out (solid when close)",
+        "boss": "The Ghost Hound"
+      }
     }
   ],
   "comingSoon": [
-    {
-      "name": "Haunted Hollow",
-      "at": 24000,
-      "colour": "#6b4a8a",
-      "obstacles": "Pumpkins, bats, ghosts",
-      "twist": "Ghosts fade in and out of solid",
-      "boss": "The Ghost Hound"
-    },
     {
       "name": "Moon Walkies",
       "at": 32000,

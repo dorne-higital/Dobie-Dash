@@ -292,11 +292,57 @@ function wreckingBall(c: Ctx, t: number) {
   dot(c, bx + 6, by + 10, 2, '#ffc61a')
 }
 
+/** Haunted Hollow: a huge see-through hound with glowing eyes, bounding after Dobie. */
+function ghostHound(c: Ctx, t: number) {
+  const run = t * Math.PI * 4
+  const b = Math.abs(Math.sin(run)) * 5
+  c.save()
+  c.globalAlpha = 0.85
+  // Wispy tail of mist.
+  for (let i = 0; i < 5; i++) {
+    const k = (t * 2 + i / 5) % 1
+    dot(c, 10 - k * 26, -40 - i * 4 + k * 8, 9 * (1 - k), 'rgba(200,190,255,.55)')
+  }
+  // Legs.
+  c.strokeStyle = '#d9d2ff'
+  c.lineWidth = 9
+  c.lineCap = 'round'
+  for (const [hx, ph] of [
+    [40, 0],
+    [56, Math.PI],
+    [104, 1.6],
+    [118, 1.6 + Math.PI],
+  ] as const) {
+    c.beginPath()
+    c.moveTo(hx, -34 - b)
+    c.lineTo(hx + Math.sin(run + ph) * 14, -6)
+    c.stroke()
+  }
+  ell(c, 80, -46 - b, 50, 22, 0, '#e8e3ff')
+  ell(c, 72, -40 - b, 30, 10, 0, 'rgba(160,140,230,.35)')
+  // Head and ears.
+  ell(c, 132, -66 - b, 22, 18, 0, '#e8e3ff')
+  tri(c, [118, -78 - b], [122, -98 - b], [132, -80 - b], '#d9d2ff')
+  ell(c, 152, -60 - b, 12, 8, 0, '#e8e3ff')
+  dot(c, 162, -62 - b, 3.5, '#2e2440')
+  c.restore()
+  // Eyes glow at full strength.
+  dot(c, 136, -70 - b, 7, 'rgba(120,255,200,.35)')
+  dot(c, 136, -70 - b, 3.5, '#7dffcf')
+  c.strokeStyle = '#2e2440'
+  c.lineWidth = 2.5
+  c.beginPath()
+  c.moveTo(128, -78 - b)
+  c.lineTo(142, -74 - b)
+  c.stroke()
+}
+
 export function drawBoss(c: Ctx, kind: BossKind, t: number) {
   if (kind === 'mower') mower(c, t)
   else if (kind === 'van') van(c, t)
   else if (kind === 'kingCrab') kingCrab(c, t)
   else if (kind === 'avalanche') avalanche(c, t)
   else if (kind === 'wreckingBall') wreckingBall(c, t)
+  else if (kind === 'ghostHound') ghostHound(c, t)
   else foxPack(c, t)
 }
