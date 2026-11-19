@@ -11,6 +11,7 @@ import { lookFor } from '~/logic/look'
 import { shouldOfferStarter } from '~/logic/store'
 import { MEDALS } from '~/logic/trophies'
 import type { RunSummary } from '~/game/run'
+import type { RunRecord } from '~/game/replay'
 import { POWER_KINDS, type PowerKind } from '~/game/config'
 import { runCause } from '~/logic/events'
 
@@ -36,6 +37,8 @@ let coachStep: { title: string; text: string; step: number; oops: boolean } | nu
 const sticker = (id: string) =>
   STICKERS.find((s) => s.id === id.replace('sticker-gold:', 'sticker:'))?.name ?? id
 const fightTip = ref<string | null>(null)
+/** The finished run's record (for a share clip after a new best). */
+const lastRecord = shallowRef<RunRecord | null>(null)
 const pauseInfo = ref({
   score: 0,
   worldName: '',
@@ -235,7 +238,8 @@ onMounted(async () => {
     if (startWorld === undefined && !startPower) {
       const got = player.recordRun(r)
       // Off to the boards to be checked (queued if offline).
-      const rec = engine?.record()
+      const rec = engine?.record() ?? null
+      lastRecord.value = rec
       if (rec && counts && r.score > 0)
         void boards.submit(rec, r.score, daily && dailySeed !== null ? 'daily' : 'normal')
       newBest.value = got.newBest
@@ -379,6 +383,7 @@ onBeforeUnmount(() => {
       :new-best="newBest"
       :earned="earned"
       :tip="fightTip"
+      :record="lastRecord"
       :dog-name="player.dog?.name"
       :can-double="counts"
       @again="start"

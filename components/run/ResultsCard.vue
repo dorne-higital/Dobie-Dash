@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { RunSummary } from '~/game/run'
+import type { RunRecord } from '~/game/replay'
 
 const props = withDefaults(
   defineProps<{
@@ -13,8 +14,10 @@ const props = withDefaults(
     canDouble?: boolean
     /** A how-to tip (e.g. how to beat a boss after a first fight with no hits). */
     tip?: string | null
+    /** The run's record: after a new best, its last 10 seconds can be shared as a clip. */
+    record?: RunRecord | null
   }>(),
-  { earned: () => [], dogName: 'Dobie', canDouble: false, tip: null },
+  { earned: () => [], dogName: 'Dobie', canDouble: false, tip: null, record: null },
 )
 const player = usePlayerStore()
 const { rewarded } = useAds()
@@ -45,6 +48,20 @@ async function share() {
   } catch {
     /* share sheet closed */
   }
+}
+
+// After a new best: share the last 10 seconds as a video.
+const clip = useClip()
+const clipMsg = ref('')
+async function shareClip() {
+  if (!props.record) return
+  clipMsg.value = 'Making your clip…'
+  const r = await clip.share(
+    props.record,
+    `${props.dogName} · ${props.result.score.toLocaleString()} · Dobie Dash`,
+  )
+  clipMsg.value =
+    r === 'failed' ? "Couldn't make the clip this time." : r === 'saved' ? 'Clip saved.' : ''
 }
 
 // Ignore taps for a moment so a panicked jump-tap doesn't skip the card.
@@ -88,6 +105,7 @@ function tapAnywhere() {
       <ul v-if="earned.length" class="earned">
         <li v-for="e in earned" :key="e"><UiIcon name="party" /> {{ e }}</li>
       </ul>
+      <p v-if="clipMsg" class="tip" role="status">{{ clipMsg }}</p>
       <p v-if="tip" class="tip"><UiIcon name="star" /> {{ tip }}</p>
       <UiButton
         v-if="canDouble && result.biscuits > 0 && !doubled"
@@ -107,6 +125,13 @@ function tapAnywhere() {
       <div class="row">
         <UiButton variant="ghost" @click="emit('home')">Home</UiButton>
         <UiButton variant="secondary" @click="share">{{ shared || 'Share' }}</UiButton>
+        <UiButton
+          v-if="newBest && record && clip.can"
+          variant="secondary"
+          :disabled="clip.making.value"
+          @click="shareClip"
+          >{{ clip.making.value ? 'Making clip…' : 'Share clip' }}</UiButton
+        >
       </div>
     </div>
     <p class="hint">Tap anywhere to go again</p>

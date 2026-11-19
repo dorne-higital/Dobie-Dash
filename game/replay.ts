@@ -46,8 +46,13 @@ export class Replayer {
     return this.run.state === 'ended'
   }
 
-  step() {
+  /** One update. `keep`: leave this step's fx and events on the run (for drawing). */
+  step(keep = false) {
     const run = this.run
+    if (keep) {
+      run.events.length = 0
+      run.fx.length = 0
+    }
     while (this.k < this.inputs.length && this.inputs[this.k]![0] <= run.ticks) {
       const code = this.inputs[this.k]![1]
       if (code === 'p') run.press()
@@ -58,8 +63,10 @@ export class Replayer {
       this.k++
     }
     run.update()
-    run.events.length = 0
-    run.fx.length = 0
+    if (!keep) {
+      run.events.length = 0
+      run.fx.length = 0
+    }
   }
 }
 
