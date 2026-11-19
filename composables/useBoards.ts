@@ -3,6 +3,7 @@
  * (name, dog, friend code), checked score submission with an offline queue, and reads for
  * the League tab. Writes only ever go through the Edge Functions (submit-run, profile).
  */
+import { Capacitor } from '@capacitor/core'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import sb from '~/content/supabase.json'
 import { configFingerprint } from '~/game/server'
@@ -41,6 +42,8 @@ const PENDING_KEY = 'dobiedash:pending-runs'
 let client: SupabaseClient | null = null
 let ready: Promise<boolean> | null = null
 const me = ref<BoardPlayer | null>(null)
+/** Is the board player linked to an Apple ID ("Keep your place")? */
+const linked = ref(false)
 
 function db() {
   client ??= createClient(sb.url, sb.publishableKey, {
@@ -77,6 +80,8 @@ export function useBoards() {
           const { error } = await auth.signInAnonymously()
           if (error) throw error
         }
+        const { data: u } = await auth.getUser()
+        linked.value = !!u.user && !u.user.is_anonymous
         await syncProfile()
         await flush()
         return true
@@ -232,8 +237,51 @@ export function useBoards() {
     return error ? null : (data as T)
   }
 
+  async function sha256(text: string) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('')
+  }
+
+  /**
+   * "Keep your place": links the board player to the player's Apple ID, so their scores,
+   * league and friends follow them to a new iPhone. If that Apple ID already has a
+   * place (from another phone), switch to it instead.
+   */
+  async function keepPlace(): Promise<'linked' | 'restored' | 'cancelled' | 'failed'> {
+    if (!Capacitor.isNativePlatform()) return 'failed'
+    if (!(await signIn())) return 'failed'
+    const raw = [...crypto.getRandomValues(new Uint8Array(16))]
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+    let token: string
+    try {
+      const { AppleSignIn } = await import('~/services/native/apple')
+      token = (await AppleSignIn.signIn({ nonce: await sha256(raw) })).identityToken
+    } catch (e) {
+      return String(e).includes('cancelled') ? 'cancelled' : 'failed'
+    }
+    const auth = db().auth
+    const { error } = await auth.linkIdentity({ provider: 'apple', token, nonce: raw })
+    if (!error) {
+      linked.value = true
+      return 'linked'
+    }
+    // Already linked to another player (the one from their old phone): become that one.
+    if (/already|exists|linked/i.test(error.message)) {
+      const { error: e2 } = await auth.signInWithIdToken({ provider: 'apple', token, nonce: raw })
+      if (e2) return 'failed'
+      linked.value = true
+      await syncProfile()
+      return 'restored'
+    }
+    console.warn('[boards] link', error.message)
+    return 'failed'
+  }
+
   return {
     me,
+    linked,
+    keepPlace,
     rivals,
     nameRejected,
     signIn,

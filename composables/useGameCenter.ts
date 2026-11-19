@@ -15,17 +15,16 @@ export function useGameCenter() {
         signingIn = null // let a later tap try again
         return
       }
-      // Catch up on anything earned while signed out.
-      if (player.player.best)
-        await gamecenter.submitScore(player.player.best, player.player.bestWorld)
+      // Catch up on medals earned while signed out. (Scores go to the Supabase boards
+      // now; Game Center keeps the achievements.)
       await gamecenter.reportMedals(player.trophies)
     })
     return signingIn
   }
 
-  async function afterRun(score: number) {
+  /** After a run: medals as Game Center achievements (scores go to the Supabase boards). */
+  async function afterRun(_score: number) {
     if (!me.value) return
-    await gamecenter.submitScore(score, player.player.bestWorld)
     await gamecenter.reportMedals(player.trophies)
   }
 

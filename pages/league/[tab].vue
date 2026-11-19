@@ -4,6 +4,7 @@
  * Friends (add by code), your weekly League of 30 (top 5 go up a tier on Monday, bottom 5
  * down) and the Daily Dash. Every score here was checked by replaying the run.
  */
+import { Capacitor } from '@capacitor/core'
 import site from '~/content/site.json'
 import sb from '~/content/supabase.json'
 import { loadGameConfig } from '~/game/config'
@@ -156,6 +157,22 @@ async function playDaily() {
 const nameNote = computed(() =>
   boards.nameRejected.value ? NAME_PROBLEM_TEXT[boards.nameRejected.value as NameProblem] : null,
 )
+// Keep your place (iPhone): link the board player to Apple.
+const native = Capacitor.isNativePlatform()
+const keepMsg = ref('')
+async function keepPlace() {
+  const r = await boards.keepPlace()
+  keepMsg.value =
+    r === 'linked'
+      ? 'Saved! Your place follows your Apple ID.'
+      : r === 'restored'
+        ? 'Welcome back! Your place is restored.'
+        : r === 'failed'
+          ? "Couldn't reach Apple. Try again in a moment."
+          : ''
+  if (r === 'restored') void load()
+}
+
 const faceLook = (r: BoardRow) => (r.me ? look.value : lookFromBoard(r.dog))
 </script>
 
@@ -211,6 +228,16 @@ const faceLook = (r: BoardRow) => (r.me ? look.value : lookFromBoard(r.dog))
       </UiButton>
     </div>
 
+    <div v-if="native && !boards.linked.value && tab !== 'dash'" class="keep">
+      <span
+        ><b>Keep your place</b
+        ><small
+          >Link Apple so your scores, league and friends follow you to a new iPhone.</small
+        ></span
+      >
+      <UiButton variant="secondary" @click="keepPlace">Sign in with Apple</UiButton>
+    </div>
+    <p v-if="keepMsg" class="msg" role="status">{{ keepMsg }}</p>
     <p v-if="friendMsg" class="msg" role="status">{{ friendMsg }}</p>
 
     <p v-if="!online" class="empty offline" role="status">{{ site.offline.league }}</p>
@@ -488,5 +515,26 @@ h1 {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+}
+.keep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 10px 12px;
+}
+.keep span {
+  flex: 1;
+  min-width: 0;
+}
+.keep b,
+.keep small {
+  display: block;
+}
+.keep small {
+  color: var(--muted);
+  font-size: 12px;
 }
 </style>

@@ -20,6 +20,7 @@
 		D0B1E0000000000000000011 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B1E0000000000000000001 /* MainViewController.swift */; };
 		D0B1E0000000000000000012 /* GameCenterPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B1E0000000000000000002 /* GameCenterPlugin.swift */; };
 		D0B1E0000000000000000013 /* ICloudSavePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B1E0000000000000000003 /* ICloudSavePlugin.swift */; };
+		D0B1E0000000000000000A2 /* AppleSignInPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B1E0000000000000000A1 /* AppleSignInPlugin.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +39,7 @@
 		D0B1E0000000000000000001 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
 		D0B1E0000000000000000002 /* GameCenterPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCenterPlugin.swift; sourceTree = "<group>"; };
 		D0B1E0000000000000000003 /* ICloudSavePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ICloudSavePlugin.swift; sourceTree = "<group>"; };
+		D0B1E0000000000000000A1 /* AppleSignInPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInPlugin.swift; sourceTree = "<group>"; };
 		D0B1E0000000000000000004 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -77,6 +79,7 @@
 				D0B1E0000000000000000001 /* MainViewController.swift */,
 				D0B1E0000000000000000002 /* GameCenterPlugin.swift */,
 				D0B1E0000000000000000003 /* ICloudSavePlugin.swift */,
+				D0B1E0000000000000000A1 /* AppleSignInPlugin.swift */,
 				D0B1E0000000000000000004 /* App.entitlements */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
@@ -178,6 +181,7 @@
 				D0B1E0000000000000000011 /* MainViewController.swift in Sources */,
 				D0B1E0000000000000000012 /* GameCenterPlugin.swift in Sources */,
 				D0B1E0000000000000000013 /* ICloudSavePlugin.swift in Sources */,
+				D0B1E0000000000000000A2 /* AppleSignInPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
