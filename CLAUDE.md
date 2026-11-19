@@ -23,13 +23,14 @@ Plan: https://claude.ai/artifact/YZddbGmWVYAXZFiTbJv5hv (read it with the Artifa
   feedback. Beta plan in `docs/beta.md`; done when testers return on day 2 and crash-free
   users > 99.5%. Also from Dan's playtest: Wardrobe, icons, Worlds map, rooftops, endless
   speed-up, bigger view, growing power meter, app icon.
-- **Order (Dan, 2026-11-19):** everything up to and including v1.2 is built before launch:
-  M5 → v1.1 → v1.2 → M6 launch.
+- **Order (Dan, 2026-11-19):** everything is built before launch. Old v1.1 is now **M6**
+  (worlds 5–8, power-up upgrades, Supabase boards, leagues, Daily Dash, ghosts, clips),
+  old v1.2 is **M7** (Pup Pass, breeds, events), and **M8 is Launch 1.0**.
 - **Leaderboards (decided 2026-11-19):** Supabase (Postgres + Edge Functions), not Game
   Center. Scores only via a `submit-run` Edge Function that replays the run; row-level
   security blocks direct writes. Game Center stays for the 30 achievements only; Firebase
   keeps analytics, Crashlytics and Remote Config. Design in the plan's "How the boards work".
-- M6 launch: not started.
+- **M6**: in progress. M7, M8 (launch): not started.
 
 ## Commands
 
