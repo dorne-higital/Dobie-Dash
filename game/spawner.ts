@@ -295,7 +295,9 @@ export class Spawner {
       }
     }
 
-    const pf = s.world.platforms
+    // No rooftops during a boss chase: it should stay busy, and the landing zone after a
+    // ledge would empty it.
+    const pf = s.minion ? null : s.world.platforms
     if (!tut && pf) {
       if (this.ledgeWorld !== s.world.id) {
         this.ledgeWorld = s.world.id

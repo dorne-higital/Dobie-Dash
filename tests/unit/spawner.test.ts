@@ -4,7 +4,7 @@ import { Run } from '~/game/run'
 import { apex, newDog, stepDog } from '~/game/physics'
 import { findClearPlan, Spawner, type SpawnBatch } from '~/game/spawner'
 
-const W = 600
+const W = loadGameConfig().view.logicalWidth
 
 /** Config with power-ups effectively off so runs are pure jumping. */
 function noPowers(base = loadGameConfig()): GameConfig {

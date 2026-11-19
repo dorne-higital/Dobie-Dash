@@ -43,7 +43,7 @@ describe('worlds', () => {
   it('a run starts in Bark Park and changes world at each score target', () => {
     const c = loadGameConfig()
     c.meter.blocks = 1e9
-    const run = new Run(c, 11, 600, { autoplay: true })
+    const run = new Run(c, 11, loadGameConfig().view.logicalWidth, { autoplay: true })
     expect(run.world.name).toBe('Bark Park')
     const seen: string[] = []
     const at: number[] = []
@@ -66,7 +66,10 @@ describe('worlds', () => {
 describe('gate chases', () => {
   it('a boss chases you in the last 300 points before each target, and you escape it', () => {
     const c = loadGameConfig()
-    const run = new Run(c, 3, 600, { autoplay: true, invincible: true })
+    const run = new Run(c, 3, loadGameConfig().view.logicalWidth, {
+      autoplay: true,
+      invincible: true,
+    })
     const log: string[] = []
     while (run.time < 420 && run.escapes < 4) {
       run.update()
@@ -94,19 +97,26 @@ describe('gate chases', () => {
   }, 30_000)
 
   it("the boss's minions only join in during its chase", () => {
+    // A chase is only 5–8 s and the parcel about a third of picks, so count over 4 runs.
     const c = loadGameConfig()
-    const run = new Run(c, 5, 600, { autoplay: true, invincible: true, startWorld: 1 })
     let parcelsOutside = 0
     let parcelsDuring = 0
-    const seen = new Set<number>()
-    while (run.time < 200 && run.worldIndex === 1) {
-      run.update()
-      for (const o of run.obstacles)
-        if (o.type === 'parcel' && !seen.has(o.id)) {
-          seen.add(o.id)
-          if (run.chase) parcelsDuring++
-          else parcelsOutside++
-        }
+    for (let seed = 1; seed <= 4; seed++) {
+      const run = new Run(c, seed, c.view.logicalWidth, {
+        autoplay: true,
+        invincible: true,
+        startWorld: 1,
+      })
+      const seen = new Set<number>()
+      while (run.time < 200 && run.worldIndex === 1) {
+        run.update()
+        for (const o of run.obstacles)
+          if (o.type === 'parcel' && !seen.has(o.id)) {
+            seen.add(o.id)
+            if (run.chase) parcelsDuring++
+            else parcelsOutside++
+          }
+      }
     }
     expect(parcelsDuring).toBeGreaterThan(0)
     expect(parcelsOutside).toBe(0)
@@ -114,7 +124,7 @@ describe('gate chases', () => {
 
   it('crashing during a chase says who got you', () => {
     const c = loadGameConfig()
-    const run = new Run(c, 1, 600, { startWorld: 1 })
+    const run = new Run(c, 1, loadGameConfig().view.logicalWidth, { startWorld: 1 })
     run.chase = { boss: 'van', name: 'The mail van', target: 4000, since: 0 }
     while (run.state === 'running') run.update()
     expect(run.summary().caughtBy).toBe('The mail van')
@@ -125,7 +135,7 @@ describe('near misses', () => {
   it('tight passes count as near misses and add +10 each to the score', () => {
     const c = loadGameConfig()
     c.meter.blocks = 1e9
-    const run = new Run(c, 6, 600, { autoplay: true })
+    const run = new Run(c, 6, loadGameConfig().view.logicalWidth, { autoplay: true })
     let fx = 0
     while (run.state === 'running' && run.time < 120) {
       run.update()
@@ -150,7 +160,7 @@ describe('near misses', () => {
     const count = (gap: number) => {
       const c = loadGameConfig()
       c.nearMiss.gap = gap
-      const run = new Run(c, 6, 600, { autoplay: true })
+      const run = new Run(c, 6, loadGameConfig().view.logicalWidth, { autoplay: true })
       while (run.state === 'running' && run.time < 60) run.update()
       return run.nearMisses
     }
@@ -173,7 +183,7 @@ describe('keep running?', () => {
   it('offers continues at 50, 100, then 200 biscuits, then the run ends', () => {
     const c = loadGameConfig()
     expect(c.continue.prices).toEqual([50, 100, 200])
-    const run = new Run(c, 2, 600)
+    const run = new Run(c, 2, c.view.logicalWidth)
     const prices: number[] = []
     for (;;) {
       const e = untilOffer(run)
@@ -192,7 +202,7 @@ describe('keep running?', () => {
 
   it('reviving clears what is just ahead and gives a grace period', () => {
     const c = loadGameConfig()
-    const run = new Run(c, 4, 600)
+    const run = new Run(c, 4, c.view.logicalWidth)
     untilOffer(run)
     run.revive()
     expect(run.state).toBe('running')
@@ -231,7 +241,7 @@ describe('keep running?', () => {
 describe('testing start world', () => {
   it('startWorld begins in that world with its target banked and no world event', () => {
     const c = loadGameConfig()
-    const run = new Run(c, 1, 600, { startWorld: 3 })
+    const run = new Run(c, 1, loadGameConfig().view.logicalWidth, { startWorld: 3 })
     expect(run.world.name).toBe('Midnight Run')
     expect(run.speed).toBe(c.worlds[3]!.speed)
     run.update()
@@ -245,7 +255,7 @@ describe('pacing', () => {
     const cfg = loadGameConfig()
     const times: number[] = []
     for (let seed = 1; seed <= 6; seed++) {
-      const run = new Run(cfg, seed, 600, { autoplay: true })
+      const run = new Run(cfg, seed, loadGameConfig().view.logicalWidth, { autoplay: true })
       while (run.state === 'running' && run.worldIndex < 3 && run.time < 400) run.update()
       times.push(run.time)
     }
@@ -282,7 +292,7 @@ describe('power meter', () => {
     c.meter.blocks = 1e9
     let soft = 0
     for (let seed = 1; seed <= 15; seed++) {
-      const run = new Run(c, seed, 600, { autoplay: true })
+      const run = new Run(c, seed, loadGameConfig().view.logicalWidth, { autoplay: true })
       while (run.state === 'running' && run.time < 150) {
         run.update()
         if (run.power.zoomies === 0) for (const o of run.obstacles) if (o.soft && !o.dead) soft++
@@ -348,7 +358,7 @@ describe('power-ups', () => {
 
   it('Magnet pulls biscuits within 320 to the dog', () => {
     const c = loadGameConfig()
-    const run = new Run(c, 1, 600)
+    const run = new Run(c, 1, c.view.logicalWidth)
     run.power.magnet = 8
     const mouthX = c.view.dogX + c.dog.mouth.x
     run.biscuits.push({ wx: mouthX + 300, y: -150, pwx: 0, py: 0, gold: false, ph: 0 })
@@ -369,7 +379,7 @@ describe('power-ups', () => {
 
   it('in a run, a shield turns a crash into a pop', () => {
     const c = loadGameConfig()
-    const run = new Run(c, 5, 600)
+    const run = new Run(c, 5, c.view.logicalWidth)
     run.power.shield = true
     const kinds: string[] = []
     while (run.state === 'running' && run.time < 30) {
@@ -404,7 +414,9 @@ describe('run events', () => {
 
   it('same seed and same taps give the same run', () => {
     const play = () => {
-      const r = new Run(loadGameConfig(), 77, 600, { autoplay: true })
+      const r = new Run(loadGameConfig(), 77, loadGameConfig().view.logicalWidth, {
+        autoplay: true,
+      })
       for (let i = 0; i < 90 * 60 && r.state === 'running'; i++) r.update()
       return r.summary()
     }

@@ -1,11 +1,11 @@
 {
   "version": 1,
   "view": {
-    "logicalWidth": 600,
+    "logicalWidth": 420,
     "minLogicalHeight": 420,
     "groundRatio": 0.76,
     "maxPixelRatio": 2,
-    "dogX": 130,
+    "dogX": 90,
     "safeTopRatio": 0.0587
   },
   "loop": {
