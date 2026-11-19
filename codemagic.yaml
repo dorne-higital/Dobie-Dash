@@ -14,9 +14,14 @@ workflows:
       # "firebase" holds FIREBASE_PLIST (GoogleService-Info.plist, base64), never committed.
       groups:
         - firebase
+      # Pinned by reference name (Codemagic → Settings → Code signing identities): the
+      # profile regenerated with Sign in with Apple (M6). The older "dobie_dash_app_store"
+      # copy lacks it and must not be picked.
       ios_signing:
-        distribution_type: app_store
-        bundle_identifier: uk.co.danhorne.dobiedash
+        provisioning_profiles:
+          - dobie_dash_app_store_siwa
+        certificates:
+          - footballdle-distribution
       # Real AdMob ids live in Codemagic (app > Environment variables, group "dobiedash"),
       # never in the repo. Only the release workflow below uses them.
       vars:
@@ -78,9 +83,14 @@ workflows:
       groups:
         - dobiedash
         - firebase
+      # Pinned by reference name (Codemagic → Settings → Code signing identities): the
+      # profile regenerated with Sign in with Apple (M6). The older "dobie_dash_app_store"
+      # copy lacks it and must not be picked.
       ios_signing:
-        distribution_type: app_store
-        bundle_identifier: uk.co.danhorne.dobiedash
+        provisioning_profiles:
+          - dobie_dash_app_store_siwa
+        certificates:
+          - footballdle-distribution
       vars:
         XCODE_PROJECT: ios/App/App.xcodeproj
         XCODE_SCHEME: App
