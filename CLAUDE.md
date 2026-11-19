@@ -25,9 +25,10 @@ Plan: https://claude.ai/artifact/YZddbGmWVYAXZFiTbJv5hv (read it with the Artifa
   speed-up, bigger view, growing power meter, app icon.
 - **Order (Dan, 2026-11-19):** everything up to and including v1.2 is built before launch:
   M5 → v1.1 → v1.2 → M6 launch.
-- **Leaderboards (decided 2026-11-19):** Firebase (Firestore + Cloud Functions), not Game
-  Center or Supabase. Scores only via a `submitRun` function that replays the run; Game
-  Center stays for the 30 achievements only. Design in the plan's "How the boards work".
+- **Leaderboards (decided 2026-11-19):** Supabase (Postgres + Edge Functions), not Game
+  Center. Scores only via a `submit-run` Edge Function that replays the run; row-level
+  security blocks direct writes. Game Center stays for the 30 achievements only; Firebase
+  keeps analytics, Crashlytics and Remote Config. Design in the plan's "How the boards work".
 - M6 launch: not started.
 
 ## Commands
