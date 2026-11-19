@@ -1,6 +1,7 @@
 /** In-canvas HUD: score, best, biscuits, power meter, world pill and power pills. */
 import type { GameConfig } from '../config'
 import type { Run } from '../run'
+import { meterNeeded } from '../powerups'
 import { worldProgress } from '../worlds'
 import { BODY_FONT, back, clamp, rr, text, type Ctx } from './draw'
 import { drawSprite, type SpriteCache } from './sprites'
@@ -49,7 +50,10 @@ export function drawHud(
   })
 
   // Biscuits + power meter.
-  const blocks = cfg.meter.blocks
+  // Always 8 boxes; each stands for an eighth of what this fill needs, filling smoothly.
+  const blocks = 8
+  const need = meterNeeded(run.power, cfg)
+  const filled = (run.power.meter / need) * blocks
   const pw = 150
   const px = L.W - m - pw
   const py = top + 6
@@ -60,11 +64,17 @@ export function drawHud(
   text(c, `×${run.biscuitsEaten}`, px + 30, py + 11, 18, '#ffffff', { align: 'left' })
   const seg = (pw - 6) / blocks
   for (let i = 0; i < blocks; i++) {
-    c.fillStyle = i < run.power.meter ? '#ffd23f' : 'rgba(255,255,255,.22)'
+    c.fillStyle = 'rgba(255,255,255,.22)'
     rr(c, px + i * seg, py + 27, seg - 3, 9, 3)
     c.fill()
+    const part = Math.max(0, Math.min(1, filled - i))
+    if (part > 0) {
+      c.fillStyle = '#ffd23f'
+      rr(c, px + i * seg, py + 27, (seg - 3) * part, 9, Math.min(3, ((seg - 3) * part) / 2))
+      c.fill()
+    }
   }
-  text(c, 'POWER', px + pw, py + 11, 10, 'rgba(255,255,255,.85)', {
+  text(c, `POWER ${run.power.meter}/${need}`, px + pw, py + 11, 10, 'rgba(255,255,255,.85)', {
     align: 'right',
     font: BODY_FONT,
     weight: 900,

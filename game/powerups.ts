@@ -1,7 +1,8 @@
 /**
  * Power meter and power-ups. Pure state + functions so the rules can be unit-tested.
  *
- * - Each biscuit fills one block of the meter. When it's full, a power-up fires.
+ * - Each biscuit fills the meter. When it's full, a power-up fires and the next one needs
+ *   more biscuits (8, 12, 16 … up to a cap; see `meterNeeded`).
  * - A golden biscuit gives Zoomies instantly (and still counts as a biscuit).
  * - Zoomies: faster, and obstacles are smashed for points. A short grace follows.
  * - Magnet: biscuits within a radius fly to the dog.
@@ -12,6 +13,8 @@ import type { Rng } from './rng'
 
 export interface PowerState {
   meter: number
+  /** Times the meter has filled this run (each fill makes the next one longer). */
+  fills: number
   zoomies: number
   magnet: number
   shield: boolean
@@ -22,7 +25,7 @@ export interface PowerState {
 export type PowerEvent = { kind: PowerKind; active: boolean }
 
 export function newPowerState(): PowerState {
-  return { meter: 0, zoomies: 0, magnet: 0, shield: false, grace: 0 }
+  return { meter: 0, fills: 0, zoomies: 0, magnet: 0, shield: false, grace: 0 }
 }
 
 export function activate(s: PowerState, kind: PowerKind, cfg: GameConfig): PowerEvent {
@@ -42,6 +45,12 @@ export function pickPower(s: PowerState, rng: Rng): PowerKind {
   return options[rng.int(options.length)]!
 }
 
+/** Biscuits needed to fill the meter now: grows with every fill this run. */
+export function meterNeeded(s: PowerState, cfg: GameConfig): number {
+  const m = cfg.meter
+  return Math.max(m.blocks, Math.min(m.maxBlocks, m.blocks + m.growBy * s.fills))
+}
+
 /** Eats a biscuit. Returns any power that switched on. */
 export function eatBiscuit(
   s: PowerState,
@@ -52,8 +61,9 @@ export function eatBiscuit(
   if (gold) return activate(s, 'zoomies', cfg)
   if (!cfg.meter.fillDuringPower && (s.zoomies > 0 || s.magnet > 0)) return null
   s.meter++
-  if (s.meter < cfg.meter.blocks) return null
+  if (s.meter < meterNeeded(s, cfg)) return null
   s.meter = 0
+  s.fills++
   return activate(s, pickPower(s, rng), cfg)
 }
 

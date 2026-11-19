@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { loadGameConfig } from '~/game/config'
 import {
   eatBiscuit,
+  meterNeeded,
   newPowerState,
   pickPower,
   resolveHit,
@@ -275,6 +276,33 @@ describe('power meter', () => {
     const ev = eatBiscuit(s, false, rng, cfg)
     expect(ev?.active).toBe(true)
     expect(s.meter).toBe(0)
+  })
+
+  it('each power-up in a run needs 4 more biscuits than the last: 8, 12, 16 … up to 40', () => {
+    const s = newPowerState()
+    const rng = new Rng(1)
+    const needed: number[] = []
+    for (let fill = 0; fill < 10; fill++) {
+      needed.push(meterNeeded(s, cfg))
+      let n = 0
+      // Clear running powers so the meter keeps filling.
+      do {
+        s.zoomies = 0
+        s.magnet = 0
+        n++
+      } while (!eatBiscuit(s, false, rng, cfg))
+      expect(n).toBe(needed[fill])
+    }
+    expect(needed).toEqual([8, 12, 16, 20, 24, 28, 32, 36, 40, 40])
+    // A new run starts back at 8.
+    expect(meterNeeded(newPowerState(), cfg)).toBe(8)
+  })
+
+  it('a golden biscuit gives Zoomies without using up a fill', () => {
+    const s = newPowerState()
+    eatBiscuit(s, true, new Rng(1), cfg)
+    expect(s.fills).toBe(0)
+    expect(meterNeeded(s, cfg)).toBe(8)
   })
 
   it('does not fill while Zoomies or Magnet is running', () => {

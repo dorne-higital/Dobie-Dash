@@ -96,6 +96,8 @@
   },
   "meter": {
     "blocks": 8,
+    "growBy": 4,
+    "maxBlocks": 40,
     "fillDuringPower": false
   },
   "powerups": {

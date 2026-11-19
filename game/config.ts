@@ -219,7 +219,11 @@ export interface GameConfig {
   endless: { perThousand: number; maxSpeed: number }
   chase: { window: number; enterSeconds: number; exitSeconds: number }
   spawner: SpawnerConfig
-  meter: { blocks: number; fillDuringPower: boolean }
+  /**
+   * Biscuits to fill the power meter: `blocks` for the first power-up in a run, then
+   * `growBy` more for each one after, up to `maxBlocks`.
+   */
+  meter: { blocks: number; growBy: number; maxBlocks: number; fillDuringPower: boolean }
   powerups: {
     zoomies: { duration: number; speedMultiplier: number; graceAfter: number; color: string }
     magnet: { duration: number; radius: number; pullSpeed: number; color: string }
