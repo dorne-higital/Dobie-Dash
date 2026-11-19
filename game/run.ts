@@ -5,6 +5,7 @@
 import {
   physicsFor,
   playableWorlds,
+  type PowerLevels,
   type BossKind,
   type Box,
   type GameConfig,
@@ -19,6 +20,7 @@ import {
   resolveHit,
   speedMultiplier,
   tickPowers,
+  goldenScale,
   type PowerEvent,
   type PowerState,
 } from './powerups'
@@ -129,6 +131,8 @@ export interface RunOptions {
   tutorial?: boolean
   /** Hold to jump higher (Settings). */
   holdToJump?: boolean
+  /** Power-up upgrade levels bought in the Wardrobe (longer powers, a second bubble). */
+  powerLevels?: PowerLevels
 }
 
 export class Run {
@@ -156,6 +160,8 @@ export class Run {
   waves: { wx0: number; wx1: number; slow: number; belt?: boolean }[] = []
   /** Rooftop ledges in play (City Streets, Midnight Run). */
   ledges: Ledge[] = []
+  /** World x the Frisbee biscuit line has been laid up to. */
+  private glideLineTo = 0
   /** Ice patches in play (Snowy Peaks). */
   ice: IcePatch[] = []
   /** Current wave speed multiplier (1 out of the water). */
@@ -198,6 +204,7 @@ export class Run {
     this.cfg = cfg
     this.seed = seed
     this.opts = opts
+    this.power = newPowerState(opts.powerLevels)
     this.worlds = playableWorlds(cfg)
     this.dt = 1 / cfg.loop.hz
     this.spawner = new Spawner(cfg, seed, viewW)
@@ -357,6 +364,8 @@ export class Run {
       // little further up the endless ramp (500 points is far more than a pattern's life).
       nextSpeed: this.worlds[this.worldIndex + 1]?.speed ?? this.targetSpeed(this.score + 500),
       nextWorld: this.worlds[this.worldIndex + 1],
+      goldenScale: goldenScale(this.power, this.cfg),
+      clear: this.landingClear(),
       tutorial: this.tutorialActive ? (this.tutorial!.step as TutorialStep) : null,
       minion:
         this.chase && this.world.chase.minion
@@ -386,18 +395,42 @@ export class Run {
       if (batch.wave) this.waves.push(batch.wave)
       if (batch.ledge) this.ledges.push(batch.ledge)
       if (batch.ice) this.ice.push(batch.ice)
-      for (const b of batch.biscuits)
+      // Frisbee Fetch: biscuits along the glide move up to where the dog's mouth is.
+      const glide = this.glideSpan()
+      for (const b0 of batch.biscuits) {
+        const b = glide && b0.wx > glide.wx0 && b0.wx < glide.wx1 ? { ...b0, y: glide.y } : b0
         this.biscuits.push({ ...b, pwx: b.wx, py: b.y, ph: (b.wx * 0.37) % (Math.PI * 2) })
+      }
     }
+
+    // Frisbee Fetch: a high line of biscuits all along the glide.
+    const glide = this.glideSpan()
+    if (glide) {
+      const sp = this.cfg.spawner.biscuits.spacing * 1.5
+      let x = Math.max(this.glideLineTo, glide.wx0 + 60)
+      for (; x < glide.wx1 - 20; x += sp)
+        this.biscuits.push({
+          wx: x,
+          y: glide.y,
+          gold: false,
+          pwx: x,
+          py: glide.y,
+          ph: (x * 0.37) % (Math.PI * 2),
+        })
+      this.glideLineTo = x
+    } else this.glideLineTo = 0
 
     // Dog.
     if (this.opts.autoplay) this.autoplay()
     const slip = this.iceUnderDog()
-    const r = stepDog(this.dog, physicsFor(this.cfg, this.world), dt, this.pressed, {
-      floor: this.floorUnderDog(),
-      holding: !!this.opts.holdToJump && this.holding,
-      jumpScale: slip?.jumpScale ?? 1,
-    })
+    const r =
+      this.power.frisbee > 0
+        ? this.glide(dt)
+        : stepDog(this.dog, physicsFor(this.cfg, this.world), dt, this.pressed, {
+            floor: this.floorUnderDog(),
+            holding: !!this.opts.holdToJump && this.holding,
+            jumpScale: slip?.jumpScale ?? 1,
+          })
     if (r.landed && slip) this.fx.push({ type: 'skid' })
     if (this.ice.length && this.ice[0]!.wx1 < this.dist - 300) this.ice.shift()
     if (this.ledges.length && this.ledges[0]!.wx1 < this.dist - 300) this.ledges.shift()
@@ -443,7 +476,7 @@ export class Run {
         this.fx.push({ type: 'smash', x: o.wx - this.dist + o.def.w / 2, y: fy })
       } else {
         this.fx.push({ type: 'pop', x: dogX + 8, y: this.dog.y - 36 })
-        this.emit('power', { kind: 'shield', active: false })
+        if (this.power.shield <= 0) this.emit('power', { kind: 'shield', active: false })
       }
     }
 
@@ -512,6 +545,51 @@ export class Run {
     for (const l of this.ledges)
       if (x + hb.x1 > l.wx0 + 8 && x + hb.x0 < l.wx1 - 8 && this.dog.y <= -l.h + 0.5) return -l.h
     return 0
+  }
+
+  /**
+   * Frisbee Fetch: rise to the glide height and hold it; taps do nothing. When it ends the
+   * dog falls with one jump left (a double jump), covered by the power's grace.
+   */
+  private glide(dt: number) {
+    const fr = this.cfg.powerups.frisbee
+    const d = this.dog
+    d.y += (fr.glideY - d.y) * Math.min(1, (dt / fr.riseSeconds) * 3)
+    d.vy = 0
+    d.grounded = false
+    d.jumps = 1
+    d.coyote = 0
+    d.buffer = 0
+    d.held = 0
+    return { jumped: null, landed: false }
+  }
+
+  /** World-x span the dog will glide over (Frisbee Fetch), and the biscuit height there. */
+  private glideSpan() {
+    if (this.power.frisbee <= 0) return null
+    const fr = this.cfg.powerups.frisbee
+    const x = this.dist + this.cfg.view.dogX
+    return {
+      wx0: x,
+      wx1: x + this.power.frisbee * this.scrollSpeed,
+      y: fr.glideY + this.cfg.dog.mouth.y,
+    }
+  }
+
+  /**
+   * Where the dog comes down after Frisbee Fetch (world x): no new obstacles there, so the
+   * landing is always safe. Padded for Zoomies starting or stopping during the glide.
+   */
+  private landingClear() {
+    if (this.power.frisbee <= 0) return undefined
+    const fr = this.cfg.powerups.frisbee
+    const x = this.dist + this.cfg.view.dogX
+    const slow = this.speed * this.waveMul
+    const fast = this.speed * this.cfg.powerups.zoomies.speedMultiplier * Math.max(1, this.waveMul)
+    return {
+      wx0: x + this.power.frisbee * slow - 150,
+      wx1: x + (this.power.frisbee + fr.graceAfter + fr.landingClear) * fast,
+    }
   }
 
   /** The ice patch under the middle of the dog's feet, if any (same rule as the spawner). */

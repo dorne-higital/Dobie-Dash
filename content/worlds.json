@@ -109,17 +109,39 @@
       "duration": 6,
       "speedMultiplier": 1.55,
       "graceAfter": 0.6,
-      "color": "#FF4FA0"
+      "color": "#FF4FA0",
+      "maxDuration": 10
     },
     "magnet": {
       "duration": 8,
       "radius": 320,
       "pullSpeed": 900,
-      "color": "#3A86F0"
+      "color": "#3A86F0",
+      "maxDuration": 14
     },
     "shield": {
       "invulnerableAfterHit": 1.2,
-      "color": "#2FD0C0"
+      "color": "#2FD0C0",
+      "maxLevelBubbles": 2
+    },
+    "frisbee": {
+      "duration": 4,
+      "maxDuration": 7,
+      "glideY": -150,
+      "riseSeconds": 0.3,
+      "graceAfter": 0.9,
+      "landingClear": 0.8,
+      "color": "#FFC61A"
+    },
+    "sniff": {
+      "duration": 15,
+      "maxDuration": 25,
+      "goldenMultiplier": 3,
+      "color": "#8A5CF6"
+    },
+    "upgrades": {
+      "maxLevel": 5,
+      "costs": [250, 600, 1200, 2500, 5000]
     }
   },
   "obstacles": {

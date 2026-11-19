@@ -276,6 +276,10 @@ export interface SpawnerState {
   nextSpeed?: number
   /** Next world, if any: patterns near the border must clear with its physics too. */
   nextWorld?: WorldDef
+  /** Golden biscuits are this many times as likely (Super Sniff). */
+  goldenScale?: number
+  /** No obstacles may start in this world-x span (where the dog lands after a glide). */
+  clear?: { wx0: number; wx1: number }
   /** During a gate chase, the boss's minion joins the mix (parcels, crabs, foxes). */
   minion?: { type: ObstacleType; weight: number }
   /** First-run tutorial step: a scripted, gentler sequence. */
@@ -318,7 +322,11 @@ export class Spawner {
   }
 
   /** Call once per step after `dist` advances. Returns anything that should appear now. */
+  /** Golden-biscuit multiplier for the batch being made (Super Sniff). */
+  private goldenScale = 1
+
   update(s: SpawnerState): SpawnBatch | null {
+    this.goldenScale = s.goldenScale ?? 1
     const sc = this.cfg.spawner
     const spawnEdge = s.dist + this.viewW + sc.spawnAhead
     if (this.nextAt > spawnEdge) return null
@@ -342,6 +350,15 @@ export class Spawner {
       const len = sc.breatherSeconds * s.speed
       const biscuits = this.breatherBiscuits(this.nextAt, len)
       this.nextAt += len
+      return { obstacles: [], biscuits, plan: null, pattern: 'breather' }
+    }
+
+    // Keep the landing after Frisbee Fetch clear of obstacles: fill it with biscuits
+    // instead (the run lifts the ones under the glide up to the dog's mouth).
+    if (s.clear && this.nextAt < s.clear.wx1 && this.nextAt + 300 > s.clear.wx0) {
+      const len = s.clear.wx1 - this.nextAt
+      const biscuits = this.breatherBiscuits(this.nextAt, len)
+      this.nextAt = s.clear.wx1
       return { obstacles: [], biscuits, plan: null, pattern: 'breather' }
     }
 
@@ -558,7 +575,7 @@ export class Spawner {
     const r = this.rng.next()
     if (r < b.arcChance) {
       const mid = (start + end) / 2
-      const golden = this.rng.chance(b.goldenArcChance)
+      const golden = this.rng.chance(b.goldenArcChance * this.goldenScale)
       const half = Math.floor(b.arcCount / 2)
       for (let i = -half; i <= half; i++) {
         const dx = i * b.spacing
@@ -595,7 +612,7 @@ export class Spawner {
     const b = this.cfg.spawner.biscuits
     const biscuits: SpawnedBiscuit[] = []
     const mid = (wx0 + wx1) / 2
-    const golden = this.rng.chance(b.goldenArcChance * 2)
+    const golden = this.rng.chance(b.goldenArcChance * 2 * this.goldenScale)
     for (let x = wx0 + 50; x < wx1 - 30; x += b.spacing * 1.5)
       biscuits.push({ wx: x, y: -pf.height + b.lowY, gold: false })
     if (golden && biscuits.length) {

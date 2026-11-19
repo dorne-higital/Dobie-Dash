@@ -70,7 +70,7 @@ describe('save migrations', () => {
     ;(v2.wallet as { biscuits: number }).biscuits = 777
     ;(v2 as { owned: string[] }).owned = ['collar:blue']
     const s = migrate(v2)
-    expect(s.v).toBe(4) // walked on through v3
+    expect(s.v).toBe(SAVE_VERSION) // walked on through v3 and v4
     expect(s.wallet.biscuits).toBe(777)
     expect(s.owned).toEqual(['collar:blue'])
     expect(s.purchases).toEqual({ delivered: [] })
@@ -123,8 +123,18 @@ describe('iCloud: which save wins', () => {
     v3.settings = settings
     ;(v3.wallet as { bones: number }).bones = 42
     const s = migrate(v3)
-    expect(s.v).toBe(4)
+    expect(s.v).toBe(SAVE_VERSION)
     expect(s.settings).toMatchObject({ reduceMotion: true, largeText: false, holdToJump: false })
     expect(s.wallet.bones).toBe(42)
+  })
+
+  it('v4 (M5) gains power-up upgrades, all at level 0; keeps the rest', () => {
+    const v4 = { ...defaultSave(), v: 4 } as Record<string, unknown>
+    delete v4.upgrades
+    ;(v4.wallet as { biscuits: number }).biscuits = 900
+    const s = migrate(v4)
+    expect(s.v).toBe(SAVE_VERSION)
+    expect(s.upgrades).toEqual({ zoomies: 0, magnet: 0, shield: 0, frisbee: 0, sniff: 0 })
+    expect(s.wallet.biscuits).toBe(900)
   })
 })

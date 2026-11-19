@@ -56,6 +56,8 @@ const POWER_BANNER: Record<PowerKind, [string, string]> = {
   zoomies: ['ZOOMIES!', 'Smash through everything'],
   magnet: ['BISCUIT MAGNET', 'Biscuits fly to you'],
   shield: ['BUBBLE SHIELD', 'Survive one crash'],
+  frisbee: ['FRISBEE FETCH!', 'Glide over everything'],
+  sniff: ['SUPER SNIFF', 'Golden biscuits everywhere'],
 }
 
 export class Engine {

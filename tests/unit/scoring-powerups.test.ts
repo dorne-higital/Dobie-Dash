@@ -300,6 +300,7 @@ describe('power meter', () => {
       do {
         s.zoomies = 0
         s.magnet = 0
+        s.frisbee = 0
         n++
       } while (!eatBiscuit(s, false, rng, cfg))
       expect(n).toBe(needed[fill])
@@ -316,7 +317,7 @@ describe('power meter', () => {
     expect(meterNeeded(s, cfg)).toBe(8)
   })
 
-  it('does not fill while Zoomies or Magnet is running', () => {
+  it('does not fill while Zoomies, Magnet or Frisbee is running', () => {
     const s = newPowerState()
     s.magnet = 3
     eatBiscuit(s, false, new Rng(1), cfg)
@@ -353,15 +354,17 @@ describe('power meter', () => {
     const rng = new Rng(9)
     const s = newPowerState()
     s.magnet = 3
-    s.shield = true
+    s.shield = 1
+    s.frisbee = 2
+    s.sniff = 5
     for (let i = 0; i < 50; i++) expect(pickPower(s, rng)).toBe('zoomies')
   })
 
-  it('picks all three powers over time', () => {
+  it('picks all five powers over time', () => {
     const rng = new Rng(2)
     const seen = new Set<string>()
     for (let i = 0; i < 100; i++) seen.add(pickPower(newPowerState(), rng))
-    expect(seen).toEqual(new Set(['zoomies', 'magnet', 'shield']))
+    expect(seen).toEqual(new Set(['zoomies', 'magnet', 'shield', 'frisbee', 'sniff']))
   })
 })
 
@@ -408,9 +411,9 @@ describe('power-ups', () => {
 
   it('Bubble Shield survives exactly one hit', () => {
     const s = newPowerState()
-    s.shield = true
+    s.shield = 1
     expect(resolveHit(s, cfg)).toBe('shield')
-    expect(s.shield).toBe(false)
+    expect(s.shield).toBe(0)
     expect(resolveHit(s, cfg)).toBe('pass') // brief invulnerability
     for (let i = 0; i < 90; i++) tickPowers(s, 1 / 60, cfg)
     expect(resolveHit(s, cfg)).toBe('crash')
@@ -419,7 +422,7 @@ describe('power-ups', () => {
   it('in a run, a shield turns a crash into a pop', () => {
     const c = loadGameConfig()
     const run = new Run(c, 5, c.view.logicalWidth)
-    run.power.shield = true
+    run.power.shield = 1
     const kinds: string[] = []
     while (run.state === 'running' && run.time < 30) {
       run.update()

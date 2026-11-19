@@ -118,10 +118,13 @@ export function drawHud(
     text(c, name, px + pw / 2, ay + 12.5, 13, '#ffffff')
     ay += 30
   }
-  if (run.power.zoomies > 0)
-    pill('ZOOMIES!', P.zoomies.color, run.power.zoomies / P.zoomies.duration)
-  if (run.power.magnet > 0) pill('MAGNET', P.magnet.color, run.power.magnet / P.magnet.duration)
-  if (run.power.shield) pill('BUBBLE SHIELD', P.shield.color, null)
+  const pow = run.power
+  if (pow.zoomies > 0) pill('ZOOMIES!', P.zoomies.color, pow.zoomies / pow.full.zoomies)
+  if (pow.magnet > 0) pill('MAGNET', P.magnet.color, pow.magnet / pow.full.magnet)
+  if (pow.frisbee > 0) pill('FRISBEE', P.frisbee.color, pow.frisbee / pow.full.frisbee)
+  if (pow.sniff > 0) pill('SUPER SNIFF', P.sniff.color, pow.sniff / pow.full.sniff)
+  if (pow.shield > 0)
+    pill(pow.shield > 1 ? `BUBBLE SHIELD ×${pow.shield}` : 'BUBBLE SHIELD', P.shield.color, null)
 }
 
 export function drawBanner(c: Ctx, b: Banner, W: number, GY: number) {

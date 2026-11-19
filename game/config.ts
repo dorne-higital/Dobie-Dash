@@ -33,7 +33,10 @@ export const OBSTACLE_TYPES = [
 export type ObstacleType = (typeof OBSTACLE_TYPES)[number]
 export type PatternType = 'single' | 'pair' | 'triple' | 'flier'
 export type ThemeKind = 'park' | 'city' | 'beach' | 'night' | 'snow' | 'site' | 'haunted' | 'moon'
-export type PowerKind = 'zoomies' | 'magnet' | 'shield'
+export const POWER_KINDS = ['zoomies', 'magnet', 'shield', 'frisbee', 'sniff'] as const
+export type PowerKind = (typeof POWER_KINDS)[number]
+/** Upgrade level per power-up (0 = not upgraded). */
+export type PowerLevels = Partial<Record<PowerKind, number>>
 
 export interface Box {
   x0: number
@@ -297,9 +300,41 @@ export interface GameConfig {
    */
   meter: { blocks: number; growBy: number; maxBlocks: number; fillDuringPower: boolean }
   powerups: {
-    zoomies: { duration: number; speedMultiplier: number; graceAfter: number; color: string }
-    magnet: { duration: number; radius: number; pullSpeed: number; color: string }
-    shield: { invulnerableAfterHit: number; color: string }
+    /** `duration` at level 0, rising evenly to `maxDuration` at the top upgrade level. */
+    zoomies: {
+      duration: number
+      maxDuration: number
+      speedMultiplier: number
+      graceAfter: number
+      color: string
+    }
+    magnet: {
+      duration: number
+      maxDuration: number
+      radius: number
+      pullSpeed: number
+      color: string
+    }
+    /** At the top level the shield starts with `maxLevelBubbles` bubbles. */
+    shield: { invulnerableAfterHit: number; maxLevelBubbles: number; color: string }
+    /**
+     * Frisbee Fetch: the dog rises to `glideY` and glides above everything, eating a high
+     * line of biscuits. After it, `graceAfter` seconds of pass-through cover the fall, and
+     * the spawner leaves `landingClear` seconds clear after that.
+     */
+    frisbee: {
+      duration: number
+      maxDuration: number
+      glideY: number
+      riseSeconds: number
+      graceAfter: number
+      landingClear: number
+      color: string
+    }
+    /** Super Sniff: golden biscuits `goldenMultiplier` times as often, and glowing. */
+    sniff: { duration: number; maxDuration: number; goldenMultiplier: number; color: string }
+    /** Upgrade levels 1..maxLevel cost costs[level - 1] biscuits. */
+    upgrades: { maxLevel: number; costs: number[] }
   }
   obstacles: Record<ObstacleType, ObstacleDef>
   worlds: WorldDef[]

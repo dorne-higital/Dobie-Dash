@@ -6,8 +6,9 @@
  * version it upgrades from. Old saves are walked forward one step at a time.
  */
 import type { EarStyle, EyeColour, TailStyle } from '~/game/art/dobie'
+import { POWER_KINDS, type PowerKind } from '~/game/config'
 
-export const SAVE_VERSION = 4
+export const SAVE_VERSION = 5
 
 export type Slot = 'collar' | 'hat' | 'eyes' | 'neck' | 'back' | 'trail'
 export const SLOTS: Slot[] = ['collar', 'hat', 'eyes', 'neck', 'back', 'trail']
@@ -57,6 +58,19 @@ export interface SettingsSave {
   holdToJump: boolean
 }
 
+/** Upgrade level bought per power-up (0–5). */
+export type Upgrades = Record<PowerKind, number>
+
+export function noUpgrades(): Upgrades {
+  return Object.fromEntries(POWER_KINDS.map((k) => [k, 0])) as Upgrades
+}
+
+export interface SaveV5 extends Omit<SaveV4, 'v'> {
+  v: 5
+  /** Power-up upgrade levels bought in the Wardrobe (M6). */
+  upgrades: Upgrades
+}
+
 export interface SaveV4 {
   v: 4
   /** Epoch ms of the last write, for picking between this phone's save and iCloud's. */
@@ -94,7 +108,7 @@ export interface SaveV4 {
   settings: SettingsSave
 }
 
-export type Save = SaveV4
+export type Save = SaveV5
 /** v3 is v4 without the large-text and hold-to-jump settings (M4). */
 export type SaveV3 = Omit<SaveV4, 'v' | 'settings'> & {
   v: 3
@@ -121,7 +135,8 @@ export function emptyStats(): Stats {
 
 export function defaultSave(): Save {
   return {
-    v: 4,
+    v: 5,
+    upgrades: noUpgrades(),
     savedAt: 0,
     purchases: { delivered: [] },
     ads: { sessions: 0, runsSinceAd: 0, attAsked: false },
@@ -220,6 +235,7 @@ const MIGRATIONS: Record<number, (s: AnySave) => AnySave> = {
       settings: { ...s.settings, largeText: false, holdToJump: false },
     } as unknown as AnySave
   },
+  4: (raw) => ({ ...raw, v: 5, upgrades: noUpgrades() }) as unknown as AnySave,
 }
 
 /** Walks any older save forward to the current version, filling missing fields. */
@@ -252,6 +268,7 @@ function fillDefaults(s: Save): Save {
     },
     stats: { ...d.stats, ...s.stats, cleared: { ...s.stats?.cleared } },
     flags: { ...d.flags, ...s.flags },
+    upgrades: { ...d.upgrades, ...s.upgrades },
     settings: { ...d.settings, ...s.settings },
     owned: [...(s.owned ?? [])],
     trophies: { ...s.trophies },
