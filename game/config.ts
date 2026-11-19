@@ -29,6 +29,7 @@ export const OBSTACLE_TYPES = [
   'ghost',
   'crater',
   'alienCat',
+  'clump',
 ] as const
 export type ObstacleType = (typeof OBSTACLE_TYPES)[number]
 export type PatternType = 'single' | 'pair' | 'triple' | 'flier'
@@ -171,6 +172,49 @@ export interface ChaseDef {
   /** Obstacle the boss adds to the mix during the chase (parcels, crabs, foxes). */
   minion: ObstacleType | null
   minionWeight: number
+  /** A boss fight instead of a chase (M6, the mower first): see FightConfig. */
+  fight?: BossFightDef
+}
+
+/** One boss's fight: its size, where you can stomp it, and its attacks in order. */
+export interface BossFightDef {
+  /** Width of the boss (facing left, as it fights), in points. */
+  w: number
+  /** Stomp surface, from the boss's left edge (facing left): x range and height above ground. */
+  stomp: { x0: number; x1: number; top: number }
+  /** Attack patterns: the nth attack uses attacks[n] (the last one repeats). */
+  attacks: ObstacleType[][]
+}
+
+/** Boss fights (see the plan's "Boss fights"): timings, the stomp, rewards and the coach. */
+export interface FightConfig {
+  /** The fight starts this many points before the score target. */
+  window: number
+  /** Stomps to knock a boss out. */
+  hits: number
+  enterSeconds: number
+  /** The red "!" shows this long before an attack. */
+  warnSeconds: number
+  /** Seconds after the attack has passed the dog before the boss tires. */
+  afterAttack: number
+  /** How long the tired boss takes to drift back past the dog (the stomp chance). */
+  tiredSeconds: number
+  hurtSeconds: number
+  returnSeconds: number
+  leaveSeconds: number
+  /** Where the boss stands while attacking: this far from the right edge (its left edge). */
+  frontFromRight: number
+  /** The dog bounces off a stomp at this vertical speed. */
+  stompBounce: number
+  beatBonus: number
+  /** Extra points for a knock-out without losing a shield bubble or continuing. */
+  flawlessBonus: number
+  /** Golden Bones for a knock-out. */
+  bones: number
+  /** Words for a player's first fight. */
+  coach: Record<'dodge' | 'stomp' | 'hit' | 'win', { title: string; text: string }> & {
+    tip: string
+  }
 }
 
 export interface WorldDef {
@@ -293,6 +337,7 @@ export interface GameConfig {
    */
   endless: { perThousand: number; maxSpeed: number }
   chase: { window: number; enterSeconds: number; exitSeconds: number }
+  fight: FightConfig
   spawner: SpawnerConfig
   /**
    * Biscuits to fill the power meter: `blocks` for the first power-up in a run, then

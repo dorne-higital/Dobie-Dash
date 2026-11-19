@@ -27,6 +27,8 @@ export interface EngineOptions {
   holdToJump?: boolean
   /** Power-up upgrade levels from the save. */
   powerLevels?: PowerLevels
+  /** Coach the player's first boss fight. */
+  coachFight?: boolean
   /** Bot plays (dev: `?bot`). */
   autoplay?: boolean
   invincible?: boolean
@@ -55,6 +57,7 @@ const FX_CUE: Partial<Record<Fx['type'], FeedbackCue>> = {
   splash: 'splash',
   revive: 'revive',
   nearMiss: 'nearMiss',
+  stomp: 'smash',
 }
 
 const POWER_BANNER: Record<PowerKind, [string, string]> = {
@@ -114,6 +117,7 @@ export class Engine {
       tutorial: this.opts.tutorial,
       holdToJump: this.opts.holdToJump,
       powerLevels: this.opts.powerLevels,
+      coachFight: this.opts.coachFight,
     })
     if (this.opts.startPower) activate(this.run.power, this.opts.startPower, this.cfg)
     this.renderer.reset(this.run.world.theme)
@@ -330,8 +334,24 @@ export class Engine {
           fb?.play('powerOn')
         } else if (e.data.kind !== 'shield') fb?.play('powerOff')
       } else if (e.type === 'chase') {
-        this.renderer.showChase(e.data.name, e.data.active)
+        // Boss fights have their own banners (below).
+        if (!run.fight) this.renderer.showChase(e.data.name, e.data.active)
         fb?.play(e.data.active ? 'bossGrowl' : 'escape')
+      } else if (e.type === 'fight') {
+        const f = run.fight
+        const F = this.cfg.fight
+        const bonus = F.beatBonus + (f?.flawless ? F.flawlessBonus : 0)
+        // In a coached first fight the coach box says it instead (they'd overlap).
+        if (!e.data.coach || e.data.step === 'leave')
+          this.renderer.showFight(
+            e.data.step,
+            f?.name ?? 'The boss',
+            e.data.hits,
+            e.data.need,
+            bonus,
+          )
+        // First fight: slow motion while the boss is tired, so there's time to read and stomp.
+        if (e.data.step === 'stomp' && e.data.coach) this.slowMo = F.tiredSeconds * 0.6
       } else if (e.type === 'run:end') {
         this.best = Math.max(this.best, e.data.score)
       }

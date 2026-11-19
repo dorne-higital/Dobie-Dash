@@ -137,4 +137,15 @@ describe('iCloud: which save wins', () => {
     expect(s.upgrades).toEqual({ zoomies: 0, magnet: 0, shield: 0, frisbee: 0, sniff: 0 })
     expect(s.wallet.biscuits).toBe(900)
   })
+
+  it('v5 (M6 power-ups) gains the fight-coached flag, off; keeps the rest', () => {
+    const v5 = { ...defaultSave(), v: 5 } as Record<string, unknown>
+    const flags = { ...(v5.flags as Record<string, unknown>) }
+    delete flags.fightCoached
+    flags.tutorialDone = true
+    v5.flags = flags
+    const s = migrate(v5)
+    expect(s.v).toBe(SAVE_VERSION)
+    expect(s.flags).toMatchObject({ tutorialDone: true, fightCoached: false })
+  })
 })

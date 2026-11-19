@@ -33,7 +33,9 @@ const tutorial = 'tutorial' in route.query
 const coach = ref<{ title: string; text: string; step: number; oops: boolean } | null>(null)
 let coachTimer: ReturnType<typeof setTimeout> | undefined
 let coachStep: { title: string; text: string; step: number; oops: boolean } | null = null
-const sticker = (id: string) => STICKERS.find((s) => s.id === id)?.name ?? id
+const sticker = (id: string) =>
+  STICKERS.find((s) => s.id === id.replace('sticker-gold:', 'sticker:'))?.name ?? id
+const fightTip = ref<string | null>(null)
 const pauseInfo = ref({
   score: 0,
   worldName: '',
@@ -207,6 +209,7 @@ onMounted(async () => {
     showFps,
     reduceMotion: settings.reduceMotion,
     holdToJump: settings.holdToJump,
+    coachFight: !player.flags.fightCoached,
     powerLevels: { ...player.upgrades },
     autoplay: bot,
     invincible: bot,
@@ -220,13 +223,19 @@ onMounted(async () => {
   engine.on('run:end', async (r) => {
     earned.value = []
     newBest.value = false
+    fightTip.value = r.fightTip ? config.game().fight.coach.tip : null
     if (startWorld === undefined && !startPower) {
       const got = player.recordRun(r)
       newBest.value = got.newBest
       earned.value = [
         ...got.unlocked.map((id) =>
-          id.startsWith('sticker:') ? `${sticker(id)} sticker` : `${item(id)?.name} unlocked`,
+          id.startsWith('sticker-gold:')
+            ? `Gold ${sticker(id)} sticker`
+            : id.startsWith('sticker:')
+              ? `${sticker(id)} sticker`
+              : `${item(id)?.name} unlocked`,
         ),
+        ...(got.bones ? [`+${got.bones} Golden Bones for the knock-out`] : []),
         ...got.medals.map((m) => `${MEDALS[m.medal]} medal: ${m.trophy.name}`),
       ]
       void gameCenter.afterRun(r.score)
@@ -249,6 +258,34 @@ onMounted(async () => {
     if (bot) botTimer = setTimeout(start, 1500)
   })
   engine.on('biscuit', (b) => (runBiscuits.value = b.count))
+  // Boss fights: coach the first one, and count how fights go.
+  engine.on('fight', (f) => {
+    if (f.coach) {
+      const C = config.game().fight.coach
+      const words =
+        f.step === 'hit'
+          ? {
+              title: `Hit ${f.hits}/${f.need}!`,
+              text: f.need - f.hits === 1 ? 'One more!' : C.hit.text,
+            }
+          : f.step === 'start' || f.step === 'leave'
+            ? null
+            : C[f.step]
+      clearTimeout(coachTimer)
+      coach.value = words ? { ...words, step: 0, oops: false } : null
+      if (words)
+        coachTimer = setTimeout(() => (coach.value = null), f.step === 'stomp' ? 4000 : 2600)
+    }
+    if (f.step === 'win' || f.step === 'leave') {
+      if (f.coach) player.flags.fightCoached = true
+      if (counts)
+        analytics.track('boss_fight', {
+          boss: f.boss,
+          result: f.step === 'win' ? 'beaten' : 'escaped',
+          hits: f.hits,
+        })
+    }
+  })
   engine.on('tutorial', (t) => {
     const C = config.game().tutorial.coach
     clearTimeout(coachTimer)
@@ -328,6 +365,7 @@ onBeforeUnmount(() => {
       :best="player.best"
       :new-best="newBest"
       :earned="earned"
+      :tip="fightTip"
       :dog-name="player.dog?.name"
       :can-double="counts"
       @again="start"

@@ -158,6 +158,8 @@ export function drawObstacle(c: Ctx, type: ObstacleType, x: number, y: number, t
     c.fillStyle = '#ffc61a'
     c.fillRect(x + 2, y - 16, 3, 16)
     tri(c, [x - 3, y - 18], [x + 10, y - 18], [x + 3.5, y - 26], '#ff7a1a')
+  } else if (type === 'clump') {
+    clump(c, x, y, t)
   } else if (type === 'crater') {
     crater(c, x, y)
   } else if (type === 'alienCat') {
@@ -551,6 +553,27 @@ function alienCat(c: Ctx, x: number, y: number, t: number) {
   dot(c, x + 12, y - 42, 2, '#ffd23f')
 }
 
+/** The mower's attack: a tumbling clump of turf and dirt (26 × 20). */
+function clump(c: Ctx, x: number, y: number, t: number) {
+  const spin = -t * 9
+  ell(c, x + 13, y - 1, 11, 2.5, 0, 'rgba(0,0,0,.18)')
+  c.save()
+  c.translate(x + 13, y - 10)
+  c.rotate(spin)
+  ell(c, 0, 2, 12, 8, 0, '#8a5a30')
+  ell(c, -3, 4, 6, 4, 0.4, '#6b4422')
+  c.fillStyle = '#5fae45'
+  c.beginPath()
+  c.ellipse(0, -2, 12, 6, 0, Math.PI, 0)
+  c.fill()
+  for (const gx of [-8, -3, 2, 7]) tri(c, [gx - 2, -5], [gx + 1, -12], [gx + 3, -5], '#4f9a3a')
+  c.restore()
+  for (let i = 0; i < 3; i++) {
+    const k = (t * 2 + i / 3) % 1
+    dot(c, x + 26 + k * 14, y - 4 - k * 6 + i * 2, 2 * (1 - k), '#5fae45')
+  }
+}
+
 /** Animation loop length (seconds) per obstacle; 0 means static. */
 export const OBSTACLE_ANIM: Record<ObstacleType, { period: number; frames: number }> = {
   hydrant: { period: 0, frames: 1 },
@@ -576,6 +599,7 @@ export const OBSTACLE_ANIM: Record<ObstacleType, { period: number; frames: numbe
   ghost: { period: (Math.PI * 2) / 5, frames: 8 },
   crater: { period: 0, frames: 1 },
   alienCat: { period: (Math.PI * 2) / 5, frames: 6 },
+  clump: { period: (Math.PI * 2) / 9, frames: 8 },
 }
 
 export function bone(c: Ctx, x: number, y: number, s: number, fill: string, edge: string) {

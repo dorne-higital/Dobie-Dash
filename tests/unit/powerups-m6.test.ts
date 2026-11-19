@@ -111,11 +111,16 @@ describe('Super Sniff', () => {
   it('golden biscuits turn up about three times as often', () => {
     const count = (sniff: boolean) => {
       let gold = 0
-      for (let seed = 1; seed <= 6; seed++) {
+      for (let seed = 1; seed <= 10; seed++) {
         const c = loadGameConfig()
         c.meter.blocks = 1e9
-        const run = new Run(c, seed, c.view.logicalWidth, { autoplay: true, invincible: true })
-        for (let i = 0; i < 90 * 60; i++) {
+        // Sunny Beach: no boss fight pausing the patterns (and their biscuit arcs).
+        const run = new Run(c, seed, c.view.logicalWidth, {
+          autoplay: true,
+          invincible: true,
+          startWorld: 2,
+        })
+        for (let i = 0; i < 70 * 60; i++) {
           if (sniff && run.power.sniff <= 0) activate(run.power, 'sniff', c)
           run.update()
         }

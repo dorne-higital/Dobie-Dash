@@ -8,7 +8,7 @@
 import type { EarStyle, EyeColour, TailStyle } from '~/game/art/dobie'
 import { POWER_KINDS, type PowerKind } from '~/game/config'
 
-export const SAVE_VERSION = 5
+export const SAVE_VERSION = 6
 
 export type Slot = 'collar' | 'hat' | 'eyes' | 'neck' | 'back' | 'trail'
 export const SLOTS: Slot[] = ['collar', 'hat', 'eyes', 'neck', 'back', 'trail']
@@ -65,6 +65,12 @@ export function noUpgrades(): Upgrades {
   return Object.fromEntries(POWER_KINDS.map((k) => [k, 0])) as Upgrades
 }
 
+export interface SaveV6 extends Omit<SaveV5, 'v' | 'flags'> {
+  v: 6
+  /** fightCoached: the first boss fight has been coached (M6). */
+  flags: SaveV5['flags'] & { fightCoached: boolean }
+}
+
 export interface SaveV5 extends Omit<SaveV4, 'v'> {
   v: 5
   /** Power-up upgrade levels bought in the Wardrobe (M6). */
@@ -108,7 +114,7 @@ export interface SaveV4 {
   settings: SettingsSave
 }
 
-export type Save = SaveV5
+export type Save = SaveV6
 /** v3 is v4 without the large-text and hold-to-jump settings (M4). */
 export type SaveV3 = Omit<SaveV4, 'v' | 'settings'> & {
   v: 3
@@ -135,7 +141,7 @@ export function emptyStats(): Stats {
 
 export function defaultSave(): Save {
   return {
-    v: 5,
+    v: 6,
     upgrades: noUpgrades(),
     savedAt: 0,
     purchases: { delivered: [] },
@@ -157,7 +163,7 @@ export function defaultSave(): Save {
     },
     trophies: {},
     stats: emptyStats(),
-    flags: { tutorialDone: false, removeAds: false, starterSeen: false },
+    flags: { tutorialDone: false, removeAds: false, starterSeen: false, fightCoached: false },
     settings: {
       music: true,
       sfx: true,
@@ -236,6 +242,10 @@ const MIGRATIONS: Record<number, (s: AnySave) => AnySave> = {
     } as unknown as AnySave
   },
   4: (raw) => ({ ...raw, v: 5, upgrades: noUpgrades() }) as unknown as AnySave,
+  5: (raw) => {
+    const s = raw as unknown as SaveV5
+    return { ...s, v: 6, flags: { ...s.flags, fightCoached: false } } as unknown as AnySave
+  },
 }
 
 /** Walks any older save forward to the current version, filling missing fields. */

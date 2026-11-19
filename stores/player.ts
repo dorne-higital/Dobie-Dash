@@ -96,8 +96,18 @@ export const usePlayerStore = defineStore('player', {
           unlocked.push(id)
         }
       }
+      // Knocked-out bosses: Golden Bones each time, and a gold sticker the first time.
+      const bones = (r.beaten ?? []).length * worlds.fight.bones
+      this.wallet.bones += bones
+      for (const boss of r.beaten ?? []) {
+        const id = `sticker-gold:${boss}`
+        if (!this.owned.includes(id)) {
+          grant(this, id)
+          unlocked.push(id)
+        }
+      }
       const medals = updateTrophies(this)
-      return { newBest, unlocked, medals }
+      return { newBest, unlocked, medals, bones }
     },
   },
 })

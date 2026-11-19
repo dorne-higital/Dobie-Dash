@@ -89,7 +89,10 @@ describe('gate chases', () => {
         if (e.type === 'chase') {
           const target = e.data.active ? run.chase!.target : 0
           if (e.data.active) {
-            expect(run.score).toBeGreaterThanOrEqual(target - c.chase.window)
+            const fight = run.world.chase.fight
+            expect(run.score).toBeGreaterThanOrEqual(
+              target - (fight ? c.fight.window : c.chase.window),
+            )
             expect(run.score).toBeLessThan(target)
           }
           log.push(`${e.data.boss}:${e.data.active ? 'on' : 'escaped'}`)
@@ -147,7 +150,11 @@ describe('near misses', () => {
   it('tight passes count as near misses and add +10 each to the score', () => {
     const c = loadGameConfig()
     c.meter.blocks = 1e9
-    const run = new Run(c, 6, loadGameConfig().view.logicalWidth, { autoplay: true })
+    // No boss knock-outs: their bonus isn't part of this sum.
+    const run = new Run(c, 6, loadGameConfig().view.logicalWidth, {
+      autoplay: true,
+      botStomps: false,
+    })
     let fx = 0
     while (run.state === 'running' && run.time < 120) {
       run.update()

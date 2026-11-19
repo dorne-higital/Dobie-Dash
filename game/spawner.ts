@@ -222,7 +222,7 @@ export interface SpawnBatch {
   biscuits: SpawnedBiscuit[]
   /** Absolute step numbers of the taps that clear this batch (used by bots and tests). */
   plan: PlannedTaps | null
-  pattern: PatternType | 'breather' | 'wave' | 'ledge' | 'ice'
+  pattern: PatternType | 'breather' | 'wave' | 'ledge' | 'ice' | 'attack'
   /**
    * A speed zone: a wave (Sunny Beach, slows you) or a conveyor belt (Building Site, `belt`,
    * speeds you up or slows you down). `slow` is the speed multiplier inside it.
@@ -280,6 +280,11 @@ export interface SpawnerState {
   goldenScale?: number
   /** No obstacles may start in this world-x span (where the dog lands after a glide). */
   clear?: { wx0: number; wx1: number }
+  /**
+   * A boss fight is on: only the boss's attacks spawn (`attack`, when it's attacking),
+   * each checked like any pattern. Nothing else, so the fight is its own thing.
+   */
+  fight?: { attack: ObstacleType[] | null }
   /** During a gate chase, the boss's minion joins the mix (parcels, crabs, foxes). */
   minion?: { type: ObstacleType; weight: number }
   /** First-run tutorial step: a scripted, gentler sequence. */
@@ -343,6 +348,8 @@ export class Spawner {
       this.readyStep = 0
       return { obstacles: [], biscuits, plan: null, pattern: 'breather' }
     }
+
+    if (s.fight) return this.fightUpdate(s, s.fight.attack, spawnEdge)
 
     // Breather: a stretch with no obstacles and lots of biscuits.
     if (!tut && s.time >= this.nextBreather) {
@@ -634,6 +641,50 @@ export class Spawner {
     let m = 0
     for (const d of Object.values(this.cfg.obstacles)) m = Math.max(m, d.extraSpeed ?? 0)
     return m
+  }
+
+  /**
+   * Boss fight: keep up with the spawn edge, and place an attack when asked, proven
+   * clearable like any pattern (or wait a moment and try again).
+   */
+  private fightUpdate(
+    s: SpawnerState,
+    attack: ObstacleType[] | null,
+    edge: number,
+  ): SpawnBatch | null {
+    if (!attack) {
+      this.nextAt = Math.max(this.nextAt, edge)
+      return null
+    }
+    const x0 = this.nextAt - s.dist
+    const pattern: PatternObstacle[] = []
+    let x = x0
+    for (const type of attack) {
+      pattern.push({ type, x })
+      x += this.cfg.obstacles[type].w + this.cfg.spawner.pairGap[1]
+    }
+    const plan = findClearPlan(pattern, this.cfg, {
+      speed: s.speed,
+      ready: this.readyStep - s.step,
+      physics: physicsFor(this.cfg, s.world),
+    })
+    if (!plan) {
+      this.nextAt += 24
+      return null
+    }
+    this.readyStep = s.step + plan.land + 1
+    const obstacles = pattern.map((o) => ({ type: o.type, wx: o.x + s.dist }))
+    const lastO = obstacles[obstacles.length - 1]!
+    this.nextAt = lastO.wx + this.cfg.obstacles[lastO.type].w + 60
+    return {
+      obstacles,
+      biscuits: [],
+      plan: {
+        jump: plan.jump === null ? null : s.step + plan.jump,
+        double: plan.double === null ? null : s.step + plan.double,
+      },
+      pattern: 'attack',
+    }
   }
 
   /** A conveyor belt: clear running at a faster or slower speed, with a line of biscuits. */

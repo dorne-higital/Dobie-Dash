@@ -34,6 +34,8 @@ function run(over: Partial<RunSummary> = {}): RunSummary {
     seed: 1,
     escapes: 0,
     escaped: [],
+    beaten: [],
+    fightTip: false,
     caughtBy: null,
     hitBy: null,
     continues: 0,

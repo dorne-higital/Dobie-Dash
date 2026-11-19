@@ -82,8 +82,11 @@ export function drawHud(
 
   // World pill, filling toward the next target. During a chase it counts down instead.
   const chase = run.chase
+  const fight = run.fight
   const label = chase
-    ? `${chase.name.toUpperCase()} · ${Math.max(0, chase.target - run.score)} TO ESCAPE`
+    ? fight
+      ? `${chase.name.toUpperCase()} · HITS ${fight.hits}/${cfg.fight.hits} · ${Math.max(0, chase.target - run.score)} TO GO`
+      : `${chase.name.toUpperCase()} · ${Math.max(0, chase.target - run.score)} TO ESCAPE`
     : `WORLD ${run.worldIndex + 1} · ${run.world.name.toUpperCase()}`
   c.font = `900 12px ${BODY_FONT}`
   const lw = c.measureText(label).width + 22

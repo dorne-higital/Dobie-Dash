@@ -5,7 +5,7 @@
  */
 import type { BossKind, LampsTwist, ThemeKind, TwistDef } from '../config'
 import type { Fx, Run } from '../run'
-import { clamp, dot, ell, rr, sparkle, text, BODY_FONT, TAU, type Ctx } from './draw'
+import { clamp, dot, ell, rr, sparkle, text, tri, BODY_FONT, TAU, type Ctx } from './draw'
 import { drawTheme } from './backgrounds'
 import { BOSS_BOX, BOSS_FRAMES, BOSS_PERIOD } from './bosses'
 import {
@@ -244,6 +244,22 @@ export class Renderer {
           r: 0,
           txt: fx.gold ? 'GOLDEN!' : `+${run.cfg.scoring.biscuit}`,
         })
+        break
+      case 'stomp':
+        this.squash = 1
+        if (!this.reduceMotion) this.shake = 5
+        for (let i = 0; i < 8; i++)
+          this.parts.push({
+            x: fx.x + r(-20, 20),
+            y: fx.y,
+            vx: r(-160, 160),
+            vy: r(-200, -40),
+            life: 0.5,
+            max: 0.5,
+            col: '#ffd23f',
+            r: r(3, 6),
+            star: true,
+          })
         break
       case 'smash':
       case 'pop':
@@ -523,6 +539,10 @@ export class Renderer {
 
   /** The chasing boss: rushes in from the left, lunges, then drops back once escaped. */
   private drawBoss(run: Run, t: number) {
+    if (run.fight) {
+      this.drawFight(run, t)
+      return
+    }
     const C = run.cfg.chase
     const home = run.cfg.view.dogX - 150
     const out = -BOSS_BOX.w
@@ -540,6 +560,95 @@ export class Renderer {
     const frames = this.sprites.boss(kind)
     const f = Math.floor(((t % BOSS_PERIOD) / BOSS_PERIOD) * BOSS_FRAMES) % BOSS_FRAMES
     drawSprite(this.c, frames[f]!, x, this.view.GY)
+  }
+
+  /**
+   * A boss fight: the boss faces Dobie from the front. A red "!" warns of an attack, a
+   * tired boss sweats (and, in a first fight, a bouncing arrow says where to land), a hit
+   * flashes, and a knock-out sends it tumbling away.
+   */
+  private drawFight(run: Run, t: number) {
+    const f = run.fight!
+    const c = this.c
+    const GY = this.view.GY
+    const w = f.def.w
+    const frames = this.sprites.boss(f.boss)
+    const still = f.phase === 'tired' || f.phase === 'hurt'
+    const k = Math.floor((((still ? t * 0.4 : t) % BOSS_PERIOD) / BOSS_PERIOD) * BOSS_FRAMES)
+    c.save()
+    c.translate(f.bx + w, GY)
+    if (f.phase === 'beaten') {
+      // Knocked out: flips and arcs up and away.
+      c.translate(-w / 2, -40 - f.t * 260 + f.t * f.t * 300)
+      c.rotate(this.reduceMotion ? 0 : f.t * 7)
+      c.translate(w / 2, 40)
+    }
+    c.scale(-1, 1)
+    if (f.phase === 'hurt' && Math.floor(t * 20) % 2) c.globalAlpha = 0.45
+    drawSprite(c, frames[k % BOSS_FRAMES]!, 0, 0)
+    c.restore()
+
+    const cx = f.bx + (f.def.stomp.x0 + f.def.stomp.x1) / 2
+    const top = GY - f.def.stomp.top
+    const busy = f.phase !== 'beaten' && f.phase !== 'leave'
+    // Hits so far: pips above the boss.
+    if (busy) {
+      const need = run.cfg.fight.hits
+      for (let i = 0; i < need; i++)
+        dot(
+          c,
+          cx + (i - (need - 1) / 2) * 14,
+          top - 58,
+          5,
+          i < f.hits ? '#ffd23f' : 'rgba(255,255,255,.55)',
+        )
+    }
+    if (f.phase === 'warn' && Math.floor(t * 8) % 2 === 0) {
+      rr(c, cx - 15, top - 46, 30, 30, 10)
+      c.fillStyle = '#e5484d'
+      c.fill()
+      text(c, '!', cx, top - 30, 24, '#ffffff')
+    }
+    if (f.phase === 'tired') {
+      // Sweat drops and a puff of breath: it's worn out.
+      for (let i = 0; i < 2; i++) {
+        const q = (t * 1.5 + i / 2) % 1
+        ell(c, cx + 18 + i * 10, top - 20 + q * 16, 2.5, 3.5, 0, `rgba(120,200,255,${1 - q})`)
+      }
+      if (f.coach) {
+        // First fight: a bouncing arrow at the spot to land on.
+        const b = this.reduceMotion ? 0 : Math.abs(Math.sin(t * 6)) * 10
+        tri(c, [cx - 12, top - 40 - b], [cx + 12, top - 40 - b], [cx, top - 22 - b], '#ff4fa0')
+        rr(c, cx - 5, top - 62 - b, 10, 24, 4)
+        c.fillStyle = '#ff4fa0'
+        c.fill()
+      }
+    }
+    if (f.phase === 'hurt')
+      for (let i = 0; i < 3; i++) {
+        const a = t * 6 + (i * TAU) / 3
+        sparkle(c, cx + Math.cos(a) * 22, top - 14 + Math.sin(a) * 6, 5, '#ffd23f', t * 4)
+      }
+  }
+
+  /** Banners for a boss fight's big moments. */
+  showFight(step: string, name: string, hits: number, need: number, bonus: number) {
+    const B: Record<string, Banner | undefined> = {
+      start: { a: 'BOSS FIGHT!', b: `${name} wants a fight`, col: '#ff5a5a', t: 0 },
+      hit: {
+        a: `HIT ${hits}/${need}`,
+        b: need - hits === 1 ? 'One more!' : 'Again!',
+        col: '#ffd23f',
+        t: 0,
+      },
+      win: { a: 'KNOCKED OUT!', b: `+${bonus} points`, col: '#3ee08f', t: 0 },
+      leave: { a: 'ESCAPED!', b: `${name} gave up`, col: '#3ee08f', t: 0 },
+    }
+    const b = B[step]
+    if (!b) return
+    if (step !== 'leave' && !this.reduceMotion) this.shake = step === 'hit' ? 5 : 7
+    this.bannerQueue.unshift(b)
+    if (this.banner && this.banner.t < 1.6) this.banner.t = 1.6
   }
 
   private drawDog(run: Run, dogY: number, t: number) {

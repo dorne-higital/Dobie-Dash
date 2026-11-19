@@ -11,8 +11,10 @@ const props = withDefaults(
     dogName?: string
     /** Offer "watch an ad to double your biscuits" (real runs only). */
     canDouble?: boolean
+    /** A how-to tip (e.g. how to beat a boss after a first fight with no hits). */
+    tip?: string | null
   }>(),
-  { earned: () => [], dogName: 'Dobie', canDouble: false },
+  { earned: () => [], dogName: 'Dobie', canDouble: false, tip: null },
 )
 const player = usePlayerStore()
 const { rewarded } = useAds()
@@ -86,6 +88,7 @@ function tapAnywhere() {
       <ul v-if="earned.length" class="earned">
         <li v-for="e in earned" :key="e"><UiIcon name="party" /> {{ e }}</li>
       </ul>
+      <p v-if="tip" class="tip"><UiIcon name="star" /> {{ tip }}</p>
       <UiButton
         v-if="canDouble && result.biscuits > 0 && !doubled"
         variant="secondary"
@@ -231,5 +234,14 @@ dd {
   font-weight: 900;
   font-size: 14px;
   opacity: 0.85;
+}
+.tip {
+  margin: 0;
+  background: #fff4cc;
+  border: 1px solid var(--gold);
+  border-radius: 14px;
+  padding: 8px 12px;
+  font-weight: 800;
+  font-size: 14px;
 }
 </style>

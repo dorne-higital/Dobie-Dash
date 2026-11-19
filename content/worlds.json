@@ -274,6 +274,12 @@
       "h": 36,
       "inset": 4,
       "extraSpeed": 30
+    },
+    "clump": {
+      "w": 26,
+      "h": 20,
+      "inset": 3,
+      "extraSpeed": 160
     }
   },
   "worlds": [
@@ -298,7 +304,16 @@
         "boss": "mower",
         "name": "The mower",
         "minion": null,
-        "minionWeight": 0
+        "minionWeight": 0,
+        "fight": {
+          "w": 112,
+          "stomp": {
+            "x0": 12,
+            "x1": 100,
+            "top": 52
+          },
+          "attacks": [["clump"], ["clump", "clump"], ["clump", "clump", "clump"]]
+        }
       },
       "gate": null,
       "about": {
@@ -624,6 +639,41 @@
         "title": "You're ready!",
         "text": "Now it counts. Run as far as you can!"
       }
+    }
+  },
+  "fight": {
+    "window": 900,
+    "hits": 3,
+    "enterSeconds": 1.0,
+    "warnSeconds": 0.8,
+    "afterAttack": 0.5,
+    "tiredSeconds": 2.6,
+    "hurtSeconds": 0.5,
+    "returnSeconds": 1.0,
+    "leaveSeconds": 1.4,
+    "frontFromRight": 150,
+    "stompBounce": -640,
+    "beatBonus": 250,
+    "flawlessBonus": 100,
+    "bones": 5,
+    "coach": {
+      "dodge": {
+        "title": "Boss fight!",
+        "text": "Dodge its attacks. Watch for the red !"
+      },
+      "stomp": {
+        "title": "Jump on its head!",
+        "text": "It's tired. Land on top of it to hit it."
+      },
+      "hit": {
+        "title": "Hit!",
+        "text": "Again! Hit it 3 times to knock it out."
+      },
+      "win": {
+        "title": "Knocked out!",
+        "text": "+250 points and Golden Bones."
+      },
+      "tip": "Tip: when a boss gets tired, jump on its head. Three hits knocks it out."
     }
   }
 }

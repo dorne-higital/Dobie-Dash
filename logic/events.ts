@@ -26,6 +26,8 @@ export interface AnalyticsEvents {
   /** What players want to wear. price: biscuits or bones, or the App Store price. */
   item_try: { item: string; price: string }
   item_buy: { item: string; price: number; currency: 'biscuits' | 'bones' | 'gbp' }
+  /** How boss fights go. result: beaten | escaped (gave up at the target) | caught. */
+  boss_fight: { boss: string; result: string; hits: number }
   /** Which power-ups players invest in. level: the level just bought (1–5). */
   upgrade_buy: { power: string; level: number; price: number }
   /** Which missions are too hard. day: days since the player's first day (1 = first). */

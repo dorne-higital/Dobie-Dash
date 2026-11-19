@@ -526,3 +526,65 @@ describe('Moon Walkies', () => {
     }
   }, 90_000)
 })
+
+describe('boss fights (the mower)', () => {
+  const fightCfg = () => {
+    const c = noPowers()
+    expect(c.worlds[0]!.chase.fight).toBeTruthy()
+    return c
+  }
+  /** Runs Bark Park to its target with the bot; returns the run and the fight events. */
+  const playFight = (seed: number, stomps: boolean, coach = false) => {
+    const c = fightCfg()
+    const run = new Run(c, seed, W, { autoplay: true, botStomps: stomps, coachFight: coach })
+    const steps: string[] = []
+    let sawAttack = false
+    const target = c.worlds[1]!.at
+    for (let i = 0; i < 240 * 60 && run.state === 'running' && run.score < target + 200; i++) {
+      run.update()
+      if (run.fight?.phase === 'attack' && run.obstacles.some((o) => o.type === 'clump'))
+        sawAttack = true
+      for (const e of run.events.splice(0)) if (e.type === 'fight') steps.push(e.data.step)
+    }
+    return { run, steps, sawAttack, c }
+  }
+
+  it('the mower overtakes you, attacks with grass clumps, and three stomps knock it out', () => {
+    for (let seed = 1; seed <= 6; seed++) {
+      const { run, steps, sawAttack, c } = playFight(seed, true)
+      expect({ seed, state: run.state }).toEqual({ seed, state: 'running' })
+      expect(sawAttack).toBe(true)
+      expect(steps.slice(0, 3)).toEqual(['start', 'dodge', 'stomp'])
+      expect(steps.filter((s) => s === 'hit').length).toBe(c.fight.hits - 1)
+      expect(steps).toContain('win')
+      expect(run.beaten).toEqual(['mower'])
+      expect(run.escaped).toEqual(['mower'])
+    }
+  }, 60_000)
+
+  it('dodging alone is enough to survive: the mower gives up at the target', () => {
+    for (let seed = 1; seed <= 6; seed++) {
+      const { run, steps } = playFight(seed, false, true)
+      expect({ seed, state: run.state }).toEqual({ seed, state: 'running' })
+      expect(steps).toContain('leave')
+      expect(steps).not.toContain('win')
+      expect(run.beaten).toEqual([])
+      expect(run.escaped).toEqual(['mower'])
+      expect(run.fightTip).toBe(true) // coached first fight, no hits: show the tip
+    }
+  }, 60_000)
+
+  it('a knock-out pays the bonus, plus the flawless bonus with no shield lost', () => {
+    const c = fightCfg()
+    const run = new Run(c, 3, W, { autoplay: true })
+    let jump = 0
+    for (let i = 0; i < 240 * 60 && run.state === 'running' && !jump; i++) {
+      const before = run.score
+      run.update()
+      for (const e of run.events.splice(0))
+        if (e.type === 'fight' && e.data.step === 'win') jump = run.score - before
+    }
+    expect(jump).toBeGreaterThanOrEqual(c.fight.beatBonus + c.fight.flawlessBonus)
+    expect(jump).toBeLessThan(c.fight.beatBonus + c.fight.flawlessBonus + 20)
+  })
+})

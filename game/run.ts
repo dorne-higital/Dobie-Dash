@@ -5,6 +5,7 @@
 import {
   physicsFor,
   playableWorlds,
+  type BossFightDef,
   type PowerLevels,
   type BossKind,
   type Box,
@@ -81,6 +82,10 @@ export interface RunSummary {
   /** Gate chases escaped this run, and which bosses. */
   escapes: number
   escaped: BossKind[]
+  /** Bosses knocked out in a fight this run. */
+  beaten: BossKind[]
+  /** A coached first fight ended with no hits: show the stomp tip on the results card. */
+  fightTip: boolean
   /** Boss that was chasing when you crashed, if any ("The mail van got you!"). */
   caughtBy: string | null
   /** The obstacle that ended the run (the last crash), if any. */
@@ -108,6 +113,17 @@ export interface RunEvents {
   continue: { price: number; index: number; countdown: number }
   /** A gate chase started (active) or ended (escaped, or caught when the run crashed). */
   chase: { active: boolean; boss: BossKind; name: string; escaped: boolean }
+  /**
+   * Boss fight moments: it started, attacks are coming (dodge), it's tired (stomp), a hit,
+   * knocked out (win), or it gave up at the target (leave). `coach`: first fight, explain.
+   */
+  fight: {
+    step: 'start' | 'dodge' | 'stomp' | 'hit' | 'win' | 'leave'
+    boss: BossKind
+    hits: number
+    need: number
+    coach: boolean
+  }
 }
 export type RunEvent = { [K in keyof RunEvents]: { type: K; data: RunEvents[K] } }[keyof RunEvents]
 
@@ -115,7 +131,7 @@ export type RunEvent = { [K in keyof RunEvents]: { type: K; data: RunEvents[K] }
 export type Fx =
   | { type: 'jump' | 'double' | 'land' | 'crash' | 'splash' | 'revive' | 'skid' }
   | { type: 'eat'; x: number; y: number; gold: boolean }
-  | { type: 'smash' | 'pop' | 'nearMiss'; x: number; y: number }
+  | { type: 'smash' | 'pop' | 'nearMiss' | 'stomp'; x: number; y: number }
 
 /** 'offer': crashed, waiting for the player to keep running (revive) or not (decline). */
 export type RunState = 'running' | 'crashed' | 'offer' | 'ended'
@@ -133,6 +149,36 @@ export interface RunOptions {
   holdToJump?: boolean
   /** Power-up upgrade levels bought in the Wardrobe (longer powers, a second bubble). */
   powerLevels?: PowerLevels
+  /** Coach the first boss fight of this run (the player's first fight ever). */
+  coachFight?: boolean
+  /** Bot only: stomp tired bosses (default true; false proves dodging alone survives). */
+  botStomps?: boolean
+}
+
+export type FightPhase =
+  'enter' | 'warn' | 'attack' | 'tired' | 'hurt' | 'return' | 'beaten' | 'leave'
+
+/** A boss fight in progress (see content/worlds.json "fight" and the world's chase.fight). */
+export interface Fight {
+  boss: BossKind
+  name: string
+  def: BossFightDef
+  phase: FightPhase
+  /** Seconds in this phase. */
+  t: number
+  /** Boss's left edge on screen (it faces left, toward the dog). */
+  bx: number
+  /** Where bx started this phase (for eased moves). */
+  bx0: number
+  hits: number
+  attacks: number
+  /** No shield bubble lost and no continue during the fight. */
+  flawless: boolean
+  coach: boolean
+  /** Seconds since the attack passed the dog. */
+  clearFor: number
+  /** Has the stomp been explained yet (first tired moment)? */
+  toldStomp: boolean
 }
 
 export class Run {
@@ -177,6 +223,14 @@ export class Run {
   chaseEnded: { boss: BossKind; at: number } | null = null
   escapes = 0
   escaped: BossKind[] = []
+  beaten: BossKind[] = []
+  fightTip = false
+  /** Boss fight in progress, if any. */
+  fight: Fight | null = null
+  private fightAttack: ObstacleType[] | null = null
+  private fightAttackIds: number[] = []
+  private coachUsed = false
+  private readonly viewW: number
   continues = 0
   hitBy: ObstacleType | null = null
   nearMisses = 0
@@ -208,6 +262,7 @@ export class Run {
     this.worlds = playableWorlds(cfg)
     this.dt = 1 / cfg.loop.hz
     this.spawner = new Spawner(cfg, seed, viewW)
+    this.viewW = viewW
     const sw = Math.min(Math.max(0, opts.startWorld ?? 0), this.worlds.length - 1)
     this.worldIndex = sw
     this.scoreOffset = this.worlds[sw]!.at
@@ -278,6 +333,8 @@ export class Run {
       seed: this.seed,
       escapes: this.escapes,
       escaped: [...this.escaped],
+      beaten: [...this.beaten],
+      fightTip: this.fightTip,
       caughtBy: this.chase?.name ?? null,
       hitBy: this.hitBy,
       continues: this.continues,
@@ -367,12 +424,17 @@ export class Run {
       goldenScale: goldenScale(this.power, this.cfg),
       clear: this.landingClear(),
       tutorial: this.tutorialActive ? (this.tutorial!.step as TutorialStep) : null,
+      fight: this.fightOn() ? { attack: this.fightAttack } : undefined,
       minion:
-        this.chase && this.world.chase.minion
+        this.chase && !this.fight && this.world.chase.minion
           ? { type: this.world.chase.minion, weight: this.world.chase.minionWeight }
           : undefined,
     })
     if (batch) {
+      if (batch.pattern === 'attack') {
+        this.fightAttack = null
+        this.fightAttackIds = batch.obstacles.map((_, i) => this.nextId + i)
+      }
       for (const o of batch.obstacles) {
         this.obstacles.push({
           id: this.nextId++,
@@ -423,6 +485,7 @@ export class Run {
     // Dog.
     if (this.opts.autoplay) this.autoplay()
     const slip = this.iceUnderDog()
+    const prevY = this.dog.y
     const r =
       this.power.frisbee > 0
         ? this.glide(dt)
@@ -432,6 +495,7 @@ export class Run {
             jumpScale: slip?.jumpScale ?? 1,
           })
     if (r.landed && slip) this.fx.push({ type: 'skid' })
+    this.checkStomp(prevY)
     if (this.ice.length && this.ice[0]!.wx1 < this.dist - 300) this.ice.shift()
     if (this.ledges.length && this.ledges[0]!.wx1 < this.dist - 300) this.ledges.shift()
     this.pressed = false
@@ -475,6 +539,7 @@ export class Run {
         if (!this.opts.invincible) this.smashes++
         this.fx.push({ type: 'smash', x: o.wx - this.dist + o.def.w / 2, y: fy })
       } else {
+        if (this.fight) this.fight.flawless = false
         this.fx.push({ type: 'pop', x: dogX + 8, y: this.dog.y - 36 })
         if (this.power.shield <= 0) this.emit('power', { kind: 'shield', active: false })
       }
@@ -531,6 +596,7 @@ export class Run {
         this.cfg,
       )
     this.updateChase()
+    this.updateFight(dt)
     const wi = worldIndexForScore(this.score, this.worlds)
     if (wi > this.worldIndex) {
       this.worldIndex = wi
@@ -625,6 +691,7 @@ export class Run {
   revive() {
     if (this.state !== 'offer') return
     this.continues++
+    if (this.fight) this.fight.flawless = false
     const C = this.cfg.continue
     const dogX = this.cfg.view.dogX
     for (const o of this.obstacles)
@@ -642,25 +709,224 @@ export class Run {
     if (this.state === 'offer') this.end()
   }
 
-  /** Starts a boss chase in the last stretch before a target; passing the target escapes it. */
+  /**
+   * Starts a boss chase in the last stretch before a target; passing the target escapes it.
+   * Bosses with a `fight` fight instead (see updateFight); passing the target ends that too.
+   */
   private updateChase() {
     const c = this.chase
     if (c && this.score >= c.target) {
-      this.chase = null
-      this.chaseEnded = { boss: c.boss, at: this.time }
-      this.escapes++
-      this.escaped.push(c.boss)
-      this.emit('chase', { active: false, boss: c.boss, name: c.name, escaped: true })
+      this.endChase()
+      if (this.fight && this.fight.phase !== 'beaten') {
+        // Not knocked out: it gives up and drives off. First fight with no hits: a tip.
+        if (this.fight.coach && this.fight.hits === 0) this.fightTip = true
+        this.fightPhase('leave')
+        this.fightEmit('leave')
+      }
       return
     }
     if (c) return
     const target = gateTarget(this.worldIndex, this.worlds, this.score)
     if (target === null || target <= this.lastChased) return
-    if (this.score < target - this.cfg.chase.window || this.score >= target) return
-    this.lastChased = target
     const def = this.world.chase
+    const window = def.fight ? this.cfg.fight.window : this.cfg.chase.window
+    if (this.score < target - window || this.score >= target) return
+    this.lastChased = target
     this.chase = { boss: def.boss, name: def.name, target, since: this.time }
     this.emit('chase', { active: true, boss: def.boss, name: def.name, escaped: false })
+    if (def.fight) {
+      const coach = !!this.opts.coachFight && !this.coachUsed
+      this.coachUsed ||= coach
+      const behind = -def.fight.w - 40
+      this.fight = {
+        boss: def.boss,
+        name: def.name,
+        def: def.fight,
+        phase: 'enter',
+        t: 0,
+        bx: behind,
+        bx0: behind,
+        hits: 0,
+        attacks: 0,
+        flawless: true,
+        coach,
+        clearFor: 0,
+        toldStomp: false,
+      }
+      this.fightEmit('start')
+    }
+  }
+
+  /** The chase is over (escaped or knocked out): counts as an escape either way. */
+  private endChase() {
+    const c = this.chase
+    if (!c) return
+    this.chase = null
+    if (!this.fight) this.chaseEnded = { boss: c.boss, at: this.time }
+    this.escapes++
+    this.escaped.push(c.boss)
+    this.emit('chase', { active: false, boss: c.boss, name: c.name, escaped: true })
+  }
+
+  /** The fight is running (not knocked out or leaving): only its attacks spawn. */
+  private fightOn() {
+    const p = this.fight?.phase
+    return !!p && p !== 'beaten' && p !== 'leave'
+  }
+
+  private fightEmit(step: RunEvents['fight']['step']) {
+    const f = this.fight!
+    this.emit('fight', {
+      step,
+      boss: f.boss,
+      hits: f.hits,
+      need: this.cfg.fight.hits,
+      coach: f.coach,
+    })
+  }
+
+  private fightPhase(p: FightPhase) {
+    const f = this.fight!
+    f.phase = p
+    f.t = 0
+    f.bx0 = f.bx
+  }
+
+  /** Where the boss stands to attack (its left edge). */
+  private get fightFront() {
+    return this.viewW - this.cfg.fight.frontFromRight
+  }
+
+  /** The tired boss's position `t` seconds into its drift back past the dog. */
+  private tiredX(t: number) {
+    const f = this.fight!
+    const behind = -f.def.w - 40
+    return (
+      this.fightFront + (behind - this.fightFront) * Math.min(1, t / this.cfg.fight.tiredSeconds)
+    )
+  }
+
+  /**
+   * The fight, one step: the boss overtakes you, warns, attacks (through the spawner, so
+   * every attack is proven clearable), tires and drifts back past you (stomp it!), then
+   * returns to the front and goes again, until it's knocked out or you reach the target.
+   */
+  private updateFight(dt: number) {
+    const f = this.fight
+    if (!f) return
+    const F = this.cfg.fight
+    const ease = (k: number) => 1 - Math.pow(1 - Math.min(1, k), 3)
+    f.t += dt
+    switch (f.phase) {
+      case 'enter':
+        f.bx = f.bx0 + (this.fightFront - f.bx0) * ease(f.t / F.enterSeconds)
+        if (f.t >= F.enterSeconds) {
+          this.fightPhase('warn')
+          if (f.attacks === 0) this.fightEmit('dodge')
+        }
+        break
+      case 'warn':
+        f.bx = this.fightFront
+        if (f.t >= F.warnSeconds) {
+          const list = f.def.attacks
+          this.fightAttack = [...list[Math.min(f.attacks, list.length - 1)]!]
+          this.fightAttackIds = []
+          f.attacks++
+          f.clearFor = 0
+          this.fightPhase('attack')
+        }
+        break
+      case 'attack': {
+        f.bx = this.fightFront
+        const hb = this.cfg.dog.hitbox
+        const dogL = this.cfg.view.dogX + hb.x0
+        const passed =
+          !this.fightAttack &&
+          this.fightAttackIds.every((id) => {
+            const o = this.obstacles.find((x) => x.id === id)
+            return !o || o.dead || o.wx - this.dist + o.def.w < dogL - 4
+          })
+        f.clearFor = passed ? f.clearFor + dt : 0
+        if (f.clearFor >= F.afterAttack) {
+          this.fightPhase('tired')
+          if (!f.toldStomp) {
+            f.toldStomp = true
+            this.fightEmit('stomp')
+          }
+        }
+        break
+      }
+      case 'tired':
+        f.bx = this.tiredX(f.t)
+        if (f.t >= F.tiredSeconds) this.fightPhase('return')
+        break
+      case 'hurt':
+        if (f.t >= F.hurtSeconds) this.fightPhase('return')
+        break
+      case 'return':
+        f.bx = f.bx0 + (this.fightFront - f.bx0) * ease(f.t / F.returnSeconds)
+        if (f.t >= F.returnSeconds) this.fightPhase('warn')
+        break
+      case 'beaten':
+      case 'leave':
+        f.bx += (f.phase === 'beaten' ? 260 : 420) * dt
+        if (f.t >= F.leaveSeconds) this.fight = null
+        break
+    }
+  }
+
+  /** A falling dog that crosses the tired boss's top while over it stomps it. */
+  private checkStomp(prevY: number) {
+    const f = this.fight
+    if (!f || f.phase !== 'tired') return
+    const d = this.dog
+    if (!this.stompHits(prevY, d.y, d.vy, f.bx, f)) return
+    const F = this.cfg.fight
+    d.y = -f.def.stomp.top
+    d.vy = F.stompBounce
+    d.grounded = false
+    d.jumps = 1
+    d.coyote = 0
+    d.buffer = 0
+    this.taps.clear()
+    f.hits++
+    this.fx.push({ type: 'stomp', x: this.cfg.view.dogX, y: d.y })
+    if (f.hits >= F.hits) {
+      this.scoreOffset += F.beatBonus + (f.flawless ? F.flawlessBonus : 0)
+      this.beaten.push(f.boss)
+      this.fightPhase('beaten')
+      this.fightEmit('win')
+      this.endChase()
+    } else {
+      this.fightPhase('hurt')
+      this.fightEmit('hit')
+    }
+  }
+
+  private stompHits(prevY: number, y: number, vy: number, bx: number, f: Fight) {
+    const top = -f.def.stomp.top
+    if (vy <= 0 || prevY > top || y < top) return false
+    const hb = this.cfg.dog.hitbox
+    const dogX = this.cfg.view.dogX
+    return dogX + hb.x1 >= bx + f.def.stomp.x0 && dogX + hb.x0 <= bx + f.def.stomp.x1
+  }
+
+  /** Bot: the tap (steps from now) that lands the dog on the tired boss, if any. */
+  private planStomp(): number | null {
+    const f = this.fight!
+    const p = physicsFor(this.cfg, this.world)
+    const dt = this.dt
+    for (let k = 0; k < 150; k++) {
+      const d = { ...this.dog }
+      for (let i = 0; i < 240; i++) {
+        if (f.t + i * dt >= this.cfg.fight.tiredSeconds) break
+        const prev = d.y
+        stepDog(d, p, dt, i === k)
+        if (this.stompHits(prev, d.y, d.vy, this.tiredX(f.t + i * dt), f)) return k
+        if (i > k && d.grounded) break
+      }
+    }
+    return null
   }
 
   /**
@@ -668,6 +934,15 @@ export class Run {
    * group of obstacles from the live state, using the same validator as the spawner.
    */
   private autoplay() {
+    // Boss tired: go for the stomp.
+    if (this.fight?.phase === 'tired' && this.opts.botStomps !== false) {
+      if (this.dog.grounded && this.taps.size === 0) {
+        const k = this.planStomp()
+        if (k !== null) this.taps.add(this.step + k)
+      }
+      if (this.taps.delete(this.step)) this.pressed = true
+      return
+    }
     // Taps planned at one speed go stale while a world change ramps the speed: replan.
     if (this.dog.grounded && this.scrollSpeed !== this.tapSpeed) this.taps.clear()
     // Leaving a wave or belt, the speed is still easing: plans made now would be for a
