@@ -7,6 +7,7 @@ import {
   powerDuration,
   resolveHit,
   shieldBubbles,
+  shieldSafeTime,
   tickPowers,
 } from '~/game/powerups'
 import { Rng } from '~/game/rng'
@@ -43,12 +44,21 @@ describe('power-up upgrades', () => {
     expect(shieldBubbles(4, cfg)).toBe(1)
   })
 
+  it('each shield level adds safe time after a pop, from 1.2 s to 2 s', () => {
+    expect(shieldSafeTime(0, cfg)).toBeCloseTo(1.2)
+    expect(shieldSafeTime(5, cfg)).toBeCloseTo(2)
+    const s = newPowerState({ shield: 3 })
+    activate(s, 'shield', cfg)
+    resolveHit(s, cfg)
+    expect(s.grace).toBeCloseTo(1.2 + (0.8 * 3) / 5)
+  })
+
   it('a two-bubble shield survives two hits, then crashes', () => {
     const s = newPowerState({ shield: 5 })
     activate(s, 'shield', cfg)
     for (let hit = 0; hit < 2; hit++) {
       expect(resolveHit(s, cfg)).toBe('shield')
-      for (let i = 0; i < 120; i++) tickPowers(s, 1 / 60, cfg)
+      for (let i = 0; i < 150; i++) tickPowers(s, 1 / 60, cfg)
     }
     expect(resolveHit(s, cfg)).toBe('crash')
   })

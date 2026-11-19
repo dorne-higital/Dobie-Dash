@@ -4,6 +4,9 @@ import { defaultSave, type DogSave, type Save, type Slot } from '~/logic/save'
 import { recordMissions } from '~/logic/missions'
 import { buyBreed, buyItem, equip, grant, unequip, worldRewards } from '~/logic/shop'
 import { updateTrophies } from '~/logic/trophies'
+import { buyUpgrade } from '~/logic/upgrades'
+import type { PowerKind } from '~/game/config'
+import worlds from '~/content/worlds.json'
 
 /** Everything in the save except settings. Persisted by plugins/02.persist.client.ts. */
 export type PlayerState = Omit<Save, 'v' | 'settings'>
@@ -37,6 +40,10 @@ export const usePlayerStore = defineStore('player', {
     },
     buyBreed(breed: string) {
       return buyBreed(this, breed)
+    },
+    /** Buys the next level of a power-up with biscuits (content/worlds.json prices). */
+    buyUpgrade(kind: PowerKind) {
+      return buyUpgrade(this, kind, worlds.powerups.upgrades)
     },
     setDog(dog: DogSave) {
       this.dog = { ...dog }

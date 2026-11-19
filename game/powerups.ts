@@ -66,6 +66,14 @@ export function powerDuration(kind: TimedPower, level: number, cfg: GameConfig):
   return d.duration + ((d.maxDuration - d.duration) * l) / max
 }
 
+/** Safe seconds after a bubble pops: rises evenly with the shield's level. */
+export function shieldSafeTime(level: number, cfg: GameConfig): number {
+  const s = cfg.powerups.shield
+  const max = cfg.powerups.upgrades.maxLevel
+  const l = Math.max(0, Math.min(max, level))
+  return s.invulnerableAfterHit + ((s.maxInvulnerable - s.invulnerableAfterHit) * l) / max
+}
+
 /** Shield bubbles at an upgrade level: one, or `maxLevelBubbles` at the top level. */
 export function shieldBubbles(level: number, cfg: GameConfig): number {
   return level >= cfg.powerups.upgrades.maxLevel ? cfg.powerups.shield.maxLevelBubbles : 1
@@ -141,7 +149,7 @@ export function resolveHit(s: PowerState, cfg: GameConfig): HitOutcome {
   if (s.grace > 0 || s.frisbee > 0) return 'pass'
   if (s.shield > 0) {
     s.shield--
-    s.grace = cfg.powerups.shield.invulnerableAfterHit
+    s.grace = shieldSafeTime(powerLevel(s.levels, 'shield', cfg), cfg)
     return 'shield'
   }
   return 'crash'

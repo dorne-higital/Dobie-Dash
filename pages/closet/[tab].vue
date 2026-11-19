@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /**
- * Wardrobe (route /closet): My dog (the dog maker), Outfits, Trails, Collars and the Store (M4).
+ * Wardrobe (route /closet): My dog (the dog maker), Outfits, Trails, Collars, Power-ups (M6)
+ * and the Store (M4).
  * Tap an item to try it on. Owned items equip at once; anything else shows a buy bar
  * with its price, or how to unlock it.
  */
@@ -17,6 +18,7 @@ const TABS = [
   { key: 'outfits', label: 'Outfits' },
   { key: 'trails', label: 'Trails' },
   { key: 'collars', label: 'Collars' },
+  { key: 'powers', label: 'Power-ups' },
   { key: 'store', label: 'Store' },
 ]
 const SLOTS: Record<string, Slot[]> = {
@@ -115,6 +117,8 @@ function status(it: ItemDef): { icon?: string; text: string } {
     <UiSegmented base="/closet" :tabs="TABS" :current="tab" />
 
     <DogMaker v-if="tab === 'dog'" cta="Save my dog" @saved="flash('Saved!')" />
+
+    <ClosetPowersTab v-else-if="tab === 'powers'" />
 
     <template v-else-if="tab !== 'store'">
       <div class="preview">

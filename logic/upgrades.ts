@@ -6,6 +6,8 @@
 import type { PowerKind } from '~/game/config'
 import type { Save } from './save'
 
+type Wallet = Pick<Save, 'wallet' | 'upgrades'>
+
 export interface UpgradePrices {
   maxLevel: number
   costs: number[]
@@ -21,7 +23,7 @@ export type UpgradeResult =
   { ok: true; level: number; cost: number } | { ok: false; reason: 'max' | 'biscuits' }
 
 /** Buys the next level of `kind` if the player can afford it. Changes `save` in place. */
-export function buyUpgrade(save: Save, kind: PowerKind, p: UpgradePrices): UpgradeResult {
+export function buyUpgrade(save: Wallet, kind: PowerKind, p: UpgradePrices): UpgradeResult {
   const level = save.upgrades[kind] ?? 0
   const cost = nextUpgradeCost(level, p)
   if (cost === null) return { ok: false, reason: 'max' }
@@ -32,7 +34,7 @@ export function buyUpgrade(save: Save, kind: PowerKind, p: UpgradePrices): Upgra
 }
 
 /** Biscuits spent on all upgrades so far (for stats). */
-export function spentOnUpgrades(save: Save, p: UpgradePrices): number {
+export function spentOnUpgrades(save: Wallet, p: UpgradePrices): number {
   let n = 0
   for (const l of Object.values(save.upgrades)) for (let i = 0; i < l; i++) n += p.costs[i] ?? 0
   return n

@@ -316,7 +316,13 @@ export interface GameConfig {
       color: string
     }
     /** At the top level the shield starts with `maxLevelBubbles` bubbles. */
-    shield: { invulnerableAfterHit: number; maxLevelBubbles: number; color: string }
+    shield: {
+      invulnerableAfterHit: number
+      /** Safe time after a pop at the top level (rises evenly from invulnerableAfterHit). */
+      maxInvulnerable: number
+      maxLevelBubbles: number
+      color: string
+    }
     /**
      * Frisbee Fetch: the dog rises to `glideY` and glides above everything, eating a high
      * line of biscuits. After it, `graceAfter` seconds of pass-through cover the fall, and

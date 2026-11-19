@@ -3,7 +3,7 @@
  * Plain TypeScript with no Vue inside. It talks to the app only through events
  * (run:end, biscuit, world, power) plus an optional feedback port for haptics.
  */
-import type { GameConfig, PowerKind } from './config'
+import type { GameConfig, PowerKind, PowerLevels } from './config'
 import type { Accessories, Dog } from './art/dobie'
 import { Emitter } from './events'
 import type { TrailKind } from './render/trails'
@@ -24,6 +24,8 @@ export interface EngineOptions {
   reduceMotion?: boolean
   /** Hold to jump higher (Settings). */
   holdToJump?: boolean
+  /** Power-up upgrade levels from the save. */
+  powerLevels?: PowerLevels
   /** Bot plays (dev: `?bot`). */
   autoplay?: boolean
   invincible?: boolean
@@ -108,6 +110,7 @@ export class Engine {
       startWorld: this.opts.startWorld,
       tutorial: this.opts.tutorial,
       holdToJump: this.opts.holdToJump,
+      powerLevels: this.opts.powerLevels,
     })
     this.renderer.reset(this.run.world.theme)
     const next = this.run.worlds[this.run.worldIndex + 1]

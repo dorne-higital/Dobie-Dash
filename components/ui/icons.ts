@@ -157,6 +157,20 @@ export const ICONS: Record<string, string> = {
   play: `<path d="M11 6.5l14.5 9.5L11 25.5z" fill="${PINK}"/>`,
   todo: `<circle cx="16" cy="16" r="10" fill="#fff" stroke="#c9bcd6" stroke-width="2.6"/>`,
   dot: `<circle cx="16" cy="16" r="4" fill="#c9bcd6" stroke="none"/>`,
+  // Power-ups (M6), in each power's own colour.
+  zoomies: `<path d="M18 3L7 18h7l-2 11 13-16h-7.5z" fill="#ff4fa0"/><path d="M4 11h4M3 16h3M5 21h3" fill="none"/>`,
+  magnet:
+    `<path d="M7 6v10a9 9 0 0 0 18 0V6h-6v10a3 3 0 0 1-6 0V6z" fill="#3a86f0"/>` +
+    `<path d="M7 6h6v4H7zM19 6h6v4h-6z" fill="#e8eef8"/>`,
+  shield:
+    `<circle cx="16" cy="16" r="11.5" fill="#bff3ec"/><circle cx="16" cy="16" r="11.5" fill="none" stroke="#2fd0c0" stroke-width="2.6"/>` +
+    `<path d="M9.5 12.5a7.5 7.5 0 0 1 5-4.5" fill="none" stroke="#fff" stroke-width="2.6"/>`,
+  frisbee:
+    `<ellipse cx="16" cy="17" rx="13" ry="6.5" fill="#ffc61a"/><ellipse cx="16" cy="15.5" rx="8" ry="3.5" fill="#ffe48a" stroke="#d99a00"/>` +
+    `<path d="M3 9c2-1.5 4-2 6-2M23 7c2 0 4 .5 6 2" fill="none" stroke="#2a1530"/>`,
+  sniff:
+    `<path d="M6 20c0-5 4-8 9-8s9 3 9 8-4 7-9 7-9-2-9-7z" fill="#3d3256"/><ellipse cx="11.5" cy="21" rx="2" ry="1.6" fill="#7b6aa0" stroke="none"/><ellipse cx="18.5" cy="21" rx="2" ry="1.6" fill="#7b6aa0" stroke="none"/>` +
+    `<path d="M11 8c1-2 3-2 4 0M17 6c1-2 3-2 4 0M23 9c1-2 3-2 4 0" fill="none" stroke="#8a5cf6" stroke-width="2.4"/>`,
 }
 
 export type IconName = keyof typeof ICONS

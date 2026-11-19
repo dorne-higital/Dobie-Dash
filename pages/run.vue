@@ -200,6 +200,7 @@ onMounted(async () => {
     showFps,
     reduceMotion: settings.reduceMotion,
     holdToJump: settings.holdToJump,
+    powerLevels: { ...player.upgrades },
     autoplay: bot,
     invincible: bot,
     startWorld,

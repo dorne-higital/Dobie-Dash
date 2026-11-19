@@ -122,7 +122,8 @@
     "shield": {
       "invulnerableAfterHit": 1.2,
       "color": "#2FD0C0",
-      "maxLevelBubbles": 2
+      "maxLevelBubbles": 2,
+      "maxInvulnerable": 2
     },
     "frisbee": {
       "duration": 4,
