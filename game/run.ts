@@ -133,6 +133,9 @@ export type Fx =
   | { type: 'eat'; x: number; y: number; gold: boolean }
   | { type: 'smash' | 'pop' | 'nearMiss' | 'stomp'; x: number; y: number }
 
+export type InputCode = 'p' | 'h' | 'u' | 'r' | 'd'
+export type RunInput = [tick: number, code: InputCode]
+
 /** 'offer': crashed, waiting for the player to keep running (revive) or not (decline). */
 export type RunState = 'running' | 'crashed' | 'offer' | 'ended'
 
@@ -315,11 +318,37 @@ export class Run {
   }
 
   press() {
+    this.record('p')
     if (this.state === 'running') this.pressed = true
   }
 
   /** The jump is being held down (only counts with hold to jump higher on). */
   holding = false
+
+  /** Hold starts or ends (recorded, so a replay holds exactly as the player did). */
+  setHolding(on: boolean) {
+    if (on === this.holding) return
+    this.record(on ? 'h' : 'u')
+    this.holding = on
+  }
+
+  /** Updates so far, in every state (the clock that inputs are recorded against). */
+  ticks = 0
+  /**
+   * Everything the player did, as [tick, code]: p press, h/u hold on/off, r revive,
+   * d decline. With the seed and options this replays the run exactly (game/replay.ts).
+   */
+  readonly inputs: RunInput[] = []
+
+  private record(code: InputCode, tick = this.ticks) {
+    this.inputs.push([tick, code])
+  }
+
+  /** The bot taps from inside update(); recorded as if tapped just before it. */
+  private botPress() {
+    this.pressed = true
+    this.record('p', this.ticks - 1)
+  }
 
   summary(): RunSummary {
     return {
@@ -351,6 +380,7 @@ export class Run {
   }
 
   update() {
+    this.ticks++
     const dt = this.dt
     this.prevDist = this.dist
     this.prevDogY = this.dog.y
@@ -690,6 +720,7 @@ export class Run {
   /** "Keep running?" accepted: clear what's just ahead, back on your feet, brief grace. */
   revive() {
     if (this.state !== 'offer') return
+    this.record('r')
     this.continues++
     if (this.fight) this.fight.flawless = false
     const C = this.cfg.continue
@@ -706,7 +737,9 @@ export class Run {
 
   /** "Keep running?" declined or timed out. */
   decline() {
-    if (this.state === 'offer') this.end()
+    if (this.state !== 'offer') return
+    this.record('d')
+    this.end()
   }
 
   /**
@@ -994,7 +1027,7 @@ export class Run {
         const k = this.planStomp()
         if (k !== null) this.taps.add(this.step + k)
       }
-      if (this.taps.delete(this.step)) this.pressed = true
+      if (this.taps.delete(this.step)) this.botPress()
       return
     }
     // In the air with the double jump left and about to land on something: use it.
@@ -1067,7 +1100,7 @@ export class Run {
         if (plan?.double != null) this.taps.add(base + plan.double)
       }
     }
-    if (this.taps.delete(this.step)) this.pressed = true
+    if (this.taps.delete(this.step)) this.botPress()
     for (const t of this.taps) if (t < this.step) this.taps.delete(t)
   }
 

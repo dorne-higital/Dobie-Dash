@@ -209,11 +209,11 @@ export class Engine {
   private onPointer = (e: PointerEvent) => {
     e.preventDefault()
     this.press()
-    if (this.run) this.run.holding = true
+    this.run?.setHolding(true)
   }
 
   private onRelease = () => {
-    if (this.run) this.run.holding = false
+    this.run?.setHolding(false)
   }
 
   private onKeyUp = (e: KeyboardEvent) => {
@@ -225,7 +225,7 @@ export class Engine {
       e.preventDefault()
       if (!e.repeat) {
         this.press()
-        if (this.run) this.run.holding = true
+        this.run?.setHolding(true)
       }
     }
   }
