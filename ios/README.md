@@ -78,17 +78,19 @@ npm run cap:sync   # nuxt generate + copy into the iOS project (Codemagic runs t
 
 ## M7 setup
 
-- **New in-app purchases** to create in App Store Connect (Dobie Dash → Monetisation → In-App
-  Purchases), all non-consumable, then add them to RevenueCat's products (and an entitlement
-  isn't needed: the app reads the products):
-  - `uk.co.danhorne.dobiedash.pass.s1`: Pup Pass: Season 1, £4.99
-  - `uk.co.danhorne.dobiedash.pack.party`: Party Pack, £2.99
-  - `uk.co.danhorne.dobiedash.breed.cockapoo` and `.breed.staffie`: £0.99 each
-    Until they exist, those buttons say the App Store didn't answer; everything else works.
+- **New in-app purchases** (done 2026-11-19): `pass.s1` (£4.99), `pack.party` (£2.99),
+  `breed.cockapoo` and `breed.staffie` (£0.99), all non-consumable, all countries, UK base
+  price, English (U.K.) names. Nothing to add in RevenueCat: the app fetches products by id
+  and reads purchases from `allPurchasedProductIdentifiers`. Still to add before review: a
+  review screenshot each (with the others, M8).
 - **Supabase:** `npx supabase db push` (the Weekend Cups migration) and
   `npm run functions:deploy` (Big Bark and events in replays, cups, attempt rules), at the
   same time as the TestFlight build goes out (older builds' scores are refused until updated).
 
 ## Still to do later
+
+- **Xcode 27 by April 2027** (Apple's ITMS-90725 warning on build uploads): builds made with
+  the iOS 26.5 SDK upload fine until then. Once Codemagic offers Xcode 27, change `xcode:`
+  in both workflows in `codemagic.yaml`.
 
 - App privacy details (AdMob identifiers and usage data) and review notes — M6.
