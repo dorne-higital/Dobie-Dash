@@ -66,6 +66,16 @@ npm run cap:sync   # nuxt generate + copy into the iOS project (Codemagic runs t
 - **Sandbox tester:** App Store Connect → Users and Access → Sandbox → Testers. On the iPhone,
   Settings → Developer (or App Store) → Sandbox Account.
 
+## M6 setup
+
+- **Sign in with Apple** ("Keep your place"): the app now has the
+  `com.apple.developer.applesignin` entitlement. Before the next build, turn on **Sign in with
+  Apple** for the App ID `uk.co.danhorne.dobiedash` (developer.apple.com → Certificates,
+  Identifiers & Profiles → Identifiers → the app → Capabilities), so Codemagic's profile
+  includes it. Supabase → Authentication → Apple is on with the bundle id as client id.
+- **Share clips** use `@capacitor/filesystem` (writes the video to the cache for the share
+  sheet). No extra permissions.
+
 ## Still to do later
 
 - App privacy details (AdMob identifiers and usage data) and review notes — M6.

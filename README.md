@@ -3,14 +3,15 @@
 A one-tap endless runner for iPhone. Nuxt 4 single-page app (static, `ssr: false`) with a
 plain-TypeScript canvas engine. It will ship inside the same iOS container as Footballdle.
 
-**Status:** **M0–M4** are done. A new player makes a dog, learns in a three-step
-tutorial, then plays all four worlds (Bark Park, City Streets, Sunny Beach with waves,
-Midnight Run lit only by street lamps) with boss chases, power-ups and "Keep running?".
-Between runs there's the hub: Closet, Worlds, Missions with a login streak and chests,
-Profile with trophies, and Settings. M4 adds the Store (RevenueCat), AdMob rewarded and
-between-run ads, Game Center boards and achievements, iCloud save sync and reminders.
-The iOS app builds on Codemagic and uploads to TestFlight (see `ios/README.md`). On a
-desktop browser the game sits in a phone-sized frame.
+**Status:** **M0–M5** are done and **M6** is code-complete. All eight worlds (Bark Park,
+City Streets, Sunny Beach, Midnight Run, Snowy Peaks, Building Site, Haunted Hollow, Moon
+Walkies), each with its own twist and a **boss fight** (the boss attacks from the front;
+stomp it three times). Five power-ups with five upgrade levels each. **Leaderboards on
+Supabase**: every score is checked by replaying the run on the server; all-time and weekly
+boards, weekly leagues of 30 with promotion, friends by code, the Daily Dash with a
+friend's ghost, and "Keep your place" with Sign in with Apple. Share clips of the last 10
+seconds after a new best. Game Center keeps the 30 achievements. The iOS app builds on
+Codemagic and uploads to TestFlight (see `ios/README.md`).
 
 ## Run it
 
@@ -62,22 +63,25 @@ overlay on in **Settings → Frame-time overlay**.
 **Every gameplay number is in [`content/worlds.json`](content/worlds.json).** Change it and
 reload; no code changes needed.
 
-| Section          | What it tunes                                                                                                        |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `physics`        | gravity 2350, jump −780, double jump −700, jump buffer 0.12 s, coyote time                                           |
-| `worlds[]`       | per world: score target `at`, `speed`, `gap`, obstacle and pattern weights, `theme`, `twist`, `chase`, `gate` (last) |
-| `worlds[].twist` | Sunny Beach `waves` (every 7–12 s, 1.6 s at 0.75×); Midnight Run `lamps` (darkness 0.62, pool radius 115)            |
-| `worlds[].chase` | the boss and the minion it adds during its chase (mail van → parcels, King Crab → crabs, fox pack → foxes)           |
-| `chase`          | chase window (last 300 points before a target), boss enter/exit times                                                |
-| `obstacles`      | width, height, hitbox `inset`, `fly` height, `extraSpeed` (skateboarders, crabs, foxes, birds move toward you)       |
-| `dog.hitbox`     | the forgiving hitbox shared by every breed (ears and tail excluded)                                                  |
-| `spawner`        | intro, breathers (every 45 s for 3 s), `carryOver` (how much earlier worlds' obstacles stay), biscuit density/shapes |
-| `scoring`        | units per metre, biscuit +5, smash +25, near miss +10                                                                |
-| `nearMiss`       | clearance that counts (5), slow-mo 0.2 s at 0.35×, at most once per 4 s                                              |
-| `meter`          | blocks to fill (8); doesn't fill while Zoomies or Magnet is running                                                  |
-| `powerups`       | Zoomies 6 s × 1.55 speed; Magnet 8 s, radius 320; Shield invulnerability after a pop                                 |
-| `continue`       | "Keep running?": 5 s countdown, prices 50 / 100 / 200 biscuits, 2 s grace, clears 420 ahead                          |
-| `view` / `loop`  | logical width 600, ground at 76%, pixel-ratio cap 2, 60 Hz fixed step                                                |
+| Section                | What it tunes                                                                                                                                                                                                  |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `physics`              | gravity 2350, jump −780, double jump −700, jump buffer 0.12 s, coyote time                                                                                                                                     |
+| `worlds[]`             | per world: score target `at`, `speed`, `gap`, obstacle and pattern weights, `theme`, `twist`, `chase`, `gate` (last)                                                                                           |
+| `worlds[].twist`       | Sunny Beach `waves`; Midnight Run `lamps`; Snowy Peaks `ice` (jumps from ice ×0.86); Building Site `belts` (×1.3 / ×0.75); Haunted Hollow `ghosts` (fade, solid when close); Moon Walkies `lowGravity` (×0.75) |
+| `worlds[].chase`       | the boss and the minion it adds during its chase (mail van → parcels, King Crab → crabs, fox pack → foxes)                                                                                                     |
+| `chase`                | chase window (last 300 points before a target), boss enter/exit times                                                                                                                                          |
+| `worlds[].chase.fight` | each boss's size, stomp spot and attacks (obstacle patterns, 1st, 2nd, 3rd…)                                                                                                                                   |
+| `fight`                | boss fights: 900-point window, 3 stomps, timings, stomp bounce, +250 (+100 flawless), 5 Golden Bones, first-fight coach words                                                                                  |
+| `obstacles`            | width, height, hitbox `inset`, `fly` height, `extraSpeed` (skateboarders, crabs, foxes, birds move toward you)                                                                                                 |
+| `dog.hitbox`           | the forgiving hitbox shared by every breed (ears and tail excluded)                                                                                                                                            |
+| `spawner`              | intro, breathers (every 45 s for 3 s), `carryOver` (how much earlier worlds' obstacles stay), biscuit density/shapes                                                                                           |
+| `scoring`              | units per metre, biscuit +5, smash +25, near miss +10                                                                                                                                                          |
+| `nearMiss`             | clearance that counts (5), slow-mo 0.2 s at 0.35×, at most once per 4 s                                                                                                                                        |
+| `meter`                | blocks to fill (8); doesn't fill while Zoomies or Magnet is running                                                                                                                                            |
+| `powerups`             | Zoomies 6→10 s, Magnet 8→14 s, Shield (safe 1.2→2 s, 2 bubbles at max), Frisbee 4→7 s glide, Super Sniff 15→25 s (golden ×3); `upgrades` costs 250 / 600 / 1,200 / 2,500 / 5,000                               |
+| `endless`              | the last world (Moon Walkies) speeds up from 495 by 3 per 1,000 points, up to 520; a UFO every 4,000 points                                                                                                    |
+| `continue`             | "Keep running?": 5 s countdown, prices 50 / 100 / 200 biscuits, 2 s grace, clears 420 ahead                                                                                                                    |
+| `view` / `loop`        | logical width 600, ground at 76%, pixel-ratio cap 2, 60 Hz fixed step                                                                                                                                          |
 
 The hub's content is also JSON:
 
@@ -169,9 +173,33 @@ pages/run.vue ── mounts ──▶ game/engine.ts  (canvas, rAF, input, 60 Hz
   turns on autoplay. `?fps` turns on the overlay. `?world=N` starts in world N.
   `/run?tutorial` replays the tutorial.
 
+## Leaderboards (Supabase)
+
+Project "Dobie Dash" (`kdsfnkisjpeoicpeqeof`, London) in Dan's organisation. Everything is
+in `supabase/`:
+
+- `migrations/`: the tables (players, runs, weekly, leagues, league_members, daily_dash,
+  daily_entries, friends, reports, rewards), row-level security (the app can only read),
+  the board functions (`board`, `my_rank`, `my_league`, `friends_board`, `daily_board`,
+  `daily_ghost`) and two pg_cron jobs: leagues settle every Monday 00:00 UTC, the Daily Dash
+  rolls at midnight UTC (top 10% of yesterday get 10 Golden Bones). Push with
+  `npx supabase db push`.
+- `functions/submit-run`: replays the run with the game's own code and records it only if
+  it replays to the claimed score. `functions/profile`: board name (word filter in
+  `content/names.json`), dog, friend codes, Report name (3 reports hide a name), reward
+  claims. Deploy with `npm run functions:deploy` (it bundles `game/server.ts` first).
+- **Replays must match across JS engines** (iPhone JavaScriptCore, server V8): the
+  simulation uses only `+ − × ÷`, `Math.sqrt`, `floor/round/min/max` — no `sin`, `pow`,
+  `hypot`. After changing gameplay numbers, redeploy the functions so the server has them
+  (the app sends a config fingerprint; a mismatch is refused, not recorded).
+- The app (`composables/useBoards.ts`) signs in anonymously, uses the dog's name on the
+  boards, submits after every counted run (queued offline) and fetches rivals.
+- Free plan for now: Supabase pauses a project after a week with no requests. Before launch
+  move it to Pro (M8 checklist).
+
 ## Tests
 
-`tests/unit/` (135 tests):
+`tests/unit/` (165 tests):
 
 - **physics, spawner, scoring / power-ups:** as before (fairness bot through all four
   worlds, waves, chases, continues, near misses, pacing).
@@ -191,6 +219,10 @@ pages/run.vue ── mounts ──▶ game/engine.ts  (canvas, rAF, input, 60 Hz
   medals complete the ones below. **notify:** asked from day 2, a week of reminders.
 - **tutorial:** jump → double → biscuits → done, no crash while learning, the double step
   needs a double jump, crashes work again afterwards.
+- **M6:** worlds 5–8 (ice, belts, ghosts, low gravity, the UFO every 4,000), boss fights
+  for all eight bosses (the bot knocks each out, and dodging alone survives), power-up
+  levels, Frisbee and Super Sniff, save v5 and v6, upgrades, names, replays (a run replays
+  to the identical summary; changed inputs are caught).
 - **M5:** analytics helpers (run cause, day number); Remote Config overrides (applied,
   all-or-nothing rejection, live readers see them); save v3 → v4; hold to jump higher (a
   tap is unchanged, holding goes higher, ledge landing zones allow for it); rooftop
@@ -198,10 +230,8 @@ pages/run.vue ── mounts ──▶ game/engine.ts  (canvas, rAF, input, 60 Hz
 
 ## What's next
 
-**M5 – Polish and beta:** code done. Analytics, crash reports and Remote Config are on
-Firebase (project `dobie-dash-2da2c`). The beta itself is in `docs/beta.md`: about 20
-testers on TestFlight, done when they come back on day 2 and crash-free users are above
-99.5%. Then **M6 – Launch**.
+**M6:** code done (see the phone tests in `docs/m6-phone-tests.md`). Then **M7** (Pup Pass,
+breeds, events) and **M8 – Launch 1.0**.
 
 Still to confirm on a real phone: 60 fps on the oldest iPhone (Settings → Frame-time
-overlay), interruptions pausing the run, iCloud between two phones, and VoiceOver.
+overlay), interruptions, iCloud between two phones, VoiceOver, and the M6 list.

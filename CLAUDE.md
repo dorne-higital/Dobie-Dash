@@ -30,7 +30,10 @@ Plan: https://claude.ai/artifact/YZddbGmWVYAXZFiTbJv5hv (read it with the Artifa
   Center. Scores only via a `submit-run` Edge Function that replays the run; row-level
   security blocks direct writes. Game Center stays for the 30 achievements only; Firebase
   keeps analytics, Crashlytics and Remote Config. Design in the plan's "How the boards work".
-- **M6**: in progress. M7, M8 (launch): not started.
+- **M6**: code done (2026-11-19): worlds 5–8 with twists, boss fights for all eight
+  bosses, Frisbee Fetch + Super Sniff + 5 upgrade levels, Supabase boards (replay-checked
+  scores, weekly leagues, Daily Dash, friends, ghosts, Report name, Keep your place), share
+  clips. Waiting on Dan's phone tests (`docs/m6-phone-tests.md`). M7, M8 (launch): not started.
 
 ## Commands
 
@@ -60,9 +63,22 @@ No local Xcode: iOS builds run on Codemagic (`codemagic.yaml`, steps in `ios/REA
   physics and hitboxes before placing it, at every speed it may meet. New obstacles or twists
   must go through it, and the end-to-end bot tests in `tests/unit/spawner.test.ts` must keep
   passing. Anything that changes speed (waves, Zoomies ending) needs its own fairness rule.
+- **Replays (boards)**: a run records every input (`run.inputs`, by tick) and
+  `game/replay.ts` plays it back exactly; the `submit-run` Edge Function replays it with
+  the bundled game code (`npm run functions:build`). So the simulation must give the same
+  numbers on every JS engine: no `Math.sin/cos/pow/hypot/exp` in `/game` simulation code
+  (render code is fine). After changing gameplay numbers, `npm run functions:deploy`.
+- **Boss fights**: `worlds[].chase.fight` (size, stomp spot, attacks) and `fight` in
+  worlds.json. Attacks go through the spawner (fairness), stomps reuse the landing rule.
+  Tests: the bot must knock each boss out and survive by dodging alone.
+- **Supabase**: schema in `supabase/migrations` (`npx supabase db push`), functions in
+  `supabase/functions` (Deno; excluded from Nuxt typecheck). The app only reads; writes go
+  through the functions. Client in `composables/useBoards.ts`; keys in `content/supabase.json`
+  (the publishable key is public).
 - **Testing a world**: `/run?world=3` starts in that world (not recorded). `?bot` autoplays.
+  `?power=frisbee` starts with a power on. `/run?daily` plays today's Daily Dash.
   `/run?tutorial` plays the tutorial. `/?sheet` shows the sprite sheet.
-- **Save file**: one versioned document (`logic/save.ts`, v4). Any shape change bumps
+- **Save file**: one versioned document (`logic/save.ts`, v6). Any shape change bumps
   `SAVE_VERSION` and adds a migration keyed on the old `v`, with a test in
   `tests/unit/save.test.ts`. Stored through the save service only (iCloud later).
 - **Hub logic is pure TS in `/logic`** (shop, missions, trophies, look), tested without
