@@ -3,15 +3,15 @@
 A one-tap endless runner for iPhone. Nuxt 4 single-page app (static, `ssr: false`) with a
 plain-TypeScript canvas engine. It will ship inside the same iOS container as Footballdle.
 
-**Status:** **M0–M5** are done and **M6** is code-complete. All eight worlds (Bark Park,
-City Streets, Sunny Beach, Midnight Run, Snowy Peaks, Building Site, Haunted Hollow, Moon
-Walkies), each with its own twist and a **boss fight** (the boss attacks from the front;
-stomp it three times). Five power-ups with five upgrade levels each. **Leaderboards on
-Supabase**: every score is checked by replaying the run on the server; all-time and weekly
-boards, weekly leagues of 30 with promotion, friends by code, the Daily Dash with a
-friend's ghost, and "Keep your place" with Sign in with Apple. Share clips of the last 10
-seconds after a new best. Game Center keeps the 30 achievements. The iOS app builds on
-Codemagic and uploads to TestFlight (see `ios/README.md`).
+**Status:** **M0–M6** are done and **M7** is code-complete. All eight worlds with their own
+twists and **boss fights** (stomp the boss three times). Five power-ups with five upgrade
+levels, plus **Big Bark** (saved up from missions and the pass; clears the screen once a run).
+**Leaderboards on Supabase** with every score checked by replaying the run: all-time and
+weekly boards, leagues, friends, the Daily Dash with ghosts, **Weekend Cups**, and "Keep your
+place" with Sign in with Apple. The **Pup Pass** (6-week seasons, 30 tiers, free and premium
+tracks), **Winter Walkies** (snow everywhere, presents to find), the **Party Pack**, 14 breeds
+(new: Cockapoo and Staffie) and share clips. Game Center keeps the 30 achievements. The iOS
+app builds on Codemagic and uploads to TestFlight (see `ios/README.md`).
 
 ## Run it
 
@@ -80,6 +80,7 @@ reload; no code changes needed.
 | `meter`                | blocks to fill (8); doesn't fill while Zoomies or Magnet is running                                                                                                                                            |
 | `powerups`             | Zoomies 6→10 s, Magnet 8→14 s, Shield (safe 1.2→2 s, 2 bubbles at max), Frisbee 4→7 s glide, Super Sniff 15→25 s (golden ×3); `upgrades` costs 250 / 600 / 1,200 / 2,500 / 5,000                               |
 | `endless`              | the last world (Moon Walkies) speeds up from 495 by 3 per 1,000 points, up to 520; a UFO every 4,000 points                                                                                                    |
+| `bigBark`              | Big Barks usable per run (1)                                                                                                                                                                                   |
 | `continue`             | "Keep running?": 5 s countdown, prices 50 / 100 / 200 biscuits, 2 s grace, clears 420 ahead                                                                                                                    |
 | `view` / `loop`        | logical width 600, ground at 76%, pixel-ratio cap 2, 60 Hz fixed step                                                                                                                                          |
 
@@ -93,6 +94,9 @@ The hub's content is also JSON:
 | `content/store.json`            | App Store products (ids are `uk.co.danhorne.dobiedash.` + id), what each gives, starter offer after run 10, between-run ad rules, reminder times         |
 | `content/gamecenter.json`       | leaderboard ids (all-time, weekly) and the achievement id pattern (trophy × bronze/silver/gold)                                                          |
 | `content/site.json`             | the App Store link for the desktop panel (null hides it), `sound` (off: no sound or Settings toggles), the currency guide words                          |
+| `content/pass-s1.json`          | Pup Pass season 1: start date (test date until launch day), 6 weeks, 30 tiers of 300 XP, XP per run and mission, free and premium rewards                |
+| `content/events.json`           | seasonal events: Winter Walkies dates (1 Dec–5 Jan UTC), snow, present chance (7%), rewards at 10 / 30 / 60 presents                                     |
+| `content/supabase.json`         | board rules: league tiers and moves, Daily Dash goes and prize, Weekend Cup goes (5) and prize (20 bones, top 10%)                                       |
 | `content/worlds.json`           | also the Worlds tab text, worlds 5–8 (locked), and the tutorial's steps and words                                                                        | The config is loaded through `services/config`, so Remote Config can later override |
 | it without an App Store update. |
 
@@ -182,8 +186,9 @@ in `supabase/`:
   daily_entries, friends, reports, rewards), row-level security (the app can only read),
   the board functions (`board`, `my_rank`, `my_league`, `friends_board`, `daily_board`,
   `daily_ghost`) and two pg_cron jobs: leagues settle every Monday 00:00 UTC, the Daily Dash
-  rolls at midnight UTC (top 10% of yesterday get 10 Golden Bones). Push with
-  `npx supabase db push`.
+  rolls at midnight UTC (top 10% of yesterday get 10 Golden Bones). M7 adds Weekend Cups
+  (`cups`, `cup_entries`, `current_cup`, `cup_board`, `roll_cups` at 00:05 UTC: opens Friday's
+  cup, closes finished ones, top 10% get 20 Golden Bones). Push with `npx supabase db push`.
 - `functions/submit-run`: replays the run with the game's own code and records it only if
   it replays to the claimed score. `functions/profile`: board name (word filter in
   `content/names.json`), dog, friend codes, Report name (3 reports hide a name), reward
@@ -199,7 +204,7 @@ in `supabase/`:
 
 ## Tests
 
-`tests/unit/` (165 tests):
+`tests/unit/` (207 tests):
 
 - **physics, spawner, scoring / power-ups:** as before (fairness bot through all four
   worlds, waves, chases, continues, near misses, pacing).
@@ -219,6 +224,11 @@ in `supabase/`:
   medals complete the ones below. **notify:** asked from day 2, a week of reminders.
 - **tutorial:** jump → double → biscuits → done, no crash while learning, the double step
   needs a double jump, crashes work again afterwards.
+- **M7:** Pup Pass (content, season dates, XP and tiers, claiming, premium, refunds), save
+  v7, Big Bark (clears the screen, one per run, needs a saved one, replays), Party Pack
+  (buy once, restore, refund, hand-edited saves), Winter Walkies (dates, switching off,
+  Remote Config, fingerprint, rewards, same course with presents, replays), Weekend Cup
+  window, and the M7 products.
 - **M6:** worlds 5–8 (ice, belts, ghosts, low gravity, the UFO every 4,000), boss fights
   for all eight bosses (the bot knocks each out, and dodging alone survives), power-up
   levels, Frisbee and Super Sniff, save v5 and v6, upgrades, names, replays (a run replays
@@ -230,8 +240,5 @@ in `supabase/`:
 
 ## What's next
 
-**M6:** code done (see the phone tests in `docs/m6-phone-tests.md`). Then **M7** (Pup Pass,
-breeds, events) and **M8 – Launch 1.0**.
-
-Still to confirm on a real phone: 60 fps on the oldest iPhone (Settings → Frame-time
-overlay), interruptions, iCloud between two phones, VoiceOver, and the M6 list.
+**M7:** code done (see `docs/m7-phone-tests.md`). Then **M8 – Launch 1.0**: set the Pup Pass
+start to launch day, store listing, review, release.

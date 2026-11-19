@@ -33,7 +33,12 @@ Plan: https://claude.ai/artifact/YZddbGmWVYAXZFiTbJv5hv (read it with the Artifa
 - **M6**: code done (2026-11-19): worlds 5–8 with twists, boss fights for all eight
   bosses, Frisbee Fetch + Super Sniff + 5 upgrade levels, Supabase boards (replay-checked
   scores, weekly leagues, Daily Dash, friends, ghosts, Report name, Keep your place), share
-  clips. Waiting on Dan's phone tests (`docs/m6-phone-tests.md`). M7, M8 (launch): not started.
+  clips. Phone-tested by Dan (2026-11-19): done.
+- **M7**: code done (2026-11-19): Pup Pass season 1 (`content/pass-s1.json`, pass.s1),
+  Cockapoo and Staffie, Big Bark, Party Pack (pack.party), Winter Walkies
+  (`content/events.json`), Weekend Cups (Supabase), Wardrobe redesign (four icon tabs, Shop
+  button, fixed dog preview). Waiting on Dan's phone tests (`docs/m7-phone-tests.md`), the
+  Supabase push (cups migration + functions) and the new App Store products. M8: not started.
 
 ## Commands
 
@@ -76,9 +81,28 @@ No local Xcode: iOS builds run on Codemagic (`codemagic.yaml`, steps in `ios/REA
   through the functions. Client in `composables/useBoards.ts`; keys in `content/supabase.json`
   (the publishable key is public).
 - **Testing a world**: `/run?world=3` starts in that world (not recorded). `?bot` autoplays.
-  `?power=frisbee` starts with a power on. `/run?daily` plays today's Daily Dash.
+  `?power=frisbee` starts with a power on. `/run?daily` plays today's Daily Dash, `/run?cup`
+  this weekend's cup. `?bark` gives one Big Bark, `?event=winter` tries Winter Walkies out of
+  season (neither counts). `/league/world?keep` shows the Keep your place card on the web.
+- **Recorded inputs**: p press, h/u hold, r revive, d decline, b Big Bark. Anything new a
+  player can do mid-run must be a recorded input, and anything that changes the run must
+  be in `RunRecord.opts` (holdToJump, powerLevels, coachFight, bigBarks, event) and checked
+  in `submit-run` (it caps bigBarks at `bigBark.perRun` and accepts known events only).
+- **Pup Pass**: `logic/pass.ts` (pure); season content, dates and XP in
+  `content/pass-s1.json`; premium = `pass.s1` delivered. A new season is a new content file
+  and product; progress from another season starts at zero.
+- **Seasonal events**: `content/events.json` (dates UTC, end exclusive; Remote Config
+  `events.<id>` can move or switch one off). Presents roll from their own seed and score
+  like biscuits, so an event never changes the course or a score. Event dates are left out
+  of the config fingerprint; present chances are in it.
+- **Weekend Cups**: Friday to Monday 00:00 UTC (`logic/cups.ts` mirrors `current_cup()`).
+  Attempts and prizes in `content/supabase.json` (`cup`, `dailyAttempts`), read by
+  `submit-run` through `boardRules`; the SQL prize amounts must match them.
+- **Hosted Supabase changes** (`db push`, `functions deploy`) need `--yes` in agent runs:
+  ask Dan first. Deploying new gameplay numbers makes older app builds' scores refused
+  ('version') until they update, so deploy with the TestFlight build that matches.
   `/run?tutorial` plays the tutorial. `/?sheet` shows the sprite sheet.
-- **Save file**: one versioned document (`logic/save.ts`, v6). Any shape change bumps
+- **Save file**: one versioned document (`logic/save.ts`, v7). Any shape change bumps
   `SAVE_VERSION` and adds a migration keyed on the old `v`, with a test in
   `tests/unit/save.test.ts`. Stored through the save service only (iCloud later).
 - **Hub logic is pure TS in `/logic`** (shop, missions, trophies, look), tested without
@@ -89,7 +113,8 @@ No local Xcode: iOS builds run on Codemagic (`codemagic.yaml`, steps in `ios/REA
   unit ids come from Codemagic env (group `dobiedash`); never commit them. The repo only has
   Google's test ad ids. After changing products run `npm run storekit`.
 - **Game Center ids** in `content/gamecenter.json`; achievements are trophy × medal.
-- **Content**: items and breed prices in `content/items.json`, missions/streak/chests in
+- **Content**: items and breed prices in `content/items.json` (earned items say how in
+  `unlock.text` / `unlock.label`), missions/streak/chests in
   `content/missions.json`, trophies in `content/trophies.json`, tutorial words and world
   blurbs in `content/worlds.json`.
 - **Art is drawn in code** and baked once into sprite caches (`game/render/sprites.ts`);

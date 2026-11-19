@@ -76,6 +76,19 @@ npm run cap:sync   # nuxt generate + copy into the iOS project (Codemagic runs t
 - **Share clips** use `@capacitor/filesystem` (writes the video to the cache for the share
   sheet). No extra permissions.
 
+## M7 setup
+
+- **New in-app purchases** to create in App Store Connect (Dobie Dash → Monetisation → In-App
+  Purchases), all non-consumable, then add them to RevenueCat's products (and an entitlement
+  isn't needed: the app reads the products):
+  - `uk.co.danhorne.dobiedash.pass.s1`: Pup Pass: Season 1, £4.99
+  - `uk.co.danhorne.dobiedash.pack.party`: Party Pack, £2.99
+  - `uk.co.danhorne.dobiedash.breed.cockapoo` and `.breed.staffie`: £0.99 each
+    Until they exist, those buttons say the App Store didn't answer; everything else works.
+- **Supabase:** `npx supabase db push` (the Weekend Cups migration) and
+  `npm run functions:deploy` (Big Bark and events in replays, cups, attempt rules), at the
+  same time as the TestFlight build goes out (older builds' scores are refused until updated).
+
 ## Still to do later
 
 - App privacy details (AdMob identifiers and usage data) and review notes — M6.
