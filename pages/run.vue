@@ -3,6 +3,7 @@
  * Mounts the canvas engine full screen. Vue only listens to engine events and shows the
  * pause sheet and results card on top.
  */
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
 import { Engine, type FeedbackCue, type FeedbackPort } from '~/game/engine'
 import type { HapticKind } from '~/services/types'
 import { item, STICKERS } from '~/logic/items'
@@ -166,6 +167,22 @@ function onHidden() {
   if (document.visibilityState === 'hidden') pause()
 }
 
+/**
+ * In the iPhone app, also pause when iOS says the app stopped being active: Control
+ * Centre, a full-screen call, Siri, locking the phone. These don't always reach the page.
+ */
+const appListeners: PluginListenerHandle[] = []
+async function listenToApp() {
+  if (!Capacitor.isNativePlatform()) return
+  const { App } = await import('@capacitor/app')
+  appListeners.push(
+    await App.addListener('appStateChange', ({ isActive }) => {
+      if (!isActive) pause()
+    }),
+    await App.addListener('pause', pause),
+  )
+}
+
 onMounted(async () => {
   // Canvas text needs the fonts loaded before the first frame.
   try {
@@ -259,6 +276,7 @@ onMounted(async () => {
   document.addEventListener('visibilitychange', onHidden)
   window.addEventListener('pagehide', pause)
   window.addEventListener('blur', pause)
+  void listenToApp()
   start()
 })
 
@@ -268,6 +286,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', onHidden)
   window.removeEventListener('pagehide', pause)
   window.removeEventListener('blur', pause)
+  for (const l of appListeners.splice(0)) void l.remove()
   engine?.destroy()
   engine = null
 })

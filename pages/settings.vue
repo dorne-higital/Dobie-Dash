@@ -1,8 +1,18 @@
 <script setup lang="ts">
+import site from '~/content/site.json'
+
 definePageMeta({ layout: 'hub' })
 const settings = useSettingsStore()
 const purchases = usePurchases()
 const version = useRuntimeConfig().public.appVersion
+
+/** Opens Mail with the app and iOS version filled in, so bug reports say what they ran. */
+const feedbackHref = computed(() => {
+  const f = site.feedback
+  const ios = /OS (\d+[_\d]*)/.exec(navigator.userAgent)?.[1]?.replaceAll('_', '.') ?? 'web'
+  const body = `\n\n\n---\nDobie Dash ${version} · iOS ${ios}`
+  return `mailto:${f.email}?subject=${encodeURIComponent(`${f.subject} (${version})`)}&body=${encodeURIComponent(body)}`
+})
 
 function restore() {
   void purchases.restore()
@@ -47,6 +57,13 @@ function restore() {
         >
         <span aria-hidden="true">{{ purchases.busy.value === 'restore' ? '…' : '↻' }}</span>
       </button>
+      <a :href="feedbackHref" class="row">
+        <span
+          ><b>Send feedback</b
+          ><small>{{ site.feedback.hint }} {{ site.feedback.email }}</small></span
+        >
+        <span aria-hidden="true">›</span>
+      </a>
     </div>
     <div class="group">
       <UiToggle

@@ -31,5 +31,10 @@
         "text": "Some trails can't be bought. They unlock the first time you reach their world."
       }
     ]
+  },
+  "feedback": {
+    "email": "hello@danhorne.co.uk",
+    "subject": "Dobie Dash feedback",
+    "hint": "Found a bug or have an idea? Tell Dan."
   }
 }
