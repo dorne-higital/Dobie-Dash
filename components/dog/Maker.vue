@@ -82,99 +82,107 @@ function save() {
       <span v-if="!owned" class="lock"><UiIcon name="lock" /> {{ BREEDS[draft.breed]!.name }}</span>
     </div>
 
-    <label class="name">
-      <span>Name</span>
-      <input v-model="draft.name" maxlength="16" placeholder="Your dog's name" autocomplete="off" />
-    </label>
-
-    <section>
-      <h3>Breed</h3>
-      <div class="breeds">
-        <button
-          v-for="[key, b] in breeds"
-          :key="key"
-          type="button"
-          class="breed"
-          :class="{ on: draft.breed === key }"
-          :aria-pressed="draft.breed === key"
-          @click="pickBreed(key)"
-        >
-          <span class="face"><DogView :look="breedLook(key)" mode="head" /></span>
-          <span class="bn">{{ b.name }}</span>
-          <span v-if="!ownsBreed(player, key)" class="price"
-            ><UiIcon name="bone" /> {{ BREED_PRICING.bones }}</span
-          >
-        </button>
-      </div>
-    </section>
-
-    <section>
-      <h3>Coat · {{ coats[draft.coat]?.[0] }}</h3>
-      <div class="row">
-        <button
-          v-for="(c, i) in coats"
-          :key="c[0]"
-          type="button"
-          class="dot"
-          :class="{ on: draft.coat === i }"
-          :style="{ background: swatch(i) }"
-          :aria-label="c[0]"
-          :aria-pressed="draft.coat === i"
-          @click="draft.coat = i"
+    <!-- Only the options scroll; the preview above and the button bar below stay put. -->
+    <div class="opts">
+      <label class="name">
+        <span>Name</span>
+        <input
+          v-model="draft.name"
+          maxlength="16"
+          placeholder="Your dog's name"
+          autocomplete="off"
         />
-      </div>
-    </section>
+      </label>
 
-    <section>
-      <h3>Ears</h3>
-      <div class="row">
-        <button
-          v-for="[k, label] in EARS"
-          :key="k"
-          type="button"
-          class="chip"
-          :class="{ on: draft.ears === k }"
-          :aria-pressed="draft.ears === k"
-          @click="draft.ears = k"
-        >
-          {{ label }}
-        </button>
-      </div>
-    </section>
+      <section>
+        <h3>Breed</h3>
+        <div class="breeds">
+          <button
+            v-for="[key, b] in breeds"
+            :key="key"
+            type="button"
+            class="breed"
+            :class="{ on: draft.breed === key }"
+            :aria-pressed="draft.breed === key"
+            @click="pickBreed(key)"
+          >
+            <span class="face"><DogView :look="breedLook(key)" mode="head" /></span>
+            <span class="bn">{{ b.name }}</span>
+            <span v-if="!ownsBreed(player, key)" class="price"
+              ><UiIcon name="bone" /> {{ BREED_PRICING.bones }}</span
+            >
+          </button>
+        </div>
+      </section>
 
-    <section>
-      <h3>Tail</h3>
-      <div class="row">
-        <button
-          v-for="[k, label] in TAILS"
-          :key="k"
-          type="button"
-          class="chip"
-          :class="{ on: draft.tail === k }"
-          :aria-pressed="draft.tail === k"
-          @click="draft.tail = k"
-        >
-          {{ label }}
-        </button>
-      </div>
-    </section>
+      <section>
+        <h3>Coat · {{ coats[draft.coat]?.[0] }}</h3>
+        <div class="row">
+          <button
+            v-for="(c, i) in coats"
+            :key="c[0]"
+            type="button"
+            class="dot"
+            :class="{ on: draft.coat === i }"
+            :style="{ background: swatch(i) }"
+            :aria-label="c[0]"
+            :aria-pressed="draft.coat === i"
+            @click="draft.coat = i"
+          />
+        </div>
+      </section>
 
-    <section>
-      <h3>Eyes</h3>
-      <div class="row">
-        <button
-          v-for="[k, label, col] in EYES"
-          :key="k"
-          type="button"
-          class="chip"
-          :class="{ on: draft.eyes === k }"
-          :aria-pressed="draft.eyes === k"
-          @click="draft.eyes = k"
-        >
-          <i class="eye" :style="{ background: col }" />{{ label }}
-        </button>
-      </div>
-    </section>
+      <section>
+        <h3>Ears</h3>
+        <div class="row">
+          <button
+            v-for="[k, label] in EARS"
+            :key="k"
+            type="button"
+            class="chip"
+            :class="{ on: draft.ears === k }"
+            :aria-pressed="draft.ears === k"
+            @click="draft.ears = k"
+          >
+            {{ label }}
+          </button>
+        </div>
+      </section>
+
+      <section>
+        <h3>Tail</h3>
+        <div class="row">
+          <button
+            v-for="[k, label] in TAILS"
+            :key="k"
+            type="button"
+            class="chip"
+            :class="{ on: draft.tail === k }"
+            :aria-pressed="draft.tail === k"
+            @click="draft.tail = k"
+          >
+            {{ label }}
+          </button>
+        </div>
+      </section>
+
+      <section>
+        <h3>Eyes</h3>
+        <div class="row">
+          <button
+            v-for="[k, label, col] in EYES"
+            :key="k"
+            type="button"
+            class="chip"
+            :class="{ on: draft.eyes === k }"
+            :aria-pressed="draft.eyes === k"
+            @click="draft.eyes = k"
+          >
+            <i class="eye" :style="{ background: col }" />{{ label }}
+          </button>
+        </div>
+      </section>
+    </div>
 
     <div class="bar">
       <template v-if="owned">
@@ -208,18 +216,32 @@ function save() {
 .maker {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
 }
 .preview {
-  /* Stays in view while you scroll the options, so each change shows straight away. */
-  position: sticky;
-  top: 0;
-  z-index: 3;
+  /* Fixed above the options, so each change shows straight away. Sky and grass, the
+     same as the Wardrobe's item preview. */
+  position: relative;
+  flex: none;
   box-shadow: 0 10px 20px -16px rgba(42, 21, 48, 0.6);
-  height: 180px;
+  height: 160px;
   border-radius: 24px;
-  background: radial-gradient(circle at 50% 70%, #fff 0%, #f1e6fb 70%);
+  background: linear-gradient(#c8ecff, #eaf8ff 70%, #9fd78a 70%);
   border: 1px solid var(--line);
+}
+.opts {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0 -4px;
+  padding: 2px 4px 8px;
 }
 .lock {
   position: absolute;
@@ -336,13 +358,11 @@ h3 {
   display: inline-block;
 }
 .bar {
-  position: sticky;
-  bottom: 0;
+  flex: none;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 10px 0 4px;
-  background: linear-gradient(transparent, var(--bg) 30%);
+  padding: 2px 0 0;
 }
 .money {
   display: flex;

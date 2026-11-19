@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /**
- * Wardrobe (route /closet): My dog (the dog maker), Outfits, Trails, Collars, Power-ups (M6)
- * and the Store (M4).
+ * Wardrobe (route /closet): four icon tabs (My dog, Outfits, Trails, Collars), a Shop
+ * button for the Store (M4) and a Power-ups banner (M6). On the item tabs the title,
+ * tabs, dog preview and banner stay fixed and only the items scroll, below them.
  * Tap an item to try it on. Owned items equip at once; anything else shows a buy bar
  * with its price, or how to unlock it.
  */
@@ -13,14 +14,7 @@ import { offer, owns, wornIn } from '~/logic/shop'
 
 definePageMeta({ layout: 'hub' })
 
-const TABS = [
-  { key: 'dog', label: 'My dog' },
-  { key: 'outfits', label: 'Outfits' },
-  { key: 'trails', label: 'Trails' },
-  { key: 'collars', label: 'Collars' },
-  { key: 'powers', label: 'Power-ups' },
-  { key: 'store', label: 'Store' },
-]
+const TITLES: Record<string, string> = { store: 'Store', powers: 'Power-ups' }
 const SLOTS: Record<string, Slot[]> = {
   outfits: ['hat', 'eyes', 'neck', 'back'],
   trails: ['trail'],
@@ -40,6 +34,8 @@ const route = useRoute()
 const player = usePlayerStore()
 const tab = computed(() => String(route.params.tab ?? 'dog'))
 const items = computed(() => itemsFor(SLOTS[tab.value] ?? []))
+/** Outfits, Trails, Collars: the fixed layout with a scrolling item grid. */
+const itemTab = computed(() => !!SLOTS[tab.value])
 const worlds = loadGameConfig().worlds
 
 const tryOn = ref<string | null>(null)
@@ -112,9 +108,14 @@ function status(it: ItemDef): { icon?: string; text: string } {
 </script>
 
 <template>
-  <section class="closet">
-    <h1>Wardrobe</h1>
-    <UiSegmented base="/closet" :tabs="TABS" :current="tab" />
+  <section class="closet" :class="{ fixed: itemTab || tab === 'dog' }">
+    <div class="head">
+      <h1>{{ TITLES[tab] ?? 'Wardrobe' }}</h1>
+      <NuxtLink to="/closet/store" class="shop" :class="{ on: tab === 'store' }" replace>
+        <UiIcon name="bag" /> Shop
+      </NuxtLink>
+    </div>
+    <ClosetIconTabs :current="tab" />
 
     <DogMaker v-if="tab === 'dog'" cta="Save my dog" @saved="flash('Saved!')" />
 
@@ -125,31 +126,41 @@ function status(it: ItemDef): { icon?: string; text: string } {
         <DogView :look="look" mode="run" />
         <span v-if="selected" class="trying">Trying on {{ selected.name }}</span>
       </div>
-      <div class="grid">
-        <button
-          v-for="it in items"
-          :key="it.id"
-          type="button"
-          class="item"
-          :class="{ worn: isWorn(it), trying: tryOn === it.id, locked: !owns(player, it.id) }"
-          @click="tap(it)"
-        >
-          <span class="icon">
-            <UiIcon v-if="it.slot === 'trail'" :name="TRAIL_ICON[it.art.trail!]!" class="emoji" />
-            <span
-              v-else-if="it.slot === 'collar'"
-              class="swatch"
-              :style="{
-                background: it.art.gold ? 'linear-gradient(135deg,#ffe27a,#d99a00)' : it.art.collar,
-              }"
-            />
-            <DogView v-else :look="itemLook(it)" mode="head" />
-          </span>
-          <span class="nm">{{ it.name }}</span>
-          <span class="st"
-            ><UiIcon v-if="status(it).icon" :name="status(it).icon!" /> {{ status(it).text }}</span
+      <NuxtLink to="/closet/powers" class="powers" replace>
+        <UiIcon name="zoomies" class="pi" />
+        <span><b>Power-ups</b><small>Make them last longer</small></span>
+        <em>Level up ›</em>
+      </NuxtLink>
+      <div class="scroll">
+        <div class="grid">
+          <button
+            v-for="it in items"
+            :key="it.id"
+            type="button"
+            class="item"
+            :class="{ worn: isWorn(it), trying: tryOn === it.id, locked: !owns(player, it.id) }"
+            @click="tap(it)"
           >
-        </button>
+            <span class="icon">
+              <UiIcon v-if="it.slot === 'trail'" :name="TRAIL_ICON[it.art.trail!]!" class="emoji" />
+              <span
+                v-else-if="it.slot === 'collar'"
+                class="swatch"
+                :style="{
+                  background: it.art.gold
+                    ? 'linear-gradient(135deg,#ffe27a,#d99a00)'
+                    : it.art.collar,
+                }"
+              />
+              <DogView v-else :look="itemLook(it)" mode="head" />
+            </span>
+            <span class="nm">{{ it.name }}</span>
+            <span class="st"
+              ><UiIcon v-if="status(it).icon" :name="status(it).icon!" />
+              {{ status(it).text }}</span
+            >
+          </button>
+        </div>
       </div>
 
       <div v-if="selected && selOffer && selOffer.kind !== 'owned'" class="buybar">
@@ -188,15 +199,95 @@ function status(it: ItemDef): { icon?: string; text: string } {
   flex-direction: column;
   gap: 12px;
 }
+/* Item tabs: everything above the grid stays put; only the grid scrolls, below it. */
+.closet.fixed {
+  height: 100%;
+}
+.closet.fixed > * {
+  flex: none;
+}
+.closet.fixed > .maker {
+  flex: 1;
+  min-height: 0;
+}
+.closet.fixed > .scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  margin: 0 -4px;
+  padding: 0 4px 8px;
+}
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
 h1 {
-  margin: 4px 0 0;
+  margin: 0;
   font-size: 34px;
 }
+.shop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--pink);
+  color: #fff;
+  font-weight: 900;
+  font-size: 15px;
+  text-decoration: none;
+  border-radius: 999px;
+  padding: 7px 14px 7px 10px;
+  box-shadow: 0 3px 0 #e0338a;
+}
+.shop :deep(.ui-icon) {
+  width: 22px;
+  height: 22px;
+}
+.shop.on {
+  background: var(--plum);
+  box-shadow: 0 3px 0 #000;
+}
+.powers {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(90deg, #fff7d6, var(--surface));
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  padding: 7px 12px;
+  text-decoration: none;
+  color: var(--fg);
+}
+.powers .pi {
+  width: 28px;
+  height: 28px;
+  flex: none;
+}
+.powers span {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.powers small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.powers em {
+  font-style: normal;
+  font-weight: 900;
+  font-size: 13px;
+  color: var(--pink);
+  white-space: nowrap;
+}
 .preview {
-  /* Stays in view while you scroll the items, so you can see what you try on. */
-  position: sticky;
-  top: 0;
-  z-index: 3;
+  position: relative;
   box-shadow: 0 10px 20px -16px rgba(42, 21, 48, 0.6);
   height: 150px;
   border-radius: 24px;
@@ -268,6 +359,7 @@ h1 {
 .buybar {
   position: sticky;
   bottom: 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 6px;

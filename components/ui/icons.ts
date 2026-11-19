@@ -111,6 +111,10 @@ export const ICONS: Record<string, string> = {
   ticket:
     `<path d="M5 10a2 2 0 0 1 2-2h18a2 2 0 0 1 2 2v3a3 3 0 0 0 0 6v3a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3a3 3 0 0 0 0-6z" fill="${PINK}"/>` +
     `<path d="M20 9v14" stroke="#fff" stroke-dasharray="2 2"/><path d="M12.5 12l1.2 2.4 2.6.4-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.4z" fill="${GOLD}" stroke-width="1.2"/>`,
+  // Wardrobe Outfits tab: a purple party hat with a gold pompom.
+  hat:
+    `<path d="M8 27L16 5l8 22z" fill="#8a5cf6"/><path d="M6 27h20" stroke-width="3"/>` +
+    `<circle cx="16" cy="5" r="3" fill="${GOLD}"/><circle cx="14" cy="17" r="1.6" fill="${PINK}" stroke="none"/><circle cx="18.5" cy="21.5" r="1.6" fill="#2fd0c0" stroke="none"/>`,
   // Big Bark (M7): a pink megaphone with sound waves.
   bark:
     `<path d="M5 13h4l11-6v18l-11-6H5z" fill="${PINK}"/><path d="M8 19l1.5 7h4l-1.5-7" fill="#fff8ee"/>` +

@@ -19,9 +19,17 @@ function done() {
 
 <style scoped>
 .make {
+  /* Full height: the dog maker's options scroll inside it, the preview stays put. */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 16px);
   max-width: 560px;
   margin: 0 auto;
+}
+.make > .maker {
+  flex: 1;
+  min-height: 0;
 }
 h1 {
   margin: 0;
