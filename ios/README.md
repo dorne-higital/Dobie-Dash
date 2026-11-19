@@ -83,7 +83,7 @@ npm run cap:sync   # nuxt generate + copy into the iOS project (Codemagic runs t
   price, English (U.K.) names. Nothing to add in RevenueCat: the app fetches products by id
   and reads purchases from `allPurchasedProductIdentifiers`. Still to add before review: a
   review screenshot each (with the others, M8).
-- **Supabase:** `npx supabase db push` (the Weekend Cups migration) and
+- **Supabase:** `npx supabase db push --remote` (the Weekend Cups migration) and
   `npm run functions:deploy` (Big Bark and events in replays, cups, attempt rules), at the
   same time as the TestFlight build goes out (older builds' scores are refused until updated).
 

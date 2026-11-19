@@ -76,7 +76,7 @@ No local Xcode: iOS builds run on Codemagic (`codemagic.yaml`, steps in `ios/REA
 - **Boss fights**: `worlds[].chase.fight` (size, stomp spot, attacks) and `fight` in
   worlds.json. Attacks go through the spawner (fairness), stomps reuse the landing rule.
   Tests: the bot must knock each boss out and survive by dodging alone.
-- **Supabase**: schema in `supabase/migrations` (`npx supabase db push`), functions in
+- **Supabase**: schema in `supabase/migrations` (`npx supabase db push --remote`), functions in
   `supabase/functions` (Deno; excluded from Nuxt typecheck). The app only reads; writes go
   through the functions. Client in `composables/useBoards.ts`; keys in `content/supabase.json`
   (the publishable key is public).

@@ -188,7 +188,7 @@ in `supabase/`:
   `daily_ghost`) and two pg_cron jobs: leagues settle every Monday 00:00 UTC, the Daily Dash
   rolls at midnight UTC (top 10% of yesterday get 10 Golden Bones). M7 adds Weekend Cups
   (`cups`, `cup_entries`, `current_cup`, `cup_board`, `roll_cups` at 00:05 UTC: opens Friday's
-  cup, closes finished ones, top 10% get 20 Golden Bones). Push with `npx supabase db push`.
+  cup, closes finished ones, top 10% get 20 Golden Bones). Push with `npx supabase db push --remote`.
 - `functions/submit-run`: replays the run with the game's own code and records it only if
   it replays to the claimed score. `functions/profile`: board name (word filter in
   `content/names.json`), dog, friend codes, Report name (3 reports hide a name), reward
