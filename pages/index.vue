@@ -57,7 +57,8 @@ function run() {
       <h1 class="logo">Dobie <span>Dash</span></h1>
       <p v-if="player.dog" class="hi">{{ player.dog.name }} is ready</p>
     </div>
-    <p class="tap">Tap anywhere to run</p>
+    <!-- The whole screen starts a run; this button is the same for VoiceOver and keyboards. -->
+    <button type="button" class="tap" @click.stop="run">Tap anywhere to run</button>
     <div v-if="askReminders" class="nudge" @click.stop>
       <p>
         <b><UiIcon name="bell" /> Want a nudge?</b> We'll tell you when new missions land and before
@@ -158,6 +159,10 @@ function run() {
 .tap {
   position: relative;
   margin: auto 0 12px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
   font-family: var(--display);
   font-size: 24px;
   color: #fff;

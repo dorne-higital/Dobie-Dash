@@ -18,6 +18,14 @@ const tabs = [
   { key: 'missions', label: 'Missions', to: '/missions/daily', icon: 'missions' },
 ] as const
 
+/** "Missions, 2 to claim" rather than "2 Missions" for VoiceOver. */
+function ariaLabel(key: string, label: string) {
+  const b = badge(key)
+  if (b === null) return label
+  if (key === 'missions') return `${label}, ${b} to claim`
+  return key === 'league' ? `${label}, ending soon` : `${label}, something new`
+}
+
 function isActive(key: string) {
   const first = route.path.split('/')[1] ?? ''
   return key === 'run' ? first === '' : first === key
@@ -33,6 +41,7 @@ function isActive(key: string) {
       class="tab"
       :class="{ active: isActive(t.key), run: t.key === 'run' }"
       :aria-current="isActive(t.key) ? 'page' : undefined"
+      :aria-label="ariaLabel(t.key, t.label)"
     >
       <span class="icon" aria-hidden="true"
         ><UiIcon :name="t.key === 'run' ? 'paw-light' : t.icon" /><span
