@@ -25,3 +25,6 @@ logs
 
 # Test / coverage
 coverage
+
+# Firebase config: comes from Codemagic (FIREBASE_PLIST), never committed
+ios/App/App/GoogleService-Info.plist

@@ -58,6 +58,11 @@ npm run cap:sync   # nuxt generate + copy into the iOS project (Codemagic runs t
   `.weekly` (recurring, every 7 days from Monday 00:00). All 30
   achievements (`uk.co.danhorne.dobiedash.trophy.<trophy>.<bronze|silver|gold>`, 10/25/50
   points, UK wording, medal images) are set up.
+- **Firebase (M5):** project "Dobie Dash" (`dobie-dash-2da2c`) with the iOS app registered
+  and Google Analytics on (account "Daniel Horne"). `GoogleService-Info.plist` is not in the
+  repo: Codemagic writes it from `FIREBASE_PLIST` (group `firebase`, base64 of the file) and
+  stops the build if it's missing, because the app can't start without it. For a local copy,
+  download it from Firebase → Project settings → Your apps into `ios/App/App/` (gitignored).
 - **Sandbox tester:** App Store Connect → Users and Access → Sandbox → Testers. On the iPhone,
   Settings → Developer (or App Store) → Sandbox Account.
 

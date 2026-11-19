@@ -7,6 +7,7 @@ import {
   claim,
   collectStreak,
   dailyChestReady,
+  dayKey,
   missionDef,
   MISSIONS,
   openDailyChest,
@@ -15,6 +16,7 @@ import {
   streakReady,
   type Reward,
 } from '~/logic/missions'
+import { dayNumber } from '~/logic/events'
 
 definePageMeta({ layout: 'hub' })
 
@@ -41,9 +43,15 @@ const resetIn = computed(() => {
   return `${Math.floor(ms / 3600_000)}h ${Math.floor((ms % 3600_000) / 60_000)}m`
 })
 
+const { analytics } = useServices()
 function doClaim(id: string) {
   const r = claim(player, id)
-  if (r) sheet.value = { title: 'Mission complete!', reward: r }
+  if (!r) return
+  sheet.value = { title: 'Mission complete!', reward: r }
+  analytics.track('mission_claim', {
+    mission: id,
+    day: dayNumber(player.notify.firstDay, dayKey(new Date())),
+  })
 }
 function doStreak() {
   const r = collectStreak(player, new Date())

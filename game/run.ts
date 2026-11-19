@@ -73,6 +73,8 @@ export interface RunSummary {
   escaped: BossKind[]
   /** Boss that was chasing when you crashed, if any ("The mail van got you!"). */
   caughtBy: string | null
+  /** The obstacle that ended the run (the last crash), if any. */
+  hitBy: ObstacleType | null
   continues: number
   nearMisses: number
   /** Taps that jumped (ground and double). */
@@ -155,6 +157,7 @@ export class Run {
   escapes = 0
   escaped: BossKind[] = []
   continues = 0
+  hitBy: ObstacleType | null = null
   nearMisses = 0
   jumps = 0
   powerupsUsed = 0
@@ -249,6 +252,7 @@ export class Run {
       escapes: this.escapes,
       escaped: [...this.escaped],
       caughtBy: this.chase?.name ?? null,
+      hitBy: this.hitBy,
       continues: this.continues,
       nearMisses: this.nearMisses,
       jumps: this.jumps,
@@ -395,6 +399,7 @@ export class Run {
       const outcome = this.opts.invincible || o.soft ? 'smash' : resolveHit(this.power, this.cfg)
       if (outcome === 'pass') continue
       if (outcome === 'crash') {
+        this.hitBy = o.type
         this.state = 'crashed'
         this.crashTime = 0
         this.fx.push({ type: 'crash' })

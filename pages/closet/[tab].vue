@@ -59,13 +59,18 @@ function tap(it: ItemDef) {
     tryOn.value = null
   } else {
     tryOn.value = tryOn.value === it.id ? null : it.id
+    if (tryOn.value) analytics.track('item_try', { item: it.id, price: status(it).text })
   }
 }
 
 const purchases = usePurchases()
+const { analytics } = useServices()
 async function buyIap(id: string) {
   if (await purchases.buy(id, 'closet')) {
-    if (selected.value) player.equip(selected.value.id)
+    if (selected.value) {
+      analytics.track('item_buy', { item: selected.value.id, price: 0, currency: 'gbp' })
+      player.equip(selected.value.id)
+    }
     flash(`${selected.value?.name ?? 'It'} is yours!`)
     tryOn.value = null
   }
@@ -78,8 +83,11 @@ function flash(msg: string) {
 
 function buy() {
   if (!selected.value) return
+  const o = selOffer.value
   const r = player.buy(selected.value.id)
   if (r === 'bought') {
+    if (o && (o.kind === 'biscuits' || o.kind === 'bones'))
+      analytics.track('item_buy', { item: selected.value.id, price: o.price, currency: o.kind })
     flash(`${selected.value.name} is yours!`)
     tryOn.value = null
   }

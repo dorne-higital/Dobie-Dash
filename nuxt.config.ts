@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -59,6 +60,17 @@ export default defineNuxtConfig({
   },
 
   eslint: { config: { stylistic: false } },
+
+  // The @capacitor-firebase plugins' web versions import the firebase JS SDK, which this
+  // app never uses: point those imports at a stand-in (services/native/stubs/firebase-web.ts).
+  alias: {
+    'firebase/analytics': fileURLToPath(
+      new URL('./services/native/stubs/firebase-web.ts', import.meta.url),
+    ),
+    'firebase/remote-config': fileURLToPath(
+      new URL('./services/native/stubs/firebase-web.ts', import.meta.url),
+    ),
+  },
 
   vite: {
     server: { allowedHosts: true },

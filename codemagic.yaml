@@ -11,7 +11,9 @@ workflows:
       # Must match its name in Codemagic exactly, including the "Foodballdle" typo.
       app_store_connect: Foodballdle ASC
     environment:
-      groups: []
+      # "firebase" holds FIREBASE_PLIST (GoogleService-Info.plist, base64), never committed.
+      groups:
+        - firebase
       ios_signing:
         distribution_type: app_store
         bundle_identifier: uk.co.danhorne.dobiedash
@@ -34,6 +36,14 @@ workflows:
         script: |
           if [ -z "$REVENUECAT_APPLE_KEY" ]; then echo "Warning: no REVENUECAT_APPLE_KEY, the Store won't load"; fi
           npm run cap:sync
+      - name: Firebase config (analytics, crash reports, Remote Config)
+        script: |
+          if [ -z "$FIREBASE_PLIST" ]; then
+            echo "Missing FIREBASE_PLIST (Codemagic group 'firebase'). Without it the app crashes on launch."
+            exit 1
+          fi
+          echo "$FIREBASE_PLIST" | base64 --decode > ios/App/App/GoogleService-Info.plist
+          plutil -lint ios/App/App/GoogleService-Info.plist
       - name: Real AdMob app id (when set)
         script: |
           if [ -n "$ADMOB_APP_ID" ]; then
@@ -67,6 +77,7 @@ workflows:
     environment:
       groups:
         - dobiedash
+        - firebase
       ios_signing:
         distribution_type: app_store
         bundle_identifier: uk.co.danhorne.dobiedash

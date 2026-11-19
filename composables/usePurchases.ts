@@ -29,7 +29,6 @@ export function usePurchases() {
     if (busy.value) return null
     busy.value = id
     message.value = ''
-    analytics.track('store_buy_tap', { product: id, from })
     try {
       const r = await iap.purchase(id)
       if (!r.ok) {

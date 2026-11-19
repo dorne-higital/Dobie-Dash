@@ -35,6 +35,7 @@ function run(over: Partial<RunSummary> = {}): RunSummary {
     escapes: 0,
     escaped: [],
     caughtBy: null,
+    hitBy: null,
     continues: 0,
     nearMisses: 0,
     jumps: 0,

@@ -10,6 +10,7 @@ import { lookFor } from '~/logic/look'
 import { shouldOfferStarter } from '~/logic/store'
 import { MEDALS } from '~/logic/trophies'
 import type { RunSummary } from '~/game/run'
+import { runCause } from '~/logic/events'
 
 definePageMeta({ layout: 'run' })
 
@@ -48,6 +49,10 @@ const startWorld = Number(route.query.world) > 1 ? Number(route.query.world) - 1
 const showFps = import.meta.dev || 'fps' in route.query || settings.showFps
 
 let engine: Engine | null = null
+/** This run's number for the player (1 = their first ever run). */
+const runNumber = () => player.stats.runs + 1
+/** The tutorial step being coached, so leaving early can be counted as skipped. */
+let tutorialStep: string | null = tutorial ? 'jump' : null
 
 /** Haptic for each sound cue (none for the small stuff). */
 const HAPTIC: Partial<Record<FeedbackCue, HapticKind>> = {
@@ -86,7 +91,7 @@ function start() {
   engine?.start()
   // Only the first run from ?tutorial is a tutorial; "Play again" is a normal run.
   engine?.setTutorial(false)
-  analytics.track('run_start', {})
+  analytics.track('run_start', { run: runNumber(), world: startWorld ?? 0 })
 }
 
 function pause() {
@@ -116,18 +121,43 @@ function continueWithBiscuits() {
   keepRunning('biscuits')
 }
 
+/** What "Keep running?" offered: both ways, or the ad only when biscuits fall short. */
+function offerType() {
+  return player.biscuits + runBiscuits.value >= offer.value.price ? 'ad_or_biscuits' : 'ad_only'
+}
+
 function keepRunning(paidWith: 'ad' | 'biscuits') {
-  analytics.track('continue', { paidWith, price: offer.value.price })
+  analytics.track('continue_offer', {
+    type: offerType(),
+    choice: paidWith,
+    price: offer.value.price,
+  })
   phase.value = 'running'
   engine?.revive()
 }
 
 function declineContinue() {
   if (phase.value !== 'continue') return
+  analytics.track('continue_offer', {
+    type: offerType(),
+    choice: 'declined',
+    price: offer.value.price,
+  })
   engine?.decline() // ends the run: run:end shows the results card
 }
 
 function goHome() {
+  // Quitting from the pause sheet ends the run without a results card: count it.
+  const s = phase.value === 'paused' ? pauseInfo.value.summary : null
+  if (s && startWorld === undefined && !bot)
+    analytics.track('run_end', {
+      score: s.score,
+      world: s.world,
+      cause: runCause(s, true),
+      seconds: Math.round(s.seconds),
+      continues: s.continues,
+    })
+  if (tutorialStep) analytics.track('tutorial_step', { step: tutorialStep, skipped: true })
   router.push('/')
 }
 
@@ -181,13 +211,24 @@ onMounted(async () => {
     }
     result.value = r
     phase.value = 'results'
-    analytics.track('run_end', { score: r.score, world: r.world, seconds: r.seconds })
+    if (startWorld === undefined && !bot)
+      analytics.track('run_end', {
+        score: r.score,
+        world: r.world,
+        cause: runCause(r),
+        seconds: Math.round(r.seconds),
+        continues: r.continues,
+      })
     if (bot) botTimer = setTimeout(start, 1500)
   })
   engine.on('biscuit', (b) => (runBiscuits.value = b.count))
   engine.on('tutorial', (t) => {
     const C = config.game().tutorial.coach
     clearTimeout(coachTimer)
+    if (!t.oops) {
+      analytics.track('tutorial_step', { step: t.step, skipped: false })
+      tutorialStep = t.step === 'done' ? null : t.step
+    }
     if (t.step === 'done') {
       player.flags.tutorialDone = true
       coach.value = { ...C.done, step: 0, oops: false }
@@ -210,7 +251,10 @@ onMounted(async () => {
     }
     phase.value = 'continue'
   })
-  engine.on('world', (w) => analytics.track('world_reached', { world: w.index }))
+  engine.on('world', (w) => {
+    if (startWorld === undefined && !bot)
+      analytics.track('world_reached', { world: w.index, run: runNumber() })
+  })
   document.addEventListener('visibilitychange', onHidden)
   window.addEventListener('pagehide', pause)
   window.addEventListener('blur', pause)

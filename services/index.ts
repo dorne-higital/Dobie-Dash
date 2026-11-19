@@ -3,6 +3,7 @@ import { createWebAds } from './web/ads'
 import { createWebAnalytics } from './web/analytics'
 import { createWebAudio } from './web/audio'
 import { createWebConfig } from './web/config'
+import { createWebCrash } from './web/crash'
 import { createWebGameCenter } from './web/gamecenter'
 import { createWebHaptics } from './web/haptics'
 import { createWebIap } from './web/iap'
@@ -21,6 +22,7 @@ export function createWebServices(opts: { debug: boolean }): Services {
     gamecenter: createWebGameCenter(opts.debug),
     notify: createWebNotify(),
     analytics: createWebAnalytics(opts.debug),
+    crash: createWebCrash(),
     config: createWebConfig(),
   }
 }

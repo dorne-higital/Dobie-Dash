@@ -8,7 +8,13 @@ const { price, busy, message, loadPrices, buy, restore } = usePurchases()
 const native = Capacitor.isNativePlatform()
 const dev = import.meta.dev
 const got = ref<{ title: string; grants: ProductGrants } | null>(null)
-onMounted(loadPrices)
+const { analytics } = useServices()
+onMounted(() => {
+  void loadPrices()
+  // Which screen opened the Store: the page we came from (e.g. "/" from the coin pills).
+  const back = useRouter().options.history.state.back
+  analytics.track('store_view', { from: typeof back === 'string' ? back : 'direct' })
+})
 
 const owned = (id: string) => player.purchases.delivered.includes(id)
 const groups = computed(() => [

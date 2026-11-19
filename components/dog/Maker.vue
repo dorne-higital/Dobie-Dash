@@ -48,8 +48,14 @@ function swatch(i: number) {
   return `linear-gradient(135deg, ${p.base} 55%, ${second} 55%)`
 }
 
+const { analytics } = useServices()
 function unlock() {
-  player.buyBreed(draft.breed)
+  if (player.buyBreed(draft.breed) === 'bought')
+    analytics.track('item_buy', {
+      item: `breed:${draft.breed}`,
+      price: BREED_PRICING.bones,
+      currency: 'bones',
+    })
 }
 
 const purchases = usePurchases()

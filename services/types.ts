@@ -2,6 +2,7 @@
  * Native-facing services. Each has a web fake in services/web/ for now; the iOS container
  * will provide native implementations (Game Center, StoreKit, AdMob, haptics, iCloud KV …).
  */
+import type { EventName, EventProps } from '~/logic/events'
 import type { GameConfig } from '~/game/config'
 import type { FeedbackCue } from '~/game/feedback'
 
@@ -90,7 +91,15 @@ export interface NotifyService {
 }
 
 export interface AnalyticsService {
-  track(event: string, props?: Record<string, string | number | boolean>): void
+  /** Only the events in logic/events.ts, with their properties. */
+  track<K extends EventName>(event: K, props: EventProps<K>): void
+}
+
+/** Crash reporting (Crashlytics on iOS). JS errors go in as non-fatal reports. */
+export interface CrashService {
+  recordError(error: unknown, context?: string): void
+  /** A breadcrumb shown alongside the next crash report. */
+  log(message: string): void
 }
 
 export interface ConfigService {
@@ -108,5 +117,6 @@ export interface Services {
   gamecenter: GameCenterService
   notify: NotifyService
   analytics: AnalyticsService
+  crash: CrashService
   config: ConfigService
 }
