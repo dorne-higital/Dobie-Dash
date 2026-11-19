@@ -107,7 +107,7 @@ function status(it: ItemDef): { icon?: string; text: string } {
   if (o.kind === 'biscuits') return { icon: 'biscuit', text: o.price.toLocaleString() }
   if (o.kind === 'bones') return { icon: 'bone', text: String(o.price) }
   if (o.kind === 'iap') return { text: o.gbp }
-  return { icon: 'lock', text: worlds[o.world]?.name ?? 'Later' }
+  return { icon: 'lock', text: o.label ?? worlds[o.world]?.name ?? 'Later' }
 }
 </script>
 
@@ -171,6 +171,7 @@ function status(it: ItemDef): { icon?: string; text: string } {
           </UiButton>
           <small v-if="purchases.message.value">{{ purchases.message.value }}</small>
         </template>
+        <small v-else-if="selOffer.text">{{ selOffer.text }}</small>
         <small v-else>Reach {{ worlds[selOffer.world]?.name }} in a run to unlock it</small>
       </div>
     </template>

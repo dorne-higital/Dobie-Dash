@@ -21,7 +21,8 @@ export interface ItemDef {
   iap?: string
   gbp?: string
   /** Earned, not bought: reaching a world (0-based index). */
-  unlock?: { world: number }
+  /** `text`: how to get it (Pup Pass, an event); `label`: the short tile tag. */
+  unlock?: { world?: number; text?: string; label?: string }
   art: Accessories & { trail?: TrailKind }
 }
 

@@ -17,7 +17,8 @@ export type Offer =
   | { kind: 'biscuits'; price: number; affordable: boolean }
   | { kind: 'bones'; price: number; affordable: boolean }
   | { kind: 'iap'; product: string; gbp: string }
-  | { kind: 'unlock'; world: number }
+  /** Earned, not bought: by reaching a world, or as `text` says (Pup Pass, an event). */
+  | { kind: 'unlock'; world: number; text?: string; label?: string }
 
 export function offer(w: Wardrobe, it: ItemDef): Offer {
   if (owns(w, it.id)) return { kind: 'owned' }
@@ -26,7 +27,12 @@ export function offer(w: Wardrobe, it: ItemDef): Offer {
   if (it.bones != null)
     return { kind: 'bones', price: it.bones, affordable: w.wallet.bones >= it.bones }
   if (it.iap) return { kind: 'iap', product: it.iap, gbp: it.gbp ?? '' }
-  return { kind: 'unlock', world: it.unlock?.world ?? 0 }
+  return {
+    kind: 'unlock',
+    world: it.unlock?.world ?? 0,
+    text: it.unlock?.text,
+    label: it.unlock?.label,
+  }
 }
 
 export type BuyResult = 'bought' | 'owned' | 'poor' | 'not-for-sale' | 'unknown'

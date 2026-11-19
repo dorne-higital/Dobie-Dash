@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "breeds": {
     "free": ["doberman"],
     "bones": 80,
@@ -249,6 +249,228 @@
       "bones": 30,
       "art": {
         "trail": "rainbow"
+      }
+    },
+    {
+      "id": "collar:orange",
+      "slot": "collar",
+      "name": "Orange Collar",
+      "unlock": {
+        "text": "Pup Pass season 1 reward",
+        "label": "Pup Pass"
+      },
+      "art": {
+        "collar": "#ff8a3a"
+      }
+    },
+    {
+      "id": "collar:teal",
+      "slot": "collar",
+      "name": "Teal Collar",
+      "unlock": {
+        "text": "Pup Pass season 1 reward",
+        "label": "Pup Pass"
+      },
+      "art": {
+        "collar": "#2fd0c0"
+      }
+    },
+    {
+      "id": "collar:black",
+      "slot": "collar",
+      "name": "Black Collar",
+      "unlock": {
+        "text": "Pup Pass season 1 reward",
+        "label": "Pup Pass"
+      },
+      "art": {
+        "collar": "#2a2433"
+      }
+    },
+    {
+      "id": "collar:silver",
+      "slot": "collar",
+      "name": "Silver Collar",
+      "unlock": {
+        "text": "Pup Pass season 1 reward",
+        "label": "Pup Pass"
+      },
+      "art": {
+        "collar": "#c3cad8"
+      }
+    },
+    {
+      "id": "neck:scarf",
+      "slot": "neck",
+      "name": "Knitted Scarf",
+      "unlock": {
+        "text": "Pup Pass season 1 reward",
+        "label": "Pup Pass"
+      },
+      "art": {
+        "neck": "scarf"
+      }
+    },
+    {
+      "id": "eyes:hearts",
+      "slot": "eyes",
+      "name": "Heart Specs",
+      "unlock": {
+        "text": "Pup Pass season 1 reward",
+        "label": "Pup Pass"
+      },
+      "art": {
+        "eyes": "hearts"
+      }
+    },
+    {
+      "id": "hat:cap",
+      "slot": "hat",
+      "name": "Baseball Cap",
+      "unlock": {
+        "text": "Pup Pass season 1 reward",
+        "label": "Pup Pass"
+      },
+      "art": {
+        "hat": "cap"
+      }
+    },
+    {
+      "id": "hat:flowers",
+      "slot": "hat",
+      "name": "Daisy Chain",
+      "unlock": {
+        "text": "Pup Pass season 1 reward",
+        "label": "Pup Pass"
+      },
+      "art": {
+        "hat": "flowers"
+      }
+    },
+    {
+      "id": "back:backpack",
+      "slot": "back",
+      "name": "Backpack",
+      "unlock": {
+        "text": "Pup Pass season 1 reward",
+        "label": "Pup Pass"
+      },
+      "art": {
+        "back": "backpack"
+      }
+    },
+    {
+      "id": "trail:bones",
+      "slot": "trail",
+      "name": "Bone Prints",
+      "unlock": {
+        "text": "Pup Pass season 1 reward",
+        "label": "Pup Pass"
+      },
+      "art": {
+        "trail": "bones"
+      }
+    },
+    {
+      "id": "trail:sparkles",
+      "slot": "trail",
+      "name": "Sparkles",
+      "unlock": {
+        "text": "Pup Pass season 1 reward",
+        "label": "Pup Pass"
+      },
+      "art": {
+        "trail": "sparkles"
+      }
+    },
+    {
+      "id": "trail:notes",
+      "slot": "trail",
+      "name": "Music Notes",
+      "unlock": {
+        "text": "Pup Pass season 1 reward",
+        "label": "Pup Pass"
+      },
+      "art": {
+        "trail": "notes"
+      }
+    },
+    {
+      "id": "trail:leaves",
+      "slot": "trail",
+      "name": "Autumn Leaves",
+      "unlock": {
+        "text": "Pup Pass season 1 reward",
+        "label": "Pup Pass"
+      },
+      "art": {
+        "trail": "leaves"
+      }
+    },
+    {
+      "id": "hat:tophat",
+      "slot": "hat",
+      "name": "Party Top Hat",
+      "iap": "pack.party",
+      "gbp": "£2.99",
+      "art": {
+        "hat": "tophat"
+      }
+    },
+    {
+      "id": "neck:sparklebow",
+      "slot": "neck",
+      "name": "Sparkle Bow Tie",
+      "iap": "pack.party",
+      "gbp": "£2.99",
+      "art": {
+        "neck": "sparklebow"
+      }
+    },
+    {
+      "id": "trail:streamers",
+      "slot": "trail",
+      "name": "Streamers",
+      "iap": "pack.party",
+      "gbp": "£2.99",
+      "art": {
+        "trail": "streamers"
+      }
+    },
+    {
+      "id": "hat:santa",
+      "slot": "hat",
+      "name": "Santa Hat",
+      "unlock": {
+        "text": "Winter Walkies event reward",
+        "label": "Winter"
+      },
+      "art": {
+        "hat": "santa"
+      }
+    },
+    {
+      "id": "hat:antlers",
+      "slot": "hat",
+      "name": "Antlers",
+      "unlock": {
+        "text": "Winter Walkies event reward",
+        "label": "Winter"
+      },
+      "art": {
+        "hat": "antlers"
+      }
+    },
+    {
+      "id": "trail:snow",
+      "slot": "trail",
+      "name": "Snowflakes",
+      "unlock": {
+        "text": "Winter Walkies event reward",
+        "label": "Winter"
+      },
+      "art": {
+        "trail": "snow"
       }
     }
   ],

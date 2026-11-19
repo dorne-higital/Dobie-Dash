@@ -401,14 +401,27 @@ export const DOBIE = makeDog('doberman')
 export interface Accessories {
   collar?: string
   gold?: boolean
-  neck?: 'bowtie' | 'bandana'
+  neck?: 'bowtie' | 'bandana' | 'sparklebow' | 'scarf'
   bandana?: boolean
-  eyes?: 'specs' | 'shades'
+  eyes?: 'specs' | 'shades' | 'hearts'
   shades?: boolean
-  hat?: 'party' | 'beanie' | 'crown' | 'bobble' | 'hardhat' | 'witch' | 'helmet'
+  hat?:
+    | 'party'
+    | 'beanie'
+    | 'crown'
+    | 'bobble'
+    | 'hardhat'
+    | 'witch'
+    | 'helmet'
+    // M7: Party pack, Pup Pass and Winter Walkies.
+    | 'tophat'
+    | 'cap'
+    | 'flowers'
+    | 'santa'
+    | 'antlers'
   crown?: boolean
   cape?: boolean
-  back?: 'cape'
+  back?: 'cape' | 'backpack'
 }
 
 export type Pose = 'run' | 'jump' | 'dizzy' | 'idle' | 'icon' | 'sit'
@@ -653,6 +666,43 @@ export function head(
     c.fill()
     dot(c, -3, 19.5, 2.6, '#2563c9')
   }
+  if (acc.neck === 'sparklebow') {
+    // Party pack: a gold sequinned bow tie.
+    c.fillStyle = '#ffc61a'
+    c.beginPath()
+    c.moveTo(-3, 19)
+    c.lineTo(-12, 13)
+    c.lineTo(-11, 26)
+    c.closePath()
+    c.moveTo(-3, 19)
+    c.lineTo(6, 14)
+    c.lineTo(5, 27)
+    c.closePath()
+    c.fill()
+    for (const [a, b] of [
+      [-8, 17],
+      [-9, 22],
+      [2, 17],
+      [2, 23],
+    ] as const)
+      dot(c, a, b, 1.1, '#fff8c2')
+    dot(c, -3, 19.5, 2.8, '#ff4fa0')
+  }
+  if (acc.neck === 'scarf') {
+    // Pup Pass: a striped knitted scarf with a hanging end.
+    c.strokeStyle = '#2fbf71'
+    c.lineWidth = 6
+    c.lineCap = 'round'
+    c.beginPath()
+    c.arc(0, 0, 17, 1.55, 2.75)
+    c.stroke()
+    c.fillStyle = '#2fbf71'
+    rr(c, -12, 14, 7, 16, 2.5)
+    c.fill()
+    c.fillStyle = '#fff8ee'
+    c.fillRect(-12, 19, 7, 2.5)
+    c.fillRect(-12, 25, 7, 2.5)
+  }
   if (acc.bandana || acc.neck === 'bandana') {
     c.fillStyle = '#e5484d'
     c.beginPath()
@@ -702,6 +752,113 @@ export function head(
     c.stroke()
     c.fillStyle = 'rgba(255,255,255,.5)'
     c.fillRect(1.5, -7.5, 4, 1.5)
+  }
+  if (acc.eyes === 'hearts') {
+    // Pup Pass: pink heart-shaped glasses.
+    const heart = (x: number, y: number, r: number) => {
+      dot(c, x - r * 0.45, y - r * 0.2, r * 0.55, '#ff4fa0')
+      dot(c, x + r * 0.45, y - r * 0.2, r * 0.55, '#ff4fa0')
+      c.fillStyle = '#ff4fa0'
+      c.beginPath()
+      c.moveTo(x - r, y)
+      c.lineTo(x, y + r * 1.05)
+      c.lineTo(x + r, y)
+      c.fill()
+    }
+    heart(5, -5, 7)
+    c.fillStyle = 'rgba(255,255,255,.55)'
+    c.fillRect(2.5, -8, 3, 1.5)
+    c.strokeStyle = '#d6337f'
+    c.lineWidth = 1.6
+    c.beginPath()
+    c.moveTo(-1.5, -5.5)
+    c.lineTo(-11, -8)
+    c.stroke()
+  }
+  if (acc.hat === 'tophat') {
+    // Party pack: a sparkly purple top hat with a gold band.
+    c.fillStyle = '#4a2a6e'
+    rr(c, -9, -36, 19, 22, 3)
+    c.fill()
+    ell(c, 0.5, -14, 17, 4, 0, '#4a2a6e')
+    c.fillStyle = '#ffc61a'
+    c.fillRect(-9, -20, 19, 4)
+    sparkle(c, 4, -30, 3.2, '#fff8c2', 0.3)
+    sparkle(c, -4, -25, 2.2, '#fff8c2', 1.1)
+  }
+  if (acc.hat === 'cap') {
+    // Pup Pass: a blue baseball cap with the peak forward.
+    c.fillStyle = '#3a86f0'
+    c.beginPath()
+    c.arc(0, -10, 15.5, Math.PI, Math.PI * 2)
+    c.closePath()
+    c.fill()
+    c.fillStyle = '#2563c9'
+    c.beginPath()
+    c.ellipse(15, -10.5, 10, 3.2, 0.08, 0, TAU)
+    c.fill()
+    dot(c, 0, -25.5, 2.2, '#2563c9')
+    c.fillStyle = '#fff8ee'
+    c.beginPath()
+    c.arc(-2, -15, 4, 0, TAU)
+    c.fill()
+    dot(c, -2, -15, 1.8, '#e5484d')
+  }
+  if (acc.hat === 'flowers') {
+    // Pup Pass: a daisy chain crown.
+    c.strokeStyle = '#3eb36a'
+    c.lineWidth = 2
+    c.beginPath()
+    c.arc(0, -4, 15.5, Math.PI * 1.08, Math.PI * 1.92)
+    c.stroke()
+    const cols = ['#ffffff', '#ffd23f', '#ff8fc4', '#ffffff', '#bfa5ff']
+    for (let i = 0; i < 5; i++) {
+      const a = Math.PI * (1.12 + i * 0.19)
+      const x = Math.cos(a) * 15.5
+      const y = -4 + Math.sin(a) * 15.5
+      for (let k = 0; k < 5; k++) {
+        const b = (k * TAU) / 5
+        dot(c, x + Math.cos(b) * 2.6, y + Math.sin(b) * 2.6, 2.1, cols[i]!)
+      }
+      dot(c, x, y, 1.7, '#f2a23a')
+    }
+  }
+  if (acc.hat === 'santa') {
+    // Winter Walkies: a floppy Santa hat with a bobble.
+    c.fillStyle = '#e5484d'
+    c.beginPath()
+    c.moveTo(-14, -12)
+    c.quadraticCurveTo(-6, -36, 10, -32)
+    c.quadraticCurveTo(18, -28, 20, -18)
+    c.lineTo(13, -12)
+    c.closePath()
+    c.fill()
+    c.fillStyle = '#fff8ee'
+    rr(c, -17, -14, 33, 7, 3.5)
+    c.fill()
+    dot(c, 20, -16, 4.5, '#fff8ee')
+  }
+  if (acc.hat === 'antlers') {
+    // Winter Walkies: reindeer antlers on a headband.
+    c.strokeStyle = '#9a6a3a'
+    c.lineWidth = 3
+    c.lineCap = 'round'
+    for (const sx of [-1, 1] as const) {
+      const x0 = sx * 7
+      c.beginPath()
+      c.moveTo(x0, -14)
+      c.lineTo(x0 + sx * 3, -28)
+      c.moveTo(x0 + sx * 1.5, -21)
+      c.lineTo(x0 + sx * 8, -25)
+      c.moveTo(x0 + sx * 2.6, -26)
+      c.lineTo(x0 - sx * 2, -32)
+      c.stroke()
+    }
+    c.strokeStyle = '#e5484d'
+    c.lineWidth = 2.5
+    c.beginPath()
+    c.arc(0, -4, 15.5, Math.PI * 1.15, Math.PI * 1.85)
+    c.stroke()
   }
   if (acc.hat === 'party') {
     c.fillStyle = '#8a5cf6'
@@ -971,6 +1128,18 @@ export function pup(c: Ctx, v: Dog, pose: Pose, t: number, ph: number, o: PupOpt
   leg(v.hipB, A[2]!, true)
   // A sitting dog's thigh: a round haunch over the folded back leg.
   if (sit) ell(c, v.hipB + 3, v.hipY - 3, v.brx * 0.38, v.bry * 0.8, -0.3, K.base)
+  if (acc.back === 'backpack') {
+    // Pup Pass: a little orange backpack on the dog's back.
+    const bx = -v.brx * 0.25
+    const by = v.by - v.bry + 2
+    c.fillStyle = '#ff8a3a'
+    rr(c, bx - 9, by - 7, 18, 13, 4)
+    c.fill()
+    c.fillStyle = '#e8702a'
+    rr(c, bx - 6, by - 2, 12, 6, 2)
+    c.fill()
+    dot(c, bx, by + 1, 1.3, '#ffd23f')
+  }
   if (acc.cape || acc.back === 'cape') {
     const f = Math.sin(t * 8)
     c.fillStyle = '#e5484d'
