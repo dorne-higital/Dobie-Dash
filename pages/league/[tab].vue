@@ -158,17 +158,21 @@ const nameNote = computed(() =>
   boards.nameRejected.value ? NAME_PROBLEM_TEXT[boards.nameRejected.value as NameProblem] : null,
 )
 // Keep your place (iPhone): link the board player to Apple.
-const native = Capacitor.isNativePlatform()
+// `?keep` shows the card in a dev browser, to check its look (it only works on iPhone).
+const native = Capacitor.isNativePlatform() || (import.meta.dev && 'keep' in route.query)
+const keeping = ref(false)
 const keepMsg = ref('')
 async function keepPlace() {
-  const r = await boards.keepPlace()
+  if (keeping.value) return
+  keeping.value = true
+  const r = await boards.keepPlace().finally(() => (keeping.value = false))
   keepMsg.value =
     r === 'linked'
       ? 'Saved! Your place follows your Apple ID.'
       : r === 'restored'
         ? 'Welcome back! Your place is restored.'
         : r === 'failed'
-          ? "Couldn't reach Apple. Try again in a moment."
+          ? "That didn't work. Check you're online and signed in to iCloud, then try again."
           : ''
   if (r === 'restored') void load()
 }
@@ -228,16 +232,26 @@ const faceLook = (r: BoardRow) => (r.me ? look.value : lookFromBoard(r.dog))
       </UiButton>
     </div>
 
-    <div v-if="native && !boards.linked.value && tab !== 'dash'" class="keep">
-      <span
-        ><b>Keep your place</b
-        ><small
-          >Link Apple so your scores, league and friends follow you to a new iPhone.</small
-        ></span
-      >
-      <UiButton variant="secondary" @click="keepPlace">Sign in with Apple</UiButton>
-    </div>
+    <section v-if="native && !boards.linked.value && tab !== 'dash'" class="keep">
+      <div class="keep-top">
+        <UiIcon name="crest" class="keep-badge" />
+        <div class="keep-text">
+          <h2>Keep your place</h2>
+          <p>Your scores, league and friends follow you to a new iPhone.</p>
+        </div>
+      </div>
+      <button type="button" class="apple" :disabled="keeping" @click="keepPlace">
+        <svg viewBox="0 0 17 20" aria-hidden="true" focusable="false">
+          <path
+            fill="currentColor"
+            d="M14.1 10.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9s-2-.9-3.4-.9C3.6 4.8 2 5.8 1.1 7.4c-1.9 3.2-.5 8 1.3 10.6.9 1.3 1.9 2.7 3.3 2.6 1.3-.1 1.8-.9 3.4-.9s2 .9 3.4.8c1.4 0 2.3-1.3 3.2-2.6 1-1.5 1.4-2.9 1.4-3-.1 0-2.9-1.1-3-4.3zM11.5 3c.7-.9 1.2-2.1 1.1-3.3-1 0-2.3.7-3 1.6-.7.8-1.3 2-1.1 3.2 1.1.1 2.3-.6 3-1.5z"
+          />
+        </svg>
+        {{ keeping ? 'Signing in…' : 'Sign in with Apple' }}
+      </button>
+    </section>
     <p v-if="keepMsg" class="msg" role="status">{{ keepMsg }}</p>
+    <p v-if="keepMsg && boards.keepError.value" class="why">{{ boards.keepError.value }}</p>
     <p v-if="friendMsg" class="msg" role="status">{{ friendMsg }}</p>
 
     <p v-if="!online" class="empty offline" role="status">{{ site.offline.league }}</p>
@@ -517,24 +531,81 @@ h1 {
   justify-content: flex-end;
 }
 .keep {
+  display: grid;
+  gap: 12px;
+  background: linear-gradient(160deg, #fff7d6 0%, var(--surface) 70%);
+  border: 2px solid var(--gold);
+  border-radius: 22px;
+  padding: 14px;
+  box-shadow: 0 4px 0 #e9b800;
+}
+.keep-top {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 10px 12px;
+  gap: 12px;
 }
-.keep span {
-  flex: 1;
+.keep-badge {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  filter: drop-shadow(0 2px 0 rgba(42, 21, 48, 0.25));
+}
+.keep-text {
   min-width: 0;
 }
-.keep b,
-.keep small {
-  display: block;
+.keep h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.1;
+  color: var(--plum);
 }
-.keep small {
+.keep p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--muted);
-  font-size: 12px;
+}
+/* Apple's own button style (black, Apple logo, system font), as their guidelines ask. */
+.apple {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 14px;
+  background: #000;
+  color: #fff;
+  font:
+    600 17px/1 -apple-system,
+    system-ui,
+    sans-serif;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+}
+.apple svg {
+  width: 17px;
+  height: 20px;
+  margin-top: -3px;
+}
+.apple:active {
+  transform: translateY(1px);
+}
+.apple:disabled {
+  opacity: 0.6;
+}
+.apple:focus-visible {
+  outline: 3px solid var(--magnet);
+  outline-offset: 2px;
+}
+.why {
+  margin: -6px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  word-break: break-word;
 }
 </style>

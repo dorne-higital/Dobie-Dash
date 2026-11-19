@@ -157,6 +157,13 @@ export const ICONS: Record<string, string> = {
   play: `<path d="M11 6.5l14.5 9.5L11 25.5z" fill="${PINK}"/>`,
   todo: `<circle cx="16" cy="16" r="10" fill="#fff" stroke="#c9bcd6" stroke-width="2.6"/>`,
   dot: `<circle cx="16" cy="16" r="4" fill="#c9bcd6" stroke="none"/>`,
+  // Keep your place (M6): a gold crest with a paw.
+  crest:
+    `<path d="M16 3l11 4v8c0 7-4.6 11.6-11 14C9.6 26.6 5 22 5 15V7z" fill="#ffd23f"/>` +
+    `<path d="M16 6.5l8 3v5.6c0 5-3.2 8.4-8 10.4-4.8-2-8-5.4-8-10.4V9.5z" fill="#ffe89a" stroke="none"/>` +
+    `<ellipse cx="16" cy="18.5" rx="3.6" ry="3" fill="#ff4fa0" stroke="none"/>` +
+    `<circle cx="11.6" cy="14" r="1.6" fill="#ff4fa0" stroke="none"/><circle cx="14.4" cy="11.6" r="1.6" fill="#ff4fa0" stroke="none"/>` +
+    `<circle cx="17.6" cy="11.6" r="1.6" fill="#ff4fa0" stroke="none"/><circle cx="20.4" cy="14" r="1.6" fill="#ff4fa0" stroke="none"/>`,
   // Power-ups (M6), in each power's own colour.
   zoomies: `<path d="M18 3L7 18h7l-2 11 13-16h-7.5z" fill="#ff4fa0"/><path d="M4 11h4M3 16h3M5 21h3" fill="none"/>`,
   magnet:

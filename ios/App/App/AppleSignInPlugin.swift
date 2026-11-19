@@ -16,6 +16,8 @@ public class AppleSignInPlugin: CAPPlugin, CAPBridgedPlugin, ASAuthorizationCont
     ]
 
     private var pending: CAPPluginCall?
+    // Held until Apple answers (the delegate is weak, so keep the controller alive).
+    private var controller: ASAuthorizationController?
 
     @objc func signIn(_ call: CAPPluginCall) {
         let nonce = call.getString("nonce")
@@ -27,6 +29,7 @@ public class AppleSignInPlugin: CAPPlugin, CAPBridgedPlugin, ASAuthorizationCont
             controller.delegate = self
             controller.presentationContextProvider = self
             self.pending = call
+            self.controller = controller
             controller.performRequests()
         }
     }
@@ -48,6 +51,7 @@ public class AppleSignInPlugin: CAPPlugin, CAPBridgedPlugin, ASAuthorizationCont
         }
         pending?.resolve(["identityToken": token, "user": credential.user])
         pending = nil
+        self.controller = nil
     }
 
     public func authorizationController(
@@ -55,7 +59,10 @@ public class AppleSignInPlugin: CAPPlugin, CAPBridgedPlugin, ASAuthorizationCont
         didCompleteWithError error: Error
     ) {
         let cancelled = (error as? ASAuthorizationError)?.code == .canceled
-        pending?.reject(cancelled ? "cancelled" : error.localizedDescription)
+        let code = (error as NSError).code
+        // The code tells us why (1000 unknown: usually the entitlement or iCloud sign-in).
+        pending?.reject(cancelled ? "cancelled" : "\(error.localizedDescription) (Apple code \(code))")
         pending = nil
+        self.controller = nil
     }
 }

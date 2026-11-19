@@ -247,9 +247,28 @@ export function useBoards() {
    * league and friends follow them to a new iPhone. If that Apple ID already has a
    * place (from another phone), switch to it instead.
    */
+  /** Why the last "Keep your place" failed (shown in small print, and sent to Crashlytics). */
+  const keepError = ref('')
+
   async function keepPlace(): Promise<'linked' | 'restored' | 'cancelled' | 'failed'> {
-    if (!Capacitor.isNativePlatform()) return 'failed'
-    if (!(await signIn())) return 'failed'
+    keepError.value = ''
+    const fail = (step: string, e: unknown) => {
+      const msg =
+        e instanceof Error
+          ? e.message
+          : typeof e === 'object' && e && 'message' in e
+            ? String(e.message)
+            : String(e)
+      keepError.value = `${step}: ${msg}`.slice(0, 160)
+      console.warn('[boards] keep your place', keepError.value)
+      useServices().crash.recordError(
+        e instanceof Error ? e : new Error(keepError.value),
+        'keep-place',
+      )
+      return 'failed' as const
+    }
+    if (!Capacitor.isNativePlatform()) return fail('setup', 'only on iPhone')
+    if (!(await signIn())) return fail('boards', 'could not sign in to the leaderboards')
     const raw = [...crypto.getRandomValues(new Uint8Array(16))]
       .map((b) => b.toString(16).padStart(2, '0'))
       .join('')
@@ -258,7 +277,8 @@ export function useBoards() {
       const { AppleSignIn } = await import('~/services/native/apple')
       token = (await AppleSignIn.signIn({ nonce: await sha256(raw) })).identityToken
     } catch (e) {
-      return String(e).includes('cancelled') ? 'cancelled' : 'failed'
+      if (String((e as Error)?.message ?? e).includes('cancelled')) return 'cancelled'
+      return fail('apple', e)
     }
     const auth = db().auth
     const { error } = await auth.linkIdentity({ provider: 'apple', token, nonce: raw })
@@ -269,19 +289,19 @@ export function useBoards() {
     // Already linked to another player (the one from their old phone): become that one.
     if (/already|exists|linked/i.test(error.message)) {
       const { error: e2 } = await auth.signInWithIdToken({ provider: 'apple', token, nonce: raw })
-      if (e2) return 'failed'
+      if (e2) return fail('restore', e2)
       linked.value = true
       await syncProfile()
       return 'restored'
     }
-    console.warn('[boards] link', error.message)
-    return 'failed'
+    return fail('link', error)
   }
 
   return {
     me,
     linked,
     keepPlace,
+    keepError,
     rivals,
     nameRejected,
     signIn,
