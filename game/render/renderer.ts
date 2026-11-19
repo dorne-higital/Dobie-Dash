@@ -56,6 +56,9 @@ interface Particle {
   r: number
   star?: boolean
   txt?: string
+  /** An expanding ring (Big Bark), growing from r; and a text size other than 16. */
+  ring?: boolean
+  size?: number
 }
 
 export interface FrameStats {
@@ -289,6 +292,53 @@ export class Renderer {
             txt: `+${run.cfg.scoring.smash}`,
           })
         break
+      case 'bark':
+        // Big Bark: rings rolling out from the dog and a big WOOF!
+        if (!this.reduceMotion) this.shake = 8
+        this.flash = 0.5
+        for (const [k, col] of [
+          [0, 'rgba(255,79,160,.9)'],
+          [0.12, 'rgba(255,210,63,.85)'],
+          [0.24, 'rgba(255,255,255,.8)'],
+        ] as const)
+          this.parts.push({
+            x: fx.x,
+            y: fx.y,
+            vx: 0,
+            vy: 0,
+            life: 0.6 - k,
+            max: 0.6,
+            col,
+            r: 10,
+            ring: true,
+          })
+        this.parts.push({
+          x: fx.x + 40,
+          y: fx.y - 30,
+          vx: 20,
+          vy: -40,
+          life: 1.1,
+          max: 1.1,
+          col: '#ffd23f',
+          r: 0,
+          txt: 'WOOF!',
+          size: 34,
+        })
+        break
+      case 'poof':
+        for (let i = 0; i < 7; i++)
+          this.parts.push({
+            x: fx.x + r(-10, 10),
+            y: fx.y + r(-10, 10),
+            vx: r(60, 260),
+            vy: r(-260, -60),
+            life: 0.6,
+            max: 0.6,
+            col: i % 2 ? '#ffffff' : '#ffd23f',
+            r: r(3, 6),
+            star: true,
+          })
+        break
       case 'crash':
         if (!this.reduceMotion) this.shake = 10
         break
@@ -362,7 +412,7 @@ export class Renderer {
     for (const p of this.parts) {
       p.x += p.vx * frameDt
       p.y += p.vy * frameDt
-      if (!p.txt) p.vy += 500 * frameDt
+      if (!p.txt && !p.ring) p.vy += 500 * frameDt
       p.life -= frameDt
     }
     this.parts = this.parts.filter((p) => p.life > 0)
@@ -506,7 +556,14 @@ export class Renderer {
     for (const p of this.parts) {
       c.globalAlpha = clamp(p.life / p.max, 0, 1)
       const y = GY + p.y
-      if (p.txt) text(c, p.txt, p.x, y, 16, p.col, { stroke: 'rgba(40,20,40,.7)', sw: 4 })
+      if (p.ring) {
+        c.strokeStyle = p.col
+        c.lineWidth = 6 * (p.life / p.max) + 1
+        c.beginPath()
+        c.arc(p.x, y, p.r + (1 - p.life / p.max) * 420, 0, Math.PI * 2)
+        c.stroke()
+      } else if (p.txt)
+        text(c, p.txt, p.x, y, p.size ?? 16, p.col, { stroke: 'rgba(40,20,40,.7)', sw: 4 })
       else if (p.star) sparkle(c, p.x, y, p.r * 1.4, p.col, t * 6)
       else dot(c, p.x, y, p.r, p.col)
     }

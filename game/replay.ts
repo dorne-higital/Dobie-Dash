@@ -11,7 +11,7 @@ export interface RunRecord {
   seed: number
   viewW: number
   /** Only the options that change the simulation. */
-  opts: Pick<RunOptions, 'holdToJump' | 'powerLevels' | 'coachFight'>
+  opts: Pick<RunOptions, 'holdToJump' | 'powerLevels' | 'coachFight' | 'bigBarks'>
   inputs: RunInput[]
   /** Updates the run took (ticks), to stop a replay that never ends. */
   ticks: number
@@ -25,6 +25,7 @@ export function recordOf(run: Run, viewW: number): RunRecord {
       holdToJump: run.opts.holdToJump,
       powerLevels: run.opts.powerLevels,
       coachFight: run.opts.coachFight,
+      bigBarks: run.opts.bigBarks,
     },
     inputs: run.inputs.map((i) => [i[0], i[1]]),
     ticks: run.ticks,
@@ -60,6 +61,7 @@ export class Replayer {
       else if (code === 'u') run.setHolding(false)
       else if (code === 'r') run.revive()
       else if (code === 'd') run.decline()
+      else if (code === 'b') run.bigBark()
       this.k++
     }
     run.update()

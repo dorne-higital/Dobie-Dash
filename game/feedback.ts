@@ -20,6 +20,8 @@ export type FeedbackCue =
   | 'splash'
   | 'revive'
   | 'button'
+  /** Big Bark (M7). */
+  | 'bark'
 
 export interface FeedbackPort {
   play(cue: FeedbackCue): void

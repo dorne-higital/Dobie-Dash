@@ -338,6 +338,8 @@ export interface GameConfig {
   endless: { perThousand: number; maxSpeed: number }
   chase: { window: number; enterSeconds: number; exitSeconds: number }
   fight: FightConfig
+  /** Big Bark (M7): how many saved Big Barks can be used in one run. */
+  bigBark: { perRun: number }
   spawner: SpawnerConfig
   /**
    * Biscuits to fill the power meter: `blocks` for the first power-up in a run, then

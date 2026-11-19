@@ -34,6 +34,8 @@ export interface AnalyticsEvents {
   mission_claim: { mission: string; day: number }
   /** Pup Pass engagement (M7). track: free | premium; tier is 1-based. */
   pass_claim: { tier: number; track: string; season: string }
+  /** Big Bark used in a run (M7). cleared: obstacles knocked away. */
+  big_bark: { run: number; cleared: number }
 }
 
 export type EventName = keyof AnalyticsEvents

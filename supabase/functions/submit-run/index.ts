@@ -9,7 +9,12 @@ import { admin, caller, cors, ensurePlayer, json } from '../_shared/http.ts'
 interface RunRecord {
   seed: number
   viewW: number
-  opts: { holdToJump?: boolean; coachFight?: boolean; powerLevels?: Record<string, number> }
+  opts: {
+    holdToJump?: boolean
+    coachFight?: boolean
+    powerLevels?: Record<string, number>
+    bigBarks?: number
+  }
   inputs: [number, string][]
   ticks: number
 }
@@ -40,7 +45,8 @@ function valid(r: RunRecord | undefined): r is RunRecord {
     Array.isArray(r.inputs) &&
     r.inputs.length < 40000 &&
     r.inputs.every(
-      (i) => Array.isArray(i) && Number.isInteger(i[0]) && ['p', 'h', 'u', 'r', 'd'].includes(i[1]),
+      (i) =>
+        Array.isArray(i) && Number.isInteger(i[0]) && ['p', 'h', 'u', 'r', 'd', 'b'].includes(i[1]),
     )
   )
 }
@@ -78,6 +84,8 @@ Deno.serve(async (req) => {
       holdToJump: !!body.record.opts?.holdToJump,
       coachFight: !!body.record.opts?.coachFight,
       powerLevels: body.record.opts?.powerLevels ?? {},
+      // Big Barks: never more than the per-run limit, whatever the app claims.
+      bigBarks: Math.max(0, Math.min(cfg.bigBark.perRun, Number(body.record.opts?.bigBarks) || 0)),
     },
   }
   const run = replay(cfg, rec, rec.ticks + 600)

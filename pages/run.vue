@@ -65,6 +65,16 @@ const online = useOnline()
 /** A normal run that counts (not a test world, test power or the bot). */
 const counts = startWorld === undefined && !startPower && !bot
 const showFps = import.meta.dev || 'fps' in route.query || settings.showFps
+/** Big Barks usable this run (saved ones, up to the per-run limit). `?bark` gives one to test. */
+const barksLeft = ref(0)
+function barksForRun() {
+  if (tutorial) return 0
+  if (counts) return player.bigBarks
+  return 'bark' in route.query ? 1 : 0
+}
+function bigBark() {
+  engine?.bigBark()
+}
 
 let engine: Engine | null = null
 /** This run's number for the player (1 = their first ever run). */
@@ -88,6 +98,7 @@ const HAPTIC: Partial<Record<FeedbackCue, HapticKind>> = {
   world: 'success',
   escape: 'success',
   revive: 'success',
+  bark: 'crash',
 }
 
 const feedback: FeedbackPort = {
@@ -106,6 +117,9 @@ function start() {
   result.value = null
   newBest.value = false
   phase.value = 'running'
+  const barks = barksForRun()
+  engine?.setBigBarks(barks)
+  barksLeft.value = Math.min(barks, config.game().bigBark.perRun)
   engine?.start(daily && dailySeed !== null ? dailySeed : undefined)
   // Only the first run from ?tutorial is a tutorial; "Play again" is a normal run.
   engine?.setTutorial(false)
@@ -277,6 +291,12 @@ onMounted(async () => {
     if (bot) botTimer = setTimeout(start, 1500)
   })
   engine.on('biscuit', (b) => (runBiscuits.value = b.count))
+  engine.on('bark', (b) => {
+    barksLeft.value = b.left
+    // Used up from the save (test runs don't spend real ones).
+    if (counts) player.bigBarks = Math.max(0, player.bigBarks - 1)
+    if (counts) analytics.track('big_bark', { run: runNumber(), cleared: b.cleared })
+  })
   // Boss fights: coach the first one, and count how fights go.
   engine.on('fight', (f) => {
     if (f.coach) {
@@ -363,6 +383,7 @@ onBeforeUnmount(() => {
     <canvas ref="canvas" class="game" aria-label="Dobie Dash. Tap anywhere to jump." />
     <RunCoach v-if="coach && phase === 'running'" v-bind="coach" />
     <RunPauseButton v-if="phase === 'running'" @pause="pause" />
+    <RunBarkButton v-if="phase === 'running' && barksLeft > 0" :left="barksLeft" @bark="bigBark" />
     <RunPauseSheet
       v-if="phase === 'paused'"
       v-bind="pauseInfo"

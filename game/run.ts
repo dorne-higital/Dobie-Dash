@@ -109,6 +109,8 @@ export interface RunEvents {
   power: PowerEvent
   /** Tutorial: a new step started, the player bumped into something, or it's done. */
   tutorial: { step: TutorialStep | 'done'; oops: boolean }
+  /** A Big Bark cleared the screen; `left` more can be used this run. */
+  bark: { cleared: number; left: number }
   /** Crashed with continues left: offer "Keep running?" at this biscuit price. */
   continue: { price: number; index: number; countdown: number }
   /** A gate chase started (active) or ended (escaped, or caught when the run crashed). */
@@ -132,8 +134,10 @@ export type Fx =
   | { type: 'jump' | 'double' | 'land' | 'crash' | 'splash' | 'revive' | 'skid' }
   | { type: 'eat'; x: number; y: number; gold: boolean }
   | { type: 'smash' | 'pop' | 'nearMiss' | 'stomp'; x: number; y: number }
+  /** Big Bark: the shockwave from the dog, and each obstacle it knocks away (no points). */
+  | { type: 'bark' | 'poof'; x: number; y: number }
 
-export type InputCode = 'p' | 'h' | 'u' | 'r' | 'd'
+export type InputCode = 'p' | 'h' | 'u' | 'r' | 'd' | 'b'
 export type RunInput = [tick: number, code: InputCode]
 
 /** 'offer': crashed, waiting for the player to keep running (revive) or not (decline). */
@@ -156,6 +160,8 @@ export interface RunOptions {
   coachFight?: boolean
   /** Bot only: stomp tired bosses (default true; false proves dodging alone survives). */
   botStomps?: boolean
+  /** Big Barks the player has saved (M7); at most cfg.bigBark.perRun can be used. */
+  bigBarks?: number
 }
 
 export type FightPhase =
@@ -332,11 +338,41 @@ export class Run {
     this.holding = on
   }
 
+  /** Big Barks used this run. */
+  barksUsed = 0
+
+  /** Big Barks still usable this run (saved ones, up to the per-run limit). */
+  get barksLeft() {
+    return Math.max(0, Math.min(this.opts.bigBarks ?? 0, this.cfg.bigBark.perRun) - this.barksUsed)
+  }
+
+  /**
+   * Big Bark: knocks away every obstacle on screen. Only while running, and only as many
+   * times as barksLeft allows. Recorded, so replays and the boards' checks match.
+   */
+  bigBark(): boolean {
+    if (this.state !== 'running' || this.barksLeft <= 0) return false
+    this.record('b')
+    this.barksUsed++
+    let cleared = 0
+    for (const o of this.obstacles)
+      if (!o.dead && o.wx - this.dist < this.viewW + 20) {
+        this.knock(o)
+        cleared++
+        const y = -(o.def.fly ?? 0) - o.def.h / 2
+        this.fx.push({ type: 'poof', x: o.wx - this.dist + o.def.w / 2, y })
+      }
+    this.fx.push({ type: 'bark', x: this.cfg.view.dogX + 20, y: this.dog.y - 40 })
+    this.emit('bark', { cleared, left: this.barksLeft })
+    return true
+  }
+
   /** Updates so far, in every state (the clock that inputs are recorded against). */
   ticks = 0
   /**
    * Everything the player did, as [tick, code]: p press, h/u hold on/off, r revive,
-   * d decline. With the seed and options this replays the run exactly (game/replay.ts).
+   * d decline, b Big Bark. With the seed and options this replays the run exactly
+   * (game/replay.ts).
    */
   readonly inputs: RunInput[] = []
 

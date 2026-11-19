@@ -36,6 +36,8 @@ export interface EngineOptions {
   powerLevels?: PowerLevels
   /** Coach the player's first boss fight. */
   coachFight?: boolean
+  /** Big Barks the player has saved (M7). */
+  bigBarks?: number
   /** Bot plays (dev: `?bot`). */
   autoplay?: boolean
   invincible?: boolean
@@ -65,6 +67,7 @@ const FX_CUE: Partial<Record<Fx['type'], FeedbackCue>> = {
   revive: 'revive',
   nearMiss: 'nearMiss',
   stomp: 'smash',
+  bark: 'bark',
 }
 
 const POWER_BANNER: Record<PowerKind, [string, string]> = {
@@ -145,6 +148,7 @@ export class Engine {
       holdToJump: this.opts.holdToJump,
       powerLevels: this.opts.powerLevels,
       coachFight: this.opts.coachFight,
+      bigBarks: this.opts.tutorial ? 0 : this.opts.bigBarks,
     })
     if (this.opts.startPower) activate(this.run.power, this.opts.startPower, this.cfg)
     const g = this.rivals.ghost
@@ -206,6 +210,19 @@ export class Engine {
   /** Whether the next start() is a tutorial run. */
   setTutorial(on: boolean) {
     this.opts.tutorial = on
+  }
+
+  /** Big Barks saved for the next start() (the save's count can change between runs). */
+  setBigBarks(n: number) {
+    this.opts.bigBarks = n
+  }
+
+  /** Big Bark button: clears the screen. False if none are left or the run isn't on. */
+  bigBark() {
+    if (this.paused || !this.run) return false
+    const ok = this.run.bigBark()
+    if (ok) this.drain(this.run)
+    return ok
   }
 
   /** "Keep running?" accepted (ad watched or biscuits spent). */

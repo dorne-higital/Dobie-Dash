@@ -124,16 +124,17 @@ describe('progress and claiming', () => {
     expect(s.missions.daily[0]!.p).toBe(2000)
   })
 
-  it('the weekly goal pays its item and bones', () => {
+  it('the weekly goal pays its item, bones and a Big Bark', () => {
     const s = defaultSave()
     const now = at(2026, 11, 18)
     refresh(s, now)
     s.missions.weekly = [{ id: 'km10', p: 0, claimed: false }]
     recordMissions(s, run({ metres: 6000 }), now)
     recordMissions(s, run({ metres: 4500 }), now)
-    expect(claim(s, 'km10')).toEqual({ item: 'neck:bowtie', bones: 10 })
+    expect(claim(s, 'km10')).toEqual({ item: 'neck:bowtie', bones: 10, bigBark: 1 })
     expect(s.owned).toContain('neck:bowtie')
     expect(s.wallet.bones).toBe(10)
+    expect(s.bigBarks).toBe(1)
   })
 
   it('the daily chest opens once, after all three missions are claimed', () => {

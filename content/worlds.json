@@ -743,5 +743,9 @@
       },
       "tip": "Tip: when a boss gets tired, jump on its head. Three hits knocks it out."
     }
+  },
+  "bigBark": {
+    "_": "Big Bark (M7): saved up from missions and the Pup Pass; at most perRun used in a run. Clears every obstacle on screen.",
+    "perRun": 1
   }
 }

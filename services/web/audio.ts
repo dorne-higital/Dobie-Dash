@@ -189,6 +189,13 @@ export function createWebAudio(): AudioService {
       }
       noise(o, t, 0.4, { freq: 120, q: 0.5, vol: 0.4, type: 'lowpass' })
     },
+    bark: (t, o) => {
+      // Big Bark: one huge, deep WOOF and a whoosh.
+      tone(o, t, 240, 0.32, { f1: 110, vol: 0.45, type: 'sawtooth', attack: 0.01 })
+      tone(o, t, 120, 0.4, { f1: 60, vol: 0.4, type: 'sine' })
+      noise(o, t, 0.25, { freq: 800, q: 2.5, vol: 0.3 })
+      noise(o, t + 0.05, 0.6, { freq: 400, f1: 3000, q: 1, vol: 0.2 })
+    },
     nearMiss: (t, o) => noise(o, t, 0.3, { freq: 600, f1: 3500, q: 4, vol: 0.18 }),
     world: (t, o) => {
       ;[523, 659, 784, 1047].forEach((f, i) => tone(o, t + i * 0.09, f, 0.22, { vol: 0.14 }))
