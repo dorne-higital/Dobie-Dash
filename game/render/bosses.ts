@@ -244,10 +244,59 @@ function avalanche(c: Ctx, t: number) {
   c.stroke()
 }
 
+/** Building Site: a wrecking ball on a little crane truck, swinging at Dobie. */
+function wreckingBall(c: Ctx, t: number) {
+  const spin = t * 28
+  const swing = Math.sin(t * Math.PI * 2 * 2) * 0.35
+  // Truck.
+  rr(c, 4, -36, 70, 24, 6)
+  c.fillStyle = '#ffc61a'
+  c.fill()
+  rr(c, 46, -58, 26, 24, 5)
+  c.fill()
+  c.fillStyle = '#9fd4f5'
+  rr(c, 52, -54, 15, 12, 3)
+  c.fill()
+  c.fillStyle = '#1d1b28'
+  for (let k = 8; k < 44; k += 12) c.fillRect(k, -26, 6, 4)
+  wheel(c, 20, -10, 10, spin)
+  wheel(c, 60, -10, 10, spin)
+  // Boom and ball.
+  c.strokeStyle = '#e8a800'
+  c.lineWidth = 6
+  c.lineCap = 'round'
+  c.beginPath()
+  c.moveTo(30, -36)
+  c.lineTo(96, -96)
+  c.stroke()
+  const bx = 96 + Math.sin(swing) * 52
+  const by = -96 + Math.cos(swing) * 52
+  c.strokeStyle = '#3a3f4b'
+  c.lineWidth = 2
+  c.beginPath()
+  c.moveTo(96, -96)
+  c.lineTo(bx, by)
+  c.stroke()
+  dot(c, bx, by + 8, 18, '#3a3f4b')
+  dot(c, bx - 6, by + 2, 5, 'rgba(255,255,255,.25)')
+  // Angry brows on the ball.
+  c.strokeStyle = '#ffc61a'
+  c.lineWidth = 2.5
+  c.beginPath()
+  c.moveTo(bx - 9, by + 2)
+  c.lineTo(bx - 2, by + 6)
+  c.moveTo(bx + 11, by + 2)
+  c.lineTo(bx + 4, by + 6)
+  c.stroke()
+  dot(c, bx - 4, by + 10, 2, '#ffc61a')
+  dot(c, bx + 6, by + 10, 2, '#ffc61a')
+}
+
 export function drawBoss(c: Ctx, kind: BossKind, t: number) {
   if (kind === 'mower') mower(c, t)
   else if (kind === 'van') van(c, t)
   else if (kind === 'kingCrab') kingCrab(c, t)
   else if (kind === 'avalanche') avalanche(c, t)
+  else if (kind === 'wreckingBall') wreckingBall(c, t)
   else foxPack(c, t)
 }

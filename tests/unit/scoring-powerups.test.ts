@@ -64,7 +64,7 @@ describe('worlds', () => {
     // At least to Midnight Run in 6 minutes, in order, each at its target.
     expect(seen.length).toBeGreaterThanOrEqual(3)
     expect(seen).toEqual(c.worlds.slice(1, seen.length + 1).map((w) => w.name))
-    c.worlds.slice(1).forEach((w, i) => expect(at[i]).toBeGreaterThanOrEqual(w.at))
+    c.worlds.slice(1, seen.length + 1).forEach((w, i) => expect(at[i]).toBeGreaterThanOrEqual(w.at))
     // At Midnight Run's speed, or above it once past the last gate (the endless ramp).
     expect(run.speed).toBeGreaterThanOrEqual(c.worlds[3]!.speed)
     expect(run.speed).toBeCloseTo(run.targetSpeed(), 0)

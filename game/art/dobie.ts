@@ -405,7 +405,7 @@ export interface Accessories {
   bandana?: boolean
   eyes?: 'specs' | 'shades'
   shades?: boolean
-  hat?: 'party' | 'beanie' | 'crown' | 'bobble'
+  hat?: 'party' | 'beanie' | 'crown' | 'bobble' | 'hardhat'
   crown?: boolean
   cape?: boolean
   back?: 'cape'
@@ -742,6 +742,22 @@ export function head(
     c.fill()
     dot(c, 0, -26, 6, '#fff8ee')
     dot(c, -2, -28, 2.2, '#ffffff')
+  }
+  if (acc.hat === 'hardhat') {
+    // Building Site reward: a yellow hard hat with a ridge and brim.
+    c.fillStyle = '#ffc61a'
+    c.beginPath()
+    c.arc(0, -10, 15, Math.PI, Math.PI * 2)
+    c.closePath()
+    c.fill()
+    c.fillStyle = '#e8a800'
+    rr(c, -19, -12, 38, 5, 2.5)
+    c.fill()
+    rr(c, -2.5, -25, 5, 14, 2)
+    c.fill()
+    c.fillStyle = 'rgba(255,255,255,.45)'
+    rr(c, -10, -21, 5, 7, 2)
+    c.fill()
   }
   if (acc.crown || acc.hat === 'crown') {
     c.fillStyle = '#ffc61a'

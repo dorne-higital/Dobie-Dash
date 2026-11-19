@@ -12,6 +12,7 @@ import type {
   ObstacleType,
   PatternType,
   PlatformsDef,
+  BeltsTwist,
   TutorialStep,
   WavesTwist,
   WorldDef,
@@ -218,8 +219,11 @@ export interface SpawnBatch {
   /** Absolute step numbers of the taps that clear this batch (used by bots and tests). */
   plan: PlannedTaps | null
   pattern: PatternType | 'breather' | 'wave' | 'ledge' | 'ice'
-  /** World-x span of a wave (Sunny Beach twist). */
-  wave?: { wx0: number; wx1: number; slow: number }
+  /**
+   * A speed zone: a wave (Sunny Beach, slows you) or a conveyor belt (Building Site, `belt`,
+   * speeds you up or slows you down). `slow` is the speed multiplier inside it.
+   */
+  wave?: { wx0: number; wx1: number; slow: number; belt?: boolean }
   /** An ice patch (Snowy Peaks twist): world-x span and how slippery jumps from it are. */
   ice?: IcePatch
   /** A ledge to run along: world-x span, height of its top and the world's look. */
@@ -346,6 +350,16 @@ export class Spawner {
       }
     }
 
+    if (!tut && tw?.kind === 'belts') {
+      if (this.waveWorld !== s.world.id) {
+        this.waveWorld = s.world.id
+        this.nextWave = s.time + this.rng.range(tw.every[0], tw.every[1])
+      } else if (s.time >= this.nextWave) {
+        this.nextWave = s.time + this.rng.range(tw.every[0], tw.every[1])
+        return this.makeBelt(tw, s)
+      }
+    }
+
     if (!tut && tw?.kind === 'ice') {
       if (this.iceWorld !== s.world.id) {
         this.iceWorld = s.world.id
@@ -387,9 +401,14 @@ export class Spawner {
       if (!plan) return null
       // The pattern may reach the dog at another speed: the one this world is ramping
       // to, or the next world's if the score target is close. It must clear at those too.
-      // A wave just behind it may still be easing the speed back up.
-      const slowed = tw?.kind === 'waves' ? s.speed * tw.slow : undefined
-      for (const v of [s.world.speed, s.nextSpeed, slowed])
+      // A wave or belt just behind it may still be easing the speed back.
+      const zone =
+        tw?.kind === 'waves'
+          ? [s.speed * tw.slow]
+          : tw?.kind === 'belts'
+            ? [s.speed * tw.slow, s.speed * tw.fast]
+            : []
+      for (const v of [s.world.speed, s.nextSpeed, ...zone])
         if (v && v !== s.speed && !findClearPlan(pat, this.cfg, { speed: v, ready: 0, ...ice }))
           return null
       return plan
@@ -543,7 +562,10 @@ export class Spawner {
     const wx0 = this.nextAt + pf.leadIn * s.speed
     const wx1 = wx0 + this.rng.range(pf.seconds[0], pf.seconds[1]) * s.speed
     const hb = this.cfg.dog.hitbox
-    const fastest = Math.max(s.speed, s.nextSpeed ?? 0) + this.maxExtraSpeed()
+    // A fast conveyor belt could carry the dog off the ledge quicker.
+    const tw = s.world.twist
+    const zone = tw?.kind === 'belts' ? tw.fast : 1
+    const fastest = Math.max(s.speed, s.nextSpeed ?? 0) * zone + this.maxExtraSpeed()
     const air = maxAirTime(pf.height, this.cfg.physics, 1 / this.cfg.loop.hz)
     const clearTo = wx1 + (hb.x1 - hb.x0) + fastest * (air + LEDGE_LANDING_SECONDS)
     this.ledge = { wx0, wx1, clearTo }
@@ -572,6 +594,25 @@ export class Spawner {
     let m = 0
     for (const d of Object.values(this.cfg.obstacles)) m = Math.max(m, d.extraSpeed ?? 0)
     return m
+  }
+
+  /** A conveyor belt: clear running at a faster or slower speed, with a line of biscuits. */
+  private makeBelt(tw: BeltsTwist, s: SpawnerState): SpawnBatch {
+    const mul = this.rng.chance(tw.fastChance) ? tw.fast : tw.slow
+    const wx0 = this.nextAt + tw.leadIn * s.speed
+    const wx1 = wx0 + tw.seconds * s.speed * mul
+    const b = this.cfg.spawner.biscuits
+    const biscuits: SpawnedBiscuit[] = []
+    for (let x = wx0 + 40; x < wx1 - 30; x += b.breatherSpacing)
+      biscuits.push({ wx: x, y: b.lowY, gold: false })
+    this.nextAt = wx1 + tw.after * s.speed
+    return {
+      obstacles: [],
+      biscuits,
+      plan: null,
+      pattern: 'wave',
+      wave: { wx0, wx1, slow: mul, belt: true },
+    }
   }
 
   /** A wave: clear water to run through (slowly), with a low line of biscuits. */

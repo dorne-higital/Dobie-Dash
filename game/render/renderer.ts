@@ -17,6 +17,7 @@ import {
   drawIce,
   drawLedges,
   drawWaves,
+  drawBelts,
   type Darkness,
   type IceSprites,
   type LedgeSprites,
@@ -379,7 +380,10 @@ export class Renderer {
       }
     }
 
-    if (run.waves.length) drawWaves(c, this.waveSprites, run.waves, dist, GY, W, t)
+    if (run.waves.length) {
+      drawWaves(c, this.waveSprites, run.waves, dist, GY, W, t)
+      drawBelts(c, run.waves, dist, GY, W, t)
+    }
     if (run.ledges.length) drawLedges(c, this.ledge, run.ledges, dist, GY, W)
     if (run.ice.length) drawIce(c, this.iceSprites, run.ice, dist, GY, W)
 

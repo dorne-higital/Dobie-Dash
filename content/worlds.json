@@ -210,6 +210,18 @@
       "h": 30,
       "inset": 5,
       "extraSpeed": 90
+    },
+    "mixer": {
+      "w": 46,
+      "h": 40,
+      "inset": 5
+    },
+    "girder": {
+      "w": 56,
+      "h": 14,
+      "inset": 3,
+      "fly": 96,
+      "extraSpeed": 40
     }
   },
   "worlds": [
@@ -401,7 +413,7 @@
         "minion": "snowball",
         "minionWeight": 2.5
       },
-      "gate": 17500,
+      "gate": null,
       "platforms": null,
       "about": {
         "colour": "#8fb8e8",
@@ -409,17 +421,54 @@
         "twist": "Ice patches: jumps from ice are lower",
         "boss": "An avalanche"
       }
+    },
+    {
+      "id": "building-site",
+      "name": "Building Site",
+      "at": 17500,
+      "speed": 445,
+      "gap": [0.95, 1.5],
+      "enabled": true,
+      "theme": "site",
+      "obstacles": {
+        "mixer": 1,
+        "cone": 0.6,
+        "girder": 0.8
+      },
+      "patterns": {
+        "single": 3,
+        "pair": 1.5,
+        "flier": 1,
+        "triple": 0.6
+      },
+      "twist": {
+        "kind": "belts",
+        "every": [6, 10],
+        "seconds": 1.4,
+        "fast": 1.3,
+        "slow": 0.75,
+        "fastChance": 0.5,
+        "ease": 0.35,
+        "leadIn": 0.35,
+        "after": 0.9
+      },
+      "chase": {
+        "boss": "wreckingBall",
+        "name": "The wrecking ball",
+        "minion": "cone",
+        "minionWeight": 2
+      },
+      "gate": 24000,
+      "platforms": null,
+      "about": {
+        "colour": "#f2a93b",
+        "obstacles": "Cement mixers, swinging girders",
+        "twist": "Conveyor belts speed you up or slow you down",
+        "boss": "A wrecking ball"
+      }
     }
   ],
   "comingSoon": [
-    {
-      "name": "Building Site",
-      "at": 17500,
-      "colour": "#f2a516",
-      "obstacles": "Cement mixers, swinging girders",
-      "twist": "Conveyor belts speed you up or slow you down",
-      "boss": "The wrecking ball"
-    },
     {
       "name": "Haunted Hollow",
       "at": 24000,

@@ -141,6 +141,17 @@
       }
     },
     {
+      "id": "hat:hardhat",
+      "slot": "hat",
+      "name": "Hard Hat",
+      "unlock": {
+        "world": 5
+      },
+      "art": {
+        "hat": "hardhat"
+      }
+    },
+    {
       "id": "back:cape",
       "slot": "back",
       "name": "Super Cape",
@@ -244,6 +255,11 @@
       "id": "sticker:avalanche",
       "boss": "avalanche",
       "name": "The Avalanche"
+    },
+    {
+      "id": "sticker:wreckingBall",
+      "boss": "wreckingBall",
+      "name": "The Wrecking Ball"
     }
   ]
 }

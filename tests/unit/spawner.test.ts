@@ -202,7 +202,9 @@ describe('world twists', () => {
     const cfg = loadGameConfig()
     for (const [i, w] of cfg.worlds.entries()) {
       const batches = spawnFor(cfg, 4, i, 120)
-      const waves = batches.filter((s) => s.batch.wave).map((s) => s.batch.wave!)
+      const waves = batches
+        .filter((s) => s.batch.wave && !s.batch.wave.belt)
+        .map((s) => s.batch.wave!)
       if (w.twist?.kind !== 'waves') {
         expect(waves, w.name).toEqual([])
         continue
@@ -391,6 +393,53 @@ describe('Snowy Peaks ice', () => {
       }
       expect({ seed, state: run.state }).toEqual({ seed, state: 'running' })
       if (seed <= 2) expect(iceJumps).toBeGreaterThan(0)
+    }
+  }, 60_000)
+})
+
+describe('Building Site belts', () => {
+  const siteIndex = () => loadGameConfig().worlds.findIndex((w) => w.twist?.kind === 'belts')
+
+  it('places fast and slow belts in Building Site only, with nothing on them', () => {
+    const cfg = loadGameConfig()
+    for (const [wi, w] of cfg.worlds.entries()) {
+      const batches = spawnFor(cfg, 4, wi, 180)
+      const belts = batches.filter((b) => b.batch.wave?.belt).map((b) => b.batch.wave!)
+      if (w.twist?.kind !== 'belts') {
+        expect(belts, w.name).toEqual([])
+        continue
+      }
+      expect(new Set(belts.map((b) => b.slow))).toEqual(new Set([w.twist.fast, w.twist.slow]))
+      const obstacles = batches.flatMap((s) => s.batch.obstacles)
+      for (const b of belts)
+        for (const o of obstacles) {
+          const end = o.wx + cfg.obstacles[o.type].w
+          expect(end < b.wx0 || o.wx > b.wx1).toBe(true)
+        }
+    }
+  })
+
+  it('a fast belt speeds the run up and a slow one slows it, then it eases back', () => {
+    const cfg = noPowers()
+    const tw = cfg.worlds[siteIndex()]!.twist
+    if (tw?.kind !== 'belts') throw new Error('Building Site should have belts')
+    const seen = new Set<number>()
+    const run = new Run(cfg, 3, W, { autoplay: true, startWorld: siteIndex() })
+    for (let i = 0; i < 90 * 60 && run.state === 'running'; i++) {
+      run.update()
+      seen.add(Math.round(run.waveMul * 100))
+    }
+    expect(Math.max(...seen)).toBe(Math.round(tw.fast * 100))
+    expect(Math.min(...seen)).toBe(Math.round(tw.slow * 100))
+    expect(seen.has(100)).toBe(true)
+  })
+
+  it('a planned-tap bot survives Building Site', () => {
+    const cfg = noPowers()
+    for (let seed = 1; seed <= 8; seed++) {
+      const run = new Run(cfg, seed, W, { autoplay: true, startWorld: siteIndex() })
+      for (let i = 0; i < 120 * 60 && run.state === 'running'; i++) run.update()
+      expect({ seed, state: run.state }).toEqual({ seed, state: 'running' })
     }
   }, 60_000)
 })

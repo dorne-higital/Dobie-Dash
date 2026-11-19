@@ -158,6 +158,10 @@ export function drawObstacle(c: Ctx, type: ObstacleType, x: number, y: number, t
     c.fillStyle = '#ffc61a'
     c.fillRect(x + 2, y - 16, 3, 16)
     tri(c, [x - 3, y - 18], [x + 10, y - 18], [x + 3.5, y - 26], '#ff7a1a')
+  } else if (type === 'mixer') {
+    mixer(c, x, y, t)
+  } else if (type === 'girder') {
+    girder(c, x, y, t)
   } else if (type === 'snowman') {
     snowman(c, x, y)
   } else if (type === 'snowball') {
@@ -350,6 +354,68 @@ function snowball(c: Ctx, x: number, y: number, t: number) {
   ell(c, x + 19, y - 9, 9, 5, 0.2, 'rgba(160,190,225,.35)')
 }
 
+/** Building Site: a cement mixer with a turning drum (46 × 40). */
+function mixer(c: Ctx, x: number, y: number, t: number) {
+  ell(c, x + 23, y - 1, 21, 3, 0, 'rgba(0,0,0,.18)')
+  c.fillStyle = '#5a6272'
+  c.fillRect(x + 6, y - 14, 34, 4)
+  dot(c, x + 12, y - 6, 6, '#2a1e22')
+  dot(c, x + 12, y - 6, 2.5, '#9aa3b8')
+  dot(c, x + 36, y - 6, 6, '#2a1e22')
+  dot(c, x + 36, y - 6, 2.5, '#9aa3b8')
+  c.save()
+  c.translate(x + 24, y - 26)
+  c.rotate(-0.35)
+  rr(c, -17, -12, 34, 24, 10)
+  c.fillStyle = '#ff7a1a'
+  c.fill()
+  // Stripes turning on the drum.
+  c.save()
+  c.beginPath()
+  rr(c, -17, -12, 34, 24, 10)
+  c.clip()
+  c.fillStyle = '#d95a00'
+  const off = ((t * 30) % 12) - 12
+  for (let k = off; k < 40; k += 12) c.fillRect(-17 + k, -12, 5, 24)
+  c.restore()
+  ell(c, 17, 0, 4, 8, 0, '#3a2f2a')
+  c.restore()
+  c.fillStyle = 'rgba(255,255,255,.3)'
+  rr(c, x + 12, y - 36, 12, 3, 1.5)
+  c.fill()
+}
+
+/** Building Site: a steel girder swinging on a crane cable (56 × 14), flies at head height. */
+function girder(c: Ctx, x: number, y: number, t: number) {
+  const sway = Math.sin(t * 3) * 3
+  c.strokeStyle = '#3a3f4b'
+  c.lineWidth = 1.5
+  c.beginPath()
+  c.moveTo(x + 28 + sway, y - 200)
+  c.lineTo(x + 28, y - 18)
+  c.moveTo(x + 28, y - 18)
+  c.lineTo(x + 8, y - 14)
+  c.moveTo(x + 28, y - 18)
+  c.lineTo(x + 48, y - 14)
+  c.stroke()
+  dot(c, x + 28, y - 18, 2.5, '#ffc61a')
+  c.fillStyle = '#e5484d'
+  c.fillRect(x, y - 14, 56, 3)
+  c.fillRect(x, y - 3, 56, 3)
+  c.fillStyle = '#c93a3f'
+  c.fillRect(x, y - 11, 56, 8)
+  c.fillStyle = '#e5484d'
+  for (let k = 4; k < 56; k += 10) {
+    c.beginPath()
+    c.moveTo(x + k, y - 11)
+    c.lineTo(x + k + 5, y - 3)
+    c.lineTo(x + k + 8, y - 3)
+    c.lineTo(x + k + 3, y - 11)
+    c.fill()
+  }
+  for (const bx of [3, 53]) dot(c, x + bx, y - 7, 1.4, '#1d1b28')
+}
+
 /** Animation loop length (seconds) per obstacle; 0 means static. */
 export const OBSTACLE_ANIM: Record<ObstacleType, { period: number; frames: number }> = {
   hydrant: { period: 0, frames: 1 },
@@ -368,6 +434,8 @@ export const OBSTACLE_ANIM: Record<ObstacleType, { period: number; frames: numbe
   parcel: { period: 0, frames: 1 },
   snowman: { period: 0, frames: 1 },
   snowball: { period: (Math.PI * 2) / 6, frames: 8 },
+  mixer: { period: 0.4, frames: 6 },
+  girder: { period: (Math.PI * 2) / 3, frames: 8 },
 }
 
 export function bone(c: Ctx, x: number, y: number, s: number, fill: string, edge: string) {

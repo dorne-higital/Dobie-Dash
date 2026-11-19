@@ -22,10 +22,12 @@ export const OBSTACLE_TYPES = [
   'parcel',
   'snowman',
   'snowball',
+  'mixer',
+  'girder',
 ] as const
 export type ObstacleType = (typeof OBSTACLE_TYPES)[number]
 export type PatternType = 'single' | 'pair' | 'triple' | 'flier'
-export type ThemeKind = 'park' | 'city' | 'beach' | 'night' | 'snow'
+export type ThemeKind = 'park' | 'city' | 'beach' | 'night' | 'snow' | 'site'
 export type PowerKind = 'zoomies' | 'magnet' | 'shield'
 
 export interface Box {
@@ -85,7 +87,30 @@ export interface IceTwist {
   leadIn: number
 }
 
-export type TwistDef = WavesTwist | LampsTwist | IceTwist
+/**
+ * Conveyor belts on the path (Building Site): running on one speeds you up (`fast`) or
+ * slows you down (`slow`), eased in and out. Like waves, nothing spawns on a belt, and
+ * patterns after one must clear at both belt speeds.
+ */
+export interface BeltsTwist {
+  kind: 'belts'
+  /** Seconds between belts (random in range). */
+  every: [number, number]
+  /** Time spent on a belt at its speed. */
+  seconds: number
+  /** Speed multipliers for the two kinds of belt. */
+  fast: number
+  slow: number
+  /** Chance a belt is a fast one. */
+  fastChance: number
+  /** Seconds to ease into and out of the belt's speed. */
+  ease: number
+  /** Clear running (seconds at world speed) before and after a belt. */
+  leadIn: number
+  after: number
+}
+
+export type TwistDef = WavesTwist | LampsTwist | IceTwist | BeltsTwist
 
 /**
  * Ledges (rooftops of low buildings) to run along: an optional higher path, never needed.
@@ -103,7 +128,7 @@ export interface PlatformsDef {
   leadIn: number
 }
 
-export type BossKind = 'mower' | 'van' | 'kingCrab' | 'foxPack' | 'avalanche'
+export type BossKind = 'mower' | 'van' | 'kingCrab' | 'foxPack' | 'avalanche' | 'wreckingBall'
 
 /** Gate chase: in the last `chase.window` points before the target, a boss chases you. */
 export interface ChaseDef {

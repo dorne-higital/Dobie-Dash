@@ -151,13 +151,16 @@ export class Run {
   obstacles: Obstacle[] = []
   biscuits: Biscuit[] = []
   /** Waves on the path (world x); in one, the speed eases down to `slow`. */
-  waves: { wx0: number; wx1: number; slow: number }[] = []
+  /** Speed zones: waves (Sunny Beach) and conveyor belts (Building Site, `belt`). */
+  waves: { wx0: number; wx1: number; slow: number; belt?: boolean }[] = []
   /** Rooftop ledges in play (City Streets, Midnight Run). */
   ledges: Ledge[] = []
   /** Ice patches in play (Snowy Peaks). */
   ice: IcePatch[] = []
   /** Current wave speed multiplier (1 out of the water). */
   waveMul = 1
+  /** The multiplier waveMul is easing toward (1 outside a zone). */
+  private zoneWant = 1
   private inWave = false
   private lastSlow = 1
   power: PowerState = newPowerState()
@@ -320,15 +323,17 @@ export class Run {
       this.speed += Math.sign(d) * Math.min(Math.abs(d), rate * dt)
     }
 
-    // Waves: ease the speed down while the dog is in the water, back up after.
+    // Waves and belts: ease the speed to the zone's multiplier while the dog is in it, back
+    // to normal after. The ease takes `ease` seconds whichever way it goes.
     const dogWX = this.dist + this.cfg.view.dogX
     const wave = this.waves.find((w) => dogWX >= w.wx0 && dogWX <= w.wx1)
     const twist = this.world.twist
-    const ease = twist?.kind === 'waves' ? twist.ease : 0.35
+    const ease = twist?.kind === 'waves' || twist?.kind === 'belts' ? twist.ease : 0.35
     const want = wave ? wave.slow : 1
-    const step = (dt / ease) * (1 - (wave?.slow ?? this.lastSlow))
+    this.zoneWant = want
+    const step = (dt / ease) * Math.abs(1 - (wave?.slow ?? this.lastSlow))
     this.waveMul += Math.sign(want - this.waveMul) * Math.min(Math.abs(want - this.waveMul), step)
-    if (wave && !this.inWave) this.fx.push({ type: 'splash' })
+    if (wave && !this.inWave && !wave.belt) this.fx.push({ type: 'splash' })
     if (wave) this.lastSlow = wave.slow
     this.inWave = !!wave
     if (this.waves.length && this.waves[0]!.wx1 < this.dist - 200) this.waves.shift()
@@ -583,7 +588,10 @@ export class Run {
   private autoplay() {
     // Taps planned at one speed go stale while a world change ramps the speed: replan.
     if (this.dog.grounded && this.scrollSpeed !== this.tapSpeed) this.taps.clear()
-    if (this.taps.size === 0 && this.dog.grounded) {
+    // Leaving a wave or belt, the speed is still easing: plans made now would be for a
+    // speed that's about to change, so wait until it settles (a player waits a beat too).
+    const easing = this.waveMul !== this.zoneWant
+    if (this.taps.size === 0 && this.dog.grounded && !easing) {
       this.tapSpeed = this.scrollSpeed
       const dogX = this.cfg.view.dogX
       const hb = this.cfg.dog.hitbox

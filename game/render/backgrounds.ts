@@ -60,6 +60,16 @@ export const THEMES: Record<ThemeKind, ThemeColors> = {
     dirt: '#e2ebf7',
     dirt2: '#c8d7ea',
   },
+  site: {
+    sky: ['#7cc0ee', '#b4dcf5', '#fde9c4'],
+    sun: '#fff3c4',
+    far: '#9fb2c6',
+    far2: '#c7b49a',
+    mid: '#f2a93b',
+    ground: '#c99a5b',
+    dirt: '#b5844a',
+    dirt2: '#8f6535',
+  },
   night: {
     sky: ['#0b1233', '#1c2460', '#3a3584'],
     sun: '#f4f1d6',
@@ -226,6 +236,81 @@ const LAYERS: Record<ThemeKind, LayerDef[]> = {
     },
   ],
   city: [buildingsFar, buildingsNear(false), lamps(false)],
+  site: [
+    buildingsFar,
+    {
+      // Tower cranes against the sky.
+      factor: 0.25,
+      spacing: 280,
+      top: () => -250,
+      bottom: () => 0,
+      item: (c, x, i, f, T) => {
+        if (hash(i) < 0.25) return
+        const h = 190 + hash(i + 1) * 50
+        const cx = x + 90
+        c.strokeStyle = T.mid
+        c.lineWidth = 2
+        c.fillStyle = T.mid
+        c.fillRect(cx - 5, f.GY - h, 10, h)
+        for (let y = f.GY - h + 8; y < f.GY; y += 14) {
+          c.beginPath()
+          c.moveTo(cx - 5, y)
+          c.lineTo(cx + 5, y + 7)
+          c.stroke()
+        }
+        c.fillRect(cx - 60, f.GY - h - 6, 170, 6)
+        c.fillRect(cx - 60, f.GY - h - 4, 22, 14)
+        c.fillStyle = '#5a6272'
+        c.fillRect(cx - 4, f.GY - h - 18, 8, 12)
+        c.strokeStyle = '#3a3f4b'
+        c.lineWidth = 1
+        const hx = cx + 40 + hash(i + 2) * 60
+        c.beginPath()
+        c.moveTo(hx, f.GY - h)
+        c.lineTo(hx, f.GY - h + 40 + hash(i + 3) * 40)
+        c.stroke()
+      },
+    },
+    {
+      // Half-built frames: grey columns and floors.
+      factor: 0.45,
+      spacing: 170,
+      top: () => -140,
+      bottom: () => 0,
+      item: (c, x, i, f) => {
+        if (hash(i) < 0.3) return
+        const floors = 2 + Math.floor(hash(i + 1) * 4)
+        const w = 110
+        c.fillStyle = '#a7adb8'
+        for (let k = 0; k <= floors; k++) c.fillRect(x + 20, f.GY - k * 28 - 4, w, 4)
+        for (let col = 0; col <= 3; col++)
+          c.fillRect(x + 20 + col * (w / 3) - 2, f.GY - floors * 28, 5, floors * 28)
+      },
+    },
+    {
+      // Blue hoardings with warning stripes.
+      factor: 0.7,
+      spacing: 96,
+      top: () => -40,
+      bottom: () => 0,
+      item: (c, x, i, f) => {
+        c.fillStyle = '#2f6fb3'
+        c.fillRect(x, f.GY - 36, 96, 36)
+        c.fillStyle = '#ffc61a'
+        c.fillRect(x, f.GY - 36, 96, 5)
+        c.fillStyle = '#1d1b28'
+        for (let k = 0; k < 96; k += 12) c.fillRect(x + k, f.GY - 36, 5, 5)
+        c.fillStyle = 'rgba(0,0,0,.18)'
+        c.fillRect(x + 94, f.GY - 31, 2, 31)
+        if (hash(i) > 0.6) {
+          c.fillStyle = '#ffffff'
+          c.fillRect(x + 30, f.GY - 26, 36, 14)
+          c.fillStyle = '#e5484d'
+          c.fillRect(x + 33, f.GY - 21, 30, 4)
+        }
+      },
+    },
+  ],
   snow: [
     {
       // Far peaks with snowy tops.
@@ -380,6 +465,7 @@ const GROUND_LAYERS: Record<ThemeKind, LayerDef[]> = {
   ],
   city: roadMarks(false),
   night: roadMarks(true),
+  site: [pebbles],
   snow: [
     {
       // Snow lumps and blue shadows on the path.

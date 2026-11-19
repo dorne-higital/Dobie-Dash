@@ -4,7 +4,7 @@
  */
 import type { LampsTwist } from '../config'
 import { LAMP_SPACING, LAMP_X, stripPeriod } from './backgrounds'
-import { dot, ell, makeCanvas, TAU, type Ctx } from './draw'
+import { dot, ell, makeCanvas, rr, TAU, type Ctx } from './draw'
 
 // ---- waves -----------------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ export function bakeWaves(scale: number): WaveSprites {
 export function drawWaves(
   c: Ctx,
   ws: WaveSprites,
-  waves: { wx0: number; wx1: number }[],
+  waves: { wx0: number; wx1: number; belt?: boolean }[],
   dist: number,
   GY: number,
   W: number,
@@ -65,6 +65,7 @@ export function drawWaves(
   const h = TOP + BOTTOM
   const y = GY - TOP + Math.sin(t * 3) * 1.5
   for (const w of waves) {
+    if (w.belt) continue
     const x0 = w.wx0 - dist
     const x1 = w.wx1 - dist
     if (x1 < -CAP_W || x0 > W + CAP_W) continue
@@ -293,5 +294,56 @@ export function drawIce(
     c.scale(-1, 1)
     c.drawImage(sp.cap, 0, 0, ICE_CAP, ICE_H)
     c.restore()
+  }
+}
+
+// ---- conveyor belts (Building Site) -----------------------------------------------------
+
+const BELT_H = 12
+const BELT_TOP = 6
+
+/** A conveyor belt on the path: rollers, a dark belt and chevrons showing which way it pulls. */
+export function drawBelts(
+  c: Ctx,
+  belts: { wx0: number; wx1: number; slow: number; belt?: boolean }[],
+  dist: number,
+  GY: number,
+  W: number,
+  t: number,
+) {
+  for (const b of belts) {
+    if (!b.belt) continue
+    const x0 = b.wx0 - dist
+    const x1 = b.wx1 - dist
+    if (x1 < -10 || x0 > W + 10) continue
+    const y = GY - BELT_TOP
+    c.fillStyle = '#5a6272'
+    rr(c, x0 - 6, y, x1 - x0 + 12, BELT_H, 6)
+    c.fill()
+    c.fillStyle = '#2f343f'
+    c.fillRect(x0, y + 2, x1 - x0, BELT_H - 4)
+    const fast = b.slow > 1
+    const col = fast ? '#2fd0c0' : '#ff7a1a'
+    // Chevrons slide the way the belt carries you (faster belts move forward on screen).
+    const phase = (((t * (fast ? 60 : -40)) % 24) + 24) % 24
+    c.fillStyle = col
+    const s0 = Math.max(x0, -24)
+    const s1 = Math.min(x1, W + 24)
+    for (let x = s0 - ((s0 - x0) % 24) + phase - 24; x < s1 - 8; x += 24) {
+      if (x < x0) continue
+      c.beginPath()
+      if (fast) {
+        c.moveTo(x, y + 3)
+        c.lineTo(x + 6, y + 6)
+        c.lineTo(x, y + 9)
+      } else {
+        c.moveTo(x + 6, y + 3)
+        c.lineTo(x, y + 6)
+        c.lineTo(x + 6, y + 9)
+      }
+      c.lineTo(x + 3, y + 6)
+      c.fill()
+    }
+    for (const rx of [x0, x1]) dot(c, rx, y + BELT_H / 2, 5, '#9aa3b8')
   }
 }
