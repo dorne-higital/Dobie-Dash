@@ -4,7 +4,13 @@ import withNuxt from './.nuxt/eslint.config.mjs'
 
 export default withNuxt(
   {
-    ignores: ['.output/**', '.nuxt/**', 'public/**', 'ios/**'],
+    ignores: [
+      '.output/**',
+      '.nuxt/**',
+      'public/**',
+      'ios/**',
+      'supabase/functions/_shared/game.js',
+    ],
   },
   {
     rules: {

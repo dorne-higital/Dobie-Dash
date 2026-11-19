@@ -536,7 +536,9 @@ export class Spawner {
     // Earlier worlds' obstacles stay in the mix, fading by carryOver per world back.
     const last = s.worldsSoFar.length - 1
     for (const [i, w] of s.worldsSoFar.entries()) {
-      const scale = Math.pow(this.cfg.spawner.carryOver, last - i)
+      // Repeated multiplication, not Math.pow: identical on every JS engine (replays).
+      let scale = 1
+      for (let k = i; k < last; k++) scale *= this.cfg.spawner.carryOver
       if (!scale) continue
       for (const [k, v] of Object.entries(w.obstacles) as [ObstacleType, number][]) {
         if (ground && this.cfg.obstacles[k].fly) continue
@@ -586,7 +588,8 @@ export class Spawner {
       const half = Math.floor(b.arcCount / 2)
       for (let i = -half; i <= half; i++) {
         const dx = i * b.spacing
-        const h = Math.max(0, b.arcHeight * (1 - Math.pow(dx / b.arcHalfWidth, 2)))
+        const q = dx / b.arcHalfWidth
+        const h = Math.max(0, b.arcHeight * (1 - q * q))
         out.push({ wx: mid + dx, y: -h - b.arcLift, gold: golden && i === 0 })
       }
     } else if (r < b.arcChance + b.lowLineChance) {
@@ -728,7 +731,11 @@ export class Spawner {
     const b = this.cfg.spawner.biscuits
     const out: SpawnedBiscuit[] = []
     for (let x = 40; x < len - 40; x += b.breatherSpacing) {
-      const wave = (Math.sin((x / len) * Math.PI * 4) + 1) / 2
+      // Two smooth humps along the breather (smoothstep, not Math.sin: replays must match
+      // on every JS engine).
+      const p = ((x / len) * 2) % 1
+      const tri = p < 0.5 ? p * 2 : 2 - p * 2
+      const wave = tri * tri * (3 - 2 * tri)
       out.push({ wx: start + x, y: b.lowY - wave * 70, gold: false })
     }
     return out

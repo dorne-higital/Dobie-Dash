@@ -54,6 +54,10 @@ const startWorld = Number(route.query.world) > 1 ? Number(route.query.world) - 1
 const startPower = (POWER_KINDS as readonly string[]).includes(String(route.query.power))
   ? (String(route.query.power) as PowerKind)
   : undefined
+// Daily Dash: today's shared course (its seed from the server), on the Daily Dash board.
+const daily = 'daily' in route.query
+let dailySeed: number | null = null
+const boards = useBoards()
 /** A normal run that counts (not a test world, test power or the bot). */
 const counts = startWorld === undefined && !startPower && !bot
 const showFps = import.meta.dev || 'fps' in route.query || settings.showFps
@@ -98,7 +102,7 @@ function start() {
   result.value = null
   newBest.value = false
   phase.value = 'running'
-  engine?.start()
+  engine?.start(daily && dailySeed !== null ? dailySeed : undefined)
   // Only the first run from ?tutorial is a tutorial; "Play again" is a normal run.
   engine?.setTutorial(false)
   analytics.track('run_start', { run: runNumber(), world: startWorld ?? 0 })
@@ -203,6 +207,7 @@ onMounted(async () => {
     /* fall back to system fonts */
   }
   if (!canvas.value) return
+  if (daily) dailySeed = (await boards.dailyToday())?.seed ?? null
   engine = new Engine(canvas.value, config.game(), {
     best: player.best,
     feedback,
@@ -226,6 +231,10 @@ onMounted(async () => {
     fightTip.value = r.fightTip ? config.game().fight.coach.tip : null
     if (startWorld === undefined && !startPower) {
       const got = player.recordRun(r)
+      // Off to the boards to be checked (queued if offline).
+      const rec = engine?.record()
+      if (rec && counts && r.score > 0)
+        void boards.submit(rec, r.score, daily && dailySeed !== null ? 'daily' : 'normal')
       newBest.value = got.newBest
       earned.value = [
         ...got.unlocked.map((id) =>

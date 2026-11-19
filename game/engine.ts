@@ -5,6 +5,7 @@
  */
 import type { GameConfig, PowerKind, PowerLevels } from './config'
 import { activate } from './powerups'
+import { recordOf, type RunRecord } from './replay'
 import type { Accessories, Dog } from './art/dobie'
 import { Emitter } from './events'
 import type { TrailKind } from './render/trails'
@@ -106,6 +107,17 @@ export class Engine {
 
   on<K extends keyof RunEvents>(type: K, fn: (d: RunEvents[K]) => void) {
     return this.events.on(type, fn)
+  }
+
+  /**
+   * This run's record for the boards (seed, view width, options, every input), or null
+   * for runs that don't count there (tutorial, bot, test worlds and powers).
+   */
+  record(): RunRecord | null {
+    const r = this.run
+    const o = this.opts
+    if (!r || o.tutorial || o.autoplay || o.startWorld !== undefined || o.startPower) return null
+    return recordOf(r, this.renderer.view.W)
   }
 
   /** Starts a fresh run (every run starts in Bark Park). */

@@ -28,3 +28,32 @@ export function lookFor(d: DogSave | null, w: Wardrobe, tryOn?: string | null): 
   }
   return { dog: dogArt(d), acc, trail }
 }
+
+/** Another player's dog from the boards (breed, coat, ears, tail, eyes, hat, collar). */
+export function lookFromBoard(dog: Record<string, unknown> | null | undefined): Look {
+  const d = dog ?? {}
+  const str = (k: string) => (typeof d[k] === 'string' ? (d[k] as string) : undefined)
+  const save: DogSave = {
+    ...dobie(),
+    name: '',
+    ...(str('breed') ? { breed: str('breed')! } : {}),
+    ...(typeof d.coat === 'number' ? { coat: d.coat } : {}),
+    ...(str('ears') ? { ears: str('ears') as DogSave['ears'] } : {}),
+    ...(str('tail') ? { tail: str('tail') as DogSave['tail'] } : {}),
+    ...(str('eyes') ? { eyes: str('eyes') as DogSave['eyes'] } : {}),
+  }
+  const w = {
+    wallet: { biscuits: 0, bones: 0 },
+    owned: [],
+    player: { name: '', best: 0, bestWorld: 0 },
+    equipped: {
+      collar: str('collar') ?? null,
+      hat: str('hat') ?? null,
+      eyes: null,
+      neck: null,
+      back: null,
+      trail: null,
+    },
+  }
+  return lookFor(save, w)
+}

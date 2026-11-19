@@ -586,7 +586,8 @@ export class Run {
       if (mag) {
         const dx = mx - sx
         const dy = my - b.y
-        const d = Math.hypot(dx, dy)
+        // sqrt, not Math.hypot: exactly the same on every JS engine (replays).
+        const d = Math.sqrt(dx * dx + dy * dy)
         if (d < mag.radius && d > 1) {
           const k = Math.min(1, (mag.pullSpeed * dt) / d)
           b.wx += dx * k
@@ -594,7 +595,9 @@ export class Run {
           sx = b.wx - this.dist
         }
       }
-      if (Math.hypot(mx - sx, my - b.y) < reach) {
+      const ex = mx - sx
+      const ey = my - b.y
+      if (ex * ex + ey * ey < reach * reach) {
         this.biscuitsEaten++
         const pe = eatBiscuit(this.power, b.gold, this.spawner.rng, this.cfg)
         this.fx.push({ type: 'eat', x: sx, y: b.y, gold: b.gold })
@@ -852,7 +855,10 @@ export class Run {
     const f = this.fight
     if (!f) return
     const F = this.cfg.fight
-    const ease = (k: number) => 1 - Math.pow(1 - Math.min(1, k), 3)
+    const ease = (k: number) => {
+      const r = 1 - Math.min(1, k)
+      return 1 - r * r * r
+    }
     f.t += dt
     switch (f.phase) {
       case 'enter':

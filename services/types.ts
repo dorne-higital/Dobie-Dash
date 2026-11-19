@@ -53,7 +53,7 @@ export interface IapService {
   restore(): Promise<string[] | null>
 }
 
-export type AdPlacement = 'continue' | 'doubleBiscuits' | 'freeChest'
+export type AdPlacement = 'continue' | 'doubleBiscuits' | 'freeChest' | 'dailyDash'
 export interface AdsService {
   /** Apple's App Tracking Transparency prompt (once, just before the first ad). */
   requestTracking(): Promise<void>

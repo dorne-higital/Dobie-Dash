@@ -76,5 +76,9 @@ export default defineNuxtConfig({
     server: { allowedHosts: true },
   },
 
-  typescript: { strict: true },
+  typescript: {
+    strict: true,
+    // The Edge Functions are Deno code, checked by Supabase when they deploy.
+    tsConfig: { exclude: ['../supabase/functions/**/*'] },
+  },
 })
