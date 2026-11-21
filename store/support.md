@@ -1,6 +1,7 @@
 # Dobie Dash support page
 
-For danhorne.co.uk/dobie-dash/support (the App Store support URL).
+For danhorne.co.uk/dobie-dash/support (the App Store support URL) and the in-app Help page.
+`npm run legal` builds both from this file (the part below the line).
 
 ---
 

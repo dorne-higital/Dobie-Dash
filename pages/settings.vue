@@ -65,14 +65,14 @@ function restore() {
         >
         <span aria-hidden="true">›</span>
       </a>
-      <a :href="site.links.support" target="_blank" rel="noopener" class="row">
+      <NuxtLink to="/support" class="row">
         <span><b>Help and support</b></span>
         <span aria-hidden="true">›</span>
-      </a>
-      <a :href="site.links.privacy" target="_blank" rel="noopener" class="row">
+      </NuxtLink>
+      <NuxtLink to="/privacy" class="row">
         <span><b>Privacy policy</b></span>
         <span aria-hidden="true">›</span>
-      </a>
+      </NuxtLink>
     </div>
     <div v-if="devTools" class="group">
       <UiToggle

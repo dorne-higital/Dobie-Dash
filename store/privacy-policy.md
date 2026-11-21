@@ -1,6 +1,7 @@
 # Dobie Dash privacy policy
 
-For danhorne.co.uk/dobie-dash/privacy. Paste into a new page in the site's CMS.
+For danhorne.co.uk/dobie-dash/privacy and the in-app Privacy page. `npm run legal` builds both from
+this file (the part below the line).
 
 ---
 
