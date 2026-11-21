@@ -13,7 +13,7 @@ IN-APP PURCHASES
 All are in Wardrobe → Shop. Remove Ads, Starter Pack, biscuit and Golden Bone packs
 (consumable), Gold Collar, Pup Pass Season 1, Party Pack (three outfits), Every Breed and
 single breeds (each breed can also be unlocked with 80 Golden Bones earned in play).
-Restore Purchases is at the top of the Shop.
+Restore purchases is at the bottom of the Shop.
 
 LEADERBOARDS
 Leagues, the Daily Dash and Weekend Cups (League tab) run on our own server. Players join
