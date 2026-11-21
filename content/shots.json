@@ -513,5 +513,18 @@
       "tier": 2,
       "size": 30
     }
-  ]
+  ],
+  "preview": {
+    "_": "Dev only: the scripted App Store preview (/preview). Seconds of each part.",
+    "runSeconds": 7,
+    "afterKnockout": 1.5,
+    "wardrobeSeconds": 5,
+    "endSeconds": 4,
+    "power": "magnet",
+    "wardrobeTaps": ["hat:crown", "hat:tophat", "neck:sparklebow"],
+    "end": {
+      "title": "Dobie Dash",
+      "sub": "Free on the App Store"
+    }
+  }
 }

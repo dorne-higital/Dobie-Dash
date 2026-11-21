@@ -6,6 +6,7 @@
  * Tap an item to try it on. Owned items equip at once; anything else shows a buy bar
  * with its price, or how to unlock it.
  */
+import shots from '~/content/shots.json'
 import { loadGameConfig } from '~/game/config'
 import { itemsFor, item, type ItemDef } from '~/logic/items'
 import { lookFor } from '~/logic/look'
@@ -24,6 +25,15 @@ const SLOTS: Record<string, Slot[]> = {
 
 const route = useRoute()
 const player = usePlayerStore()
+
+// Preview video mode (dev tools, M8): try a few outfits on, then the end card.
+if (useRuntimeConfig().public.devTools && route.query.shot === 'preview') {
+  onMounted(() => {
+    const P = shots.preview
+    P.wardrobeTaps.forEach((id, i) => setTimeout(() => player.equip(id), 900 + i * 1100))
+    setTimeout(() => void navigateTo('/preview/end'), P.wardrobeSeconds * 1000)
+  })
+}
 const tab = computed(() => String(route.params.tab ?? 'dog'))
 const items = computed(() => itemsFor(SLOTS[tab.value] ?? []))
 /** Outfits, Trails, Collars: the fixed layout with a scrolling item grid. */

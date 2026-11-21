@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import shots from '~/content/shots.json'
 /**
  * Mounts the canvas engine full screen. Vue only listens to engine events and shows the
  * pause sheet and results card on top.
@@ -149,10 +150,33 @@ function presentLines(n: number): string[] {
 /** Screenshot mode: skip ahead to the moment, let it play a beat, then freeze the frame. */
 function stageShot() {
   if (!engine) return
+  if (shot === 'preview') return stagePreview()
   if (shot === 'zoomies') engine.warp((r) => r.time > 1.2)
   else if (shot === 'boss')
     engine.warp((r) => r.fight?.phase === 'attack' && r.fight.t > 0.35, 60 * 120)
   setTimeout(() => engine?.pause(), 1400)
+}
+
+/**
+ * Preview video mode (dev tools): the bot runs with a power-up for a few seconds (near
+ * misses happen on their own), skips ahead to the first boss fight, knocks it out, then
+ * goes to the Wardrobe and the end card. Timings in content/shots.json `preview`.
+ */
+function stagePreview() {
+  const P = shots.preview
+  let run: Parameters<Parameters<NonNullable<typeof engine>['warp']>[0]>[0] | null = null
+  setTimeout(() => {
+    engine?.warp((r) => {
+      run = r
+      return r.fight?.phase === 'enter'
+    }, 60 * 180)
+    const wait = setInterval(() => {
+      if (run && (!run.fight || run.fight.phase === 'beaten')) {
+        clearInterval(wait)
+        setTimeout(() => void navigateTo('/closet/outfits?shot=preview'), P.afterKnockout * 1000)
+      }
+    }, 200)
+  }, P.runSeconds * 1000)
 }
 
 function start() {
