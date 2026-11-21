@@ -65,6 +65,14 @@ function restore() {
         >
         <span aria-hidden="true">›</span>
       </a>
+      <a :href="site.links.support" target="_blank" rel="noopener" class="row">
+        <span><b>Help and support</b></span>
+        <span aria-hidden="true">›</span>
+      </a>
+      <a :href="site.links.privacy" target="_blank" rel="noopener" class="row">
+        <span><b>Privacy policy</b></span>
+        <span aria-hidden="true">›</span>
+      </a>
     </div>
     <div v-if="devTools" class="group">
       <UiToggle
