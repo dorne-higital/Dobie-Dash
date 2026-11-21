@@ -25,6 +25,8 @@ export interface RemoteOverrides {
   pass?: { start?: string; weeks?: number }
   /** Seasonal events by id (M7): move the dates (UTC, end exclusive) or switch one off. */
   events?: Record<string, { start?: string; end?: string; off?: boolean }>
+  /** Players with a score needed before the League table shows (M8); 0 opens it now. */
+  leagueMinPlayers?: number
 }
 
 /** The parts of the /content files that overrides write into (mutated in place). */
@@ -44,6 +46,8 @@ export interface ContentFiles {
   pass?: { start: string; weeks: number }
   /** content/events.json (optional, like pass). */
   events?: { events: { id: string; start: string; end: string; off?: boolean }[] }
+  /** content/supabase.json (optional, like pass). */
+  boards?: { leagueOpen: { minPlayers: number } }
 }
 
 const isDate = (v: unknown): v is string =>
@@ -152,6 +156,12 @@ function writeOverrides(f: ContentFiles, o: RemoteOverrides): string[] {
   if (o.starterAfterRuns !== undefined) {
     if (isInt(o.starterAfterRuns, 0, 1000)) f.store.starterOffer.afterRuns = o.starterAfterRuns
     else bad.push('starterAfterRuns')
+  }
+  if (o.leagueMinPlayers !== undefined) {
+    if (!f.boards) bad.push('leagueMinPlayers: not loaded')
+    else if (isInt(o.leagueMinPlayers, 0, 100_000))
+      f.boards.leagueOpen.minPlayers = o.leagueMinPlayers
+    else bad.push('leagueMinPlayers')
   }
   if (o.pass) {
     if (!f.pass) bad.push('pass: not loaded')

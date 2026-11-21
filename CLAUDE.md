@@ -156,6 +156,10 @@ No local Xcode: iOS builds run on Codemagic (`codemagic.yaml`, steps in `ios/REA
   (aspect-fill splash). Change `content/loader.json` and all three together.
 - **Privacy**: anything new that collects data needs `ios/App/App/PrivacyInfo.xcprivacy`,
   `store/app-privacy.md` and `store/privacy-policy.md` updated together.
+- **League opening**: until `leagueOpen.minPlayers` (content/supabase.json, Remote Config
+  `leagueMinPlayers`) players have a checked score (`players.best > 0`, counted by
+  `useBoards.playerCount`), the League tab shows a "Leagues open soon" card. Scores and
+  league membership are saved as normal underneath; the count only grows, so it never closes.
 - **Pup Pass start**: the build ships with a placeholder start (2099); the real one is set
   in Remote Config (`overrides` → `pass.start`) on release day.
 - Small commits; lint, tests and `nuxi generate` must pass after each step.

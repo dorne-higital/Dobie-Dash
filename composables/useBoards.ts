@@ -173,6 +173,18 @@ export function useBoards() {
   const myRank = async (kind: 'all' | 'week') =>
     (await rpc<{ rank: number; score: number; total: number }>('my_rank', { kind }))[0] ?? null
   const league = () => rpc<BoardRow>('my_league')
+  /**
+   * Players with a checked score (best > 0). Only ever goes up, so once the leagues open
+   * they stay open. Null when it can't be read (offline).
+   */
+  async function playerCount(): Promise<number | null> {
+    if (!(await signIn())) return null
+    const { count, error } = await db()
+      .from('players')
+      .select('id', { count: 'exact', head: true })
+      .gt('best', 0)
+    return error ? null : count
+  }
   const friends = () => rpc<BoardRow>('friends_board')
   const daily = () => rpc<BoardRow>('daily_board')
 
@@ -342,6 +354,7 @@ export function useBoards() {
     board,
     myRank,
     league,
+    playerCount,
     friends,
     daily,
     dailyToday,

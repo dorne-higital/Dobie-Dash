@@ -21,6 +21,13 @@ both. For the Pup Pass parts, first set Remote Config `overrides` →
 - [ ] Collection: four rings, the boss stickers (the ones you have in colour), item pictures.
 - [ ] Friend code at the bottom on every tab; Copy copies it.
 
+## League
+
+- [ ] League → League: "Leagues open soon" with a bar (e.g. 3 / 20 dogs) while fewer than
+      20 players have a score. World, Friends and Daily Dash still show their tables.
+- [ ] Remote Config `overrides` → `"leagueMinPlayers": 0`, restart the app: the league table
+      shows, with your score already in it. Set it back afterwards (or remove it).
+
 ## Wardrobe
 
 - [ ] Trails: every trail has an icon (Bone Prints, Sparkles, Music Notes, Autumn Leaves…).

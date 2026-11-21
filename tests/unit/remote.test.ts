@@ -3,6 +3,7 @@ import items from '~/content/items.json'
 import store from '~/content/store.json'
 import worlds from '~/content/worlds.json'
 import passFile from '~/content/pass-s1.json'
+import sbFile from '~/content/supabase.json'
 import { loadGameConfig } from '~/game/config'
 import { BREED_PRICING, item } from '~/logic/items'
 import { applyOverrides, type ContentFiles } from '~/logic/remote'
@@ -114,5 +115,25 @@ describe('remote config: Pup Pass dates', () => {
     expect(applyOverrides(f, { pass: { start: 'soon' } })).toEqual(['pass'])
     expect(applyOverrides(f, { pass: { weeks: 0 } })).toEqual(['pass'])
     expect(f.pass.start).toBe(start)
+  })
+})
+
+describe('remote config: when the leagues open', () => {
+  const withBoards = () =>
+    ({ ...files(), boards: structuredClone(sbFile) }) as unknown as ContentFiles & {
+      boards: { leagueOpen: { minPlayers: number } }
+    }
+  it('changes the player minimum, and 0 opens the leagues now', () => {
+    const f = withBoards()
+    expect(applyOverrides(f, { leagueMinPlayers: 50 })).toEqual([])
+    expect(f.boards.leagueOpen.minPlayers).toBe(50)
+    expect(applyOverrides(f, { leagueMinPlayers: 0 })).toEqual([])
+    expect(f.boards.leagueOpen.minPlayers).toBe(0)
+  })
+  it('refuses a bad number, changing nothing', () => {
+    const f = withBoards()
+    expect(applyOverrides(f, { leagueMinPlayers: -1 })).toEqual(['leagueMinPlayers'])
+    expect(applyOverrides(f, { leagueMinPlayers: 2.5 })).toEqual(['leagueMinPlayers'])
+    expect(f.boards.leagueOpen.minPlayers).toBe(sbFile.leagueOpen.minPlayers)
   })
 })

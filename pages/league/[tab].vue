@@ -45,6 +45,22 @@ const cupUsed = ref(0)
 // Dev tools (M8): `?shot=league` shows the demo board from content/shots.json.
 const demoBoard = useRuntimeConfig().public.devTools && route.query.shot === 'league'
 
+/**
+ * Leagues need enough players to be fun: until `leagueOpen.minPlayers` have a score, the
+ * League tab shows a "coming soon" card. Runs, scores and leagues are saved as normal, so
+ * the table appears complete the moment the count is reached. Unknown count: show the table.
+ */
+const players = ref<number | null>(null)
+const leagueMin = computed(() => sb.leagueOpen.minPlayers)
+const leagueSoon = computed(
+  () =>
+    tab.value === 'league' &&
+    !demoBoard &&
+    players.value !== null &&
+    players.value < leagueMin.value,
+)
+const myLeagueScore = computed(() => rows.value.find((r) => r.me)?.score ?? 0)
+
 async function load() {
   if (demoBoard) {
     rows.value = shots.league as BoardRow[]
@@ -63,8 +79,11 @@ async function load() {
     rows.value = r
     mine.value = m
   } else if (tab.value === 'friends') rows.value = await boards.friends()
-  else if (tab.value === 'league') rows.value = await boards.league()
-  else {
+  else if (tab.value === 'league') {
+    const [r, n] = await Promise.all([boards.league(), boards.playerCount()])
+    rows.value = r
+    players.value = n
+  } else {
     const [d, c] = await Promise.all([boards.dailyToday(), boards.cupNow()])
     dailySeed.value = d?.seed ?? null
     cupInfo.value = c ? { friday: c.friday, seed: c.seed, name: c.name, ends: c.ends } : null
@@ -245,7 +264,7 @@ const faceLook = (r: BoardRow) => (r.me ? look.value : lookFromBoard(r.dog))
       </button>
     </div>
 
-    <div v-if="tab === 'league'" class="head">
+    <div v-if="tab === 'league' && !leagueSoon" class="head">
       <b>{{ tierName }} League</b>
       <small>Top {{ moves }} go up, bottom {{ moves }} go down · ends in {{ endsIn }}</small>
     </div>
@@ -339,7 +358,26 @@ const faceLook = (r: BoardRow) => (r.me ? look.value : lookFromBoard(r.dog))
     <p v-if="keepMsg && boards.keepError.value" class="why">{{ boards.keepError.value }}</p>
     <p v-if="friendMsg" class="msg" role="status">{{ friendMsg }}</p>
 
-    <p v-if="!online" class="empty offline" role="status">{{ site.offline.league }}</p>
+    <div v-if="online && !loading && !failed && leagueSoon" class="soon" role="status">
+      <UiIcon name="crest" class="crest" />
+      <b>Leagues open soon</b>
+      <p>
+        Weekly leagues start when {{ leagueMin }} dogs are on the boards. Tell a friend to join
+        sooner!
+      </p>
+      <div class="bar" aria-hidden="true">
+        <i :style="{ width: `${Math.min(100, ((players ?? 0) / leagueMin) * 100)}%` }" />
+      </div>
+      <small>{{ players }} / {{ leagueMin }} dogs so far</small>
+      <p class="kept">
+        Your runs already count.
+        <template v-if="myLeagueScore"
+          >Your best this week is {{ myLeagueScore.toLocaleString() }},
+        </template>
+        and your league is ready the moment it opens.
+      </p>
+    </div>
+    <p v-else-if="!online" class="empty offline" role="status">{{ site.offline.league }}</p>
     <p v-else-if="loading" class="empty">Loading…</p>
     <div v-else-if="failed" class="empty">
       <p>Couldn't reach the leaderboards.</p>
@@ -741,5 +779,49 @@ h1 {
 .cupnext :deep(.ui-icon) {
   width: 16px;
   height: 16px;
+}
+.soon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  background: var(--surface);
+  border: 2px dashed var(--line);
+  border-radius: 20px;
+  padding: 22px 18px;
+}
+.soon .crest {
+  font-size: 54px;
+}
+.soon b {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 26px;
+}
+.soon p {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+.soon .bar {
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+.soon .bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--pink);
+}
+.soon small {
+  font-weight: 900;
+}
+.soon .kept {
+  color: var(--fg);
+  font-size: 14px;
 }
 </style>
