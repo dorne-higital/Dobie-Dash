@@ -1,0 +1,13 @@
+{
+  "_": "Profile page (M8): the title under your dog's name comes from the furthest world you've reached (index = world). The league name is added from content/supabase.json tiers.",
+  "titles": [
+    "Park Pup",
+    "City Slicker",
+    "Beach Bum",
+    "Night Owl",
+    "Snow Dog",
+    "Hard Hat",
+    "Ghost Hunter",
+    "Moon Walker"
+  ]
+}

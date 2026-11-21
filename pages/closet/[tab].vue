@@ -9,6 +9,7 @@
 import { loadGameConfig } from '~/game/config'
 import { itemsFor, item, type ItemDef } from '~/logic/items'
 import { lookFor } from '~/logic/look'
+import { TRAIL_ICON } from '~/logic/itemIcons'
 import type { Slot } from '~/logic/save'
 import { offer, owns, wornIn } from '~/logic/shop'
 
@@ -19,15 +20,6 @@ const SLOTS: Record<string, Slot[]> = {
   outfits: ['hat', 'eyes', 'neck', 'back'],
   trails: ['trail'],
   collars: ['collar'],
-}
-const TRAIL_ICON: Record<string, string> = {
-  dust: 'dust',
-  paws: 'paw',
-  hearts: 'hearts',
-  confetti: 'party',
-  bubbles: 'bubbles',
-  stars: 'star',
-  rainbow: 'rainbow',
 }
 
 const route = useRoute()

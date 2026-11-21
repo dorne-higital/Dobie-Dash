@@ -154,6 +154,14 @@ export const ICONS: Record<string, string> = {
     `<path d="M4 15a12 7 0 0 1 24 0z" fill="#d79a5b"/><rect x="4" y="15" width="24" height="12" rx="2" fill="${WOOD}"/>` +
     `<rect x="14" y="10" width="4" height="17" fill="${GOLD}"/><rect x="13.5" y="16" width="5" height="5" rx="1" fill="${GOLD}"/>`,
   dust: `<circle cx="11" cy="19" r="6" fill="#ece4f4"/><circle cx="19" cy="15" r="7" fill="#ece4f4"/><circle cx="23" cy="21" r="5" fill="#ece4f4"/>`,
+  leaf: `<path d="M6 26C6 13 13 6 27 5c-1 14-8 21-21 21z" fill="#f08a2c"/><path d="M7 25L20 12" fill="none" stroke-width="1.8"/>`,
+  note: `<path d="M12 23V8l14-3v15" fill="none" stroke-width="2.6"/><ellipse cx="9" cy="23" rx="4" ry="3.2" fill="${PINK}"/><ellipse cx="23" cy="20" rx="4" ry="3.2" fill="${PINK}"/>`,
+  snowflake:
+    '<path d="M16 3v26M5 9.5l22 13M5 22.5l22-13" fill="none" stroke="#3a86f0" stroke-width="3"/>' +
+    '<path d="M12 5l4 4 4-4M12 27l4-4 4 4" fill="none" stroke="#3a86f0" stroke-width="2"/><circle cx="16" cy="16" r="3" fill="#fff"/>',
+  streamers:
+    `<path d="M4 6c6 2 6 8 12 8s6-6 12-6" fill="none" stroke="${PINK}" stroke-width="4"/>` +
+    `<path d="M4 18c6 2 6 8 12 8s6-6 12-6" fill="none" stroke="${TEAL}" stroke-width="4"/>`,
   hearts: `<path d="M16 27S5 20 5 12.5A5.5 5.5 0 0 1 16 10a5.5 5.5 0 0 1 11 2.5C27 20 16 27 16 27z" fill="${PINK}"/><path d="M9.5 12a3 3 0 0 1 3-3" stroke="#fff" stroke-opacity=".7" fill="none"/>`,
   bubbles: `<circle cx="12" cy="18" r="7.5" fill="#c8ecff"/><circle cx="22.5" cy="10" r="5" fill="#c8ecff"/><circle cx="23.5" cy="23.5" r="3.5" fill="#c8ecff"/><path d="M8 15a4.5 4.5 0 0 1 3-3" stroke="#fff" fill="none"/>`,
   rainbow:
