@@ -29,4 +29,4 @@ Reported names are hidden until reviewed.
 GAME CENTER
 Used only for the 30 achievements (bronze, silver and gold medals for 10 trophies).
 
-To see a boss fight quickly: reach 1,000 points in Bark Park (about a minute).
+To see a boss fight quickly: the mower arrives about 700 points into Bark Park (under a minute).

@@ -19,11 +19,11 @@ Timings are in `content/shots.json` → `preview`.
 
 ## Shot list
 
-| Time | Shot | What happens |
-|---|---|---|
-| 0–2 s | Bark Park, running | Dobie in a top hat and sparkle bow tie, Magnet already on, biscuits flying in |
-| 2–7 s | Jumps and near misses | The bot double-jumps obstacles; near misses slow time for a moment |
-| 7–9 s | Boss arrives | Skips ahead: "BOSS FIGHT! The mower wants a fight" |
-| 9–20 s | The fight | Dodge the attack, stomp three times: HIT 1/3, 2/3, KNOCKED OUT! |
-| 20–25 s | Wardrobe | Crown, then top hat, then sparkle bow tie go on the dog preview |
-| 25–29 s | End card | App icon pops in: "Dobie Dash · Free on the App Store" |
+| Time    | Shot                  | What happens                                                                  |
+| ------- | --------------------- | ----------------------------------------------------------------------------- |
+| 0–2 s   | Bark Park, running    | Dobie in a top hat and sparkle bow tie, Magnet already on, biscuits flying in |
+| 2–7 s   | Jumps and near misses | The bot double-jumps obstacles; near misses slow time for a moment            |
+| 7–9 s   | Boss arrives          | Skips ahead: "BOSS FIGHT! The mower wants a fight"                            |
+| 9–20 s  | The fight             | Dodge the attack, stomp three times: HIT 1/3, 2/3, KNOCKED OUT!               |
+| 20–25 s | Wardrobe              | Crown, then top hat, then sparkle bow tie go on the dog preview               |
+| 25–29 s | End card              | App icon pops in: "Dobie Dash · Free on the App Store"                        |
