@@ -17,6 +17,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       appVersion: process.env.npm_package_version ?? '',
+      // Dev tools (screenshot and preview modes, ?bot, ?world …): on in `npm run dev` and
+      // `npm run phone` (DOBIE_DEV_TOOLS=1), off in the App Store build.
+      devTools: process.env.NODE_ENV !== 'production' || process.env.DOBIE_DEV_TOOLS === '1',
       revenuecatKey: process.env.REVENUECAT_APPLE_KEY ?? '',
       admobRewarded: process.env.ADMOB_REWARDED_ID || 'ca-app-pub-3940256099942544/1712485313',
       admobInterstitial:

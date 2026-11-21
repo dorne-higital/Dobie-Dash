@@ -13,7 +13,7 @@ const router = useRouter()
 const player = usePlayerStore()
 const look = useLook()
 const now = useNow()
-const showSheet = computed(() => 'sheet' in route.query)
+const showSheet = computed(() => !!useRuntimeConfig().public.devTools && 'sheet' in route.query)
 
 const worlds = loadGameConfig().worlds
 const theme = computed(() => worlds[Math.min(player.player.bestWorld, worlds.length - 1)]!.theme)

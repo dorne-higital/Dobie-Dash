@@ -51,12 +51,19 @@ const offer = ref({ price: 0, countdown: 5, caughtBy: null as string | null })
 const runBiscuits = ref(0)
 const continueSheet = ref<{ adFinished: () => void } | null>(null)
 
-const bot = 'bot' in route.query
+// Dev tools (M8): `?shot=zoomies|boss` stages an App Store screenshot: the bot plays, the
+// run skips ahead to the moment, then freezes with no buttons or overlays.
+// Every testing flag below (?bot, ?world, ?power, ?fps, ?event, ?bark, ?shot) only works
+// with dev tools on (`npm run dev`, `npm run phone`), never in the App Store build.
+const devTools = !!useRuntimeConfig().public.devTools
+const q: typeof route.query = devTools ? route.query : {}
+const shot = String(q.shot ?? '')
+const bot = 'bot' in q || !!shot
 // Testing: `?world=3` starts in Sunny Beach. Such runs don't count towards best or stats.
-const startWorld = Number(route.query.world) > 1 ? Number(route.query.world) - 1 : undefined
+const startWorld = Number(q.world) > 1 ? Number(q.world) - 1 : undefined
 // Testing: `?power=frisbee` starts with that power on (also not recorded).
-const startPower = (POWER_KINDS as readonly string[]).includes(String(route.query.power))
-  ? (String(route.query.power) as PowerKind)
+const startPower = (POWER_KINDS as readonly string[]).includes(String(q.power))
+  ? (String(q.power) as PowerKind)
   : undefined
 // Daily Dash: today's shared course (its seed from the server), on the Daily Dash board.
 const daily = 'daily' in route.query
@@ -73,18 +80,17 @@ const boards = useBoards()
 const online = useOnline()
 /** A normal run that counts (not a test world, test power or the bot). */
 const counts = startWorld === undefined && !startPower && !bot
-const showFps = import.meta.dev || 'fps' in route.query || settings.showFps
+const showFps = devTools && !shot && (import.meta.dev || 'fps' in q || settings.showFps)
 // Seasonal event (Winter Walkies): on by date (Remote Config can move it); `?event=winter`
 // tries it out of season (not counted).
-const event =
-  activeEvent(new Date()) ?? EVENTS.find((e) => e.id === String(route.query.event)) ?? null
+const event = activeEvent(new Date()) ?? EVENTS.find((e) => e.id === String(q.event)) ?? null
 const eventCounts = computed(() => !!event && isOn(event, new Date()))
 /** Big Barks usable this run (saved ones, up to the per-run limit). `?bark` gives one to test. */
 const barksLeft = ref(0)
 function barksForRun() {
   if (tutorial) return 0
   if (counts) return player.bigBarks
-  return 'bark' in route.query ? 1 : 0
+  return 'bark' in q ? 1 : 0
 }
 function bigBark() {
   engine?.bigBark()
@@ -138,6 +144,15 @@ function presentLines(n: number): string[] {
       ? [`${player.event.presents} / ${next.at} presents to the ${item(next.item)?.name}`]
       : []),
   ]
+}
+
+/** Screenshot mode: skip ahead to the moment, let it play a beat, then freeze the frame. */
+function stageShot() {
+  if (!engine) return
+  if (shot === 'zoomies') engine.warp((r) => r.time > 1.2)
+  else if (shot === 'boss')
+    engine.warp((r) => r.fight?.phase === 'attack' && r.fight.t > 0.35, 60 * 120)
+  setTimeout(() => engine?.pause(), 1400)
 }
 
 function start() {
@@ -394,6 +409,7 @@ onMounted(async () => {
   void listenToApp()
   if (rivals) engine.setRivals(rivals)
   start()
+  if (shot) stageShot()
 })
 
 onBeforeUnmount(() => {
@@ -413,7 +429,7 @@ onBeforeUnmount(() => {
     <div ref="safeProbe" class="safe-probe" aria-hidden="true" />
     <canvas ref="canvas" class="game" aria-label="Dobie Dash. Tap anywhere to jump." />
     <RunCoach v-if="coach && phase === 'running'" v-bind="coach" />
-    <RunPauseButton v-if="phase === 'running'" @pause="pause" />
+    <RunPauseButton v-if="phase === 'running' && !shot" @pause="pause" />
     <RunBarkButton v-if="phase === 'running' && barksLeft > 0" :left="barksLeft" @bark="bigBark" />
     <RunPauseSheet
       v-if="phase === 'paused'"

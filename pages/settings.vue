@@ -2,6 +2,7 @@
 import site from '~/content/site.json'
 
 definePageMeta({ layout: 'hub' })
+const devTools = !!useRuntimeConfig().public.devTools
 const settings = useSettingsStore()
 const purchases = usePurchases()
 const version = useRuntimeConfig().public.appVersion
@@ -65,7 +66,7 @@ function restore() {
         <span aria-hidden="true">›</span>
       </a>
     </div>
-    <div class="group">
+    <div v-if="devTools" class="group">
       <UiToggle
         v-model="settings.showFps"
         label="Frame-time overlay"

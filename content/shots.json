@@ -1,0 +1,517 @@
+{
+  "_": "Dev only: screenshot mode (/shots, M8). Captions for the App Store images, the demo save they're taken with, and a demo league board. Not used in release builds.",
+  "captions": [
+    {
+      "n": 1,
+      "title": "Zoom through the city",
+      "sub": "One tap to jump. Tap again to double jump.",
+      "path": "/run?world=2&power=zoomies&shot=zoomies"
+    },
+    {
+      "n": 2,
+      "title": "Eight worlds to run",
+      "sub": "From Bark Park all the way to the Moon.",
+      "path": "/shots/worlds"
+    },
+    {
+      "n": 3,
+      "title": "Dress up your dog",
+      "sub": "Hats, collars, trails and 14 breeds.",
+      "path": "/closet/outfits?shot=wardrobe"
+    },
+    {
+      "n": 4,
+      "title": "Climb the weekly league",
+      "sub": "Race friends and players near your level.",
+      "path": "/league/league?shot=league"
+    },
+    {
+      "n": 5,
+      "title": "Stomp the bosses",
+      "sub": "Dodge the attacks, then jump on their heads.",
+      "path": "/run?shot=boss"
+    }
+  ],
+  "save": {
+    "dog": {
+      "name": "Dobie",
+      "breed": "doberman",
+      "coat": 0,
+      "ears": "down",
+      "tail": "up",
+      "eyes": "brown"
+    },
+    "player": {
+      "name": "Dobie",
+      "best": 48210,
+      "bestWorld": 7
+    },
+    "wallet": {
+      "biscuits": 2450,
+      "bones": 120
+    },
+    "owned": [
+      "hat:tophat",
+      "neck:sparklebow",
+      "trail:streamers",
+      "hat:party",
+      "hat:beanie",
+      "eyes:specs",
+      "eyes:shades",
+      "neck:bandana",
+      "neck:bowtie",
+      "collar:pink",
+      "collar:gold",
+      "hat:crown",
+      "hat:bobble",
+      "hat:cap",
+      "trail:sparkles"
+    ],
+    "equipped": {
+      "hat": "hat:tophat",
+      "neck": "neck:sparklebow",
+      "collar": "collar:gold",
+      "trail": "trail:streamers",
+      "eyes": null,
+      "back": null
+    }
+  },
+  "league": [
+    {
+      "rank": 1,
+      "player_id": "demo-0",
+      "name": "Luna",
+      "dog": {
+        "breed": "golden",
+        "coat": 0,
+        "hat": "hat:flowers"
+      },
+      "score": 52840,
+      "best_world": 7,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 2,
+      "player_id": "demo-1",
+      "name": "Teddy",
+      "dog": {
+        "breed": "frenchie",
+        "coat": 1
+      },
+      "score": 51940,
+      "best_world": 7,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 3,
+      "player_id": "demo-2",
+      "name": "Biscuit",
+      "dog": {
+        "breed": "cockapoo",
+        "coat": 0,
+        "hat": "hat:cap"
+      },
+      "score": 50903,
+      "best_world": 7,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 4,
+      "player_id": "demo-3",
+      "name": "Dobie",
+      "dog": {
+        "breed": "doberman",
+        "coat": 0,
+        "hat": "hat:tophat"
+      },
+      "score": 49729,
+      "best_world": 7,
+      "me": true,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 5,
+      "player_id": "demo-4",
+      "name": "Milo",
+      "dog": {
+        "breed": "lab",
+        "coat": 2
+      },
+      "score": 48418,
+      "best_world": 7,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 6,
+      "player_id": "demo-5",
+      "name": "Poppy",
+      "dog": {
+        "breed": "spaniel",
+        "coat": 1,
+        "hat": "hat:beanie"
+      },
+      "score": 46970,
+      "best_world": 6,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 7,
+      "player_id": "demo-6",
+      "name": "Alfie",
+      "dog": {
+        "breed": "staffie",
+        "coat": 0
+      },
+      "score": 45385,
+      "best_world": 6,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 8,
+      "player_id": "demo-7",
+      "name": "Daisy",
+      "dog": {
+        "breed": "dalmatian",
+        "coat": 0,
+        "hat": "hat:party"
+      },
+      "score": 44363,
+      "best_world": 6,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 9,
+      "player_id": "demo-8",
+      "name": "Bella",
+      "dog": {
+        "breed": "husky",
+        "coat": 0
+      },
+      "score": 43204,
+      "best_world": 6,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 10,
+      "player_id": "demo-9",
+      "name": "Winnie",
+      "dog": {
+        "breed": "corgi",
+        "coat": 0,
+        "hat": "hat:crown"
+      },
+      "score": 41908,
+      "best_world": 6,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 11,
+      "player_id": "demo-10",
+      "name": "Hugo",
+      "dog": {
+        "breed": "greyhound",
+        "coat": 1
+      },
+      "score": 40475,
+      "best_world": 5,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 12,
+      "player_id": "demo-11",
+      "name": "Ziggy",
+      "dog": {
+        "breed": "jack",
+        "coat": 2,
+        "hat": "hat:bobble"
+      },
+      "score": 38905,
+      "best_world": 5,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 13,
+      "player_id": "demo-12",
+      "name": "Rosie",
+      "dog": {
+        "breed": "collie",
+        "coat": 0
+      },
+      "score": 37898,
+      "best_world": 5,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 14,
+      "player_id": "demo-13",
+      "name": "Monty",
+      "dog": {
+        "breed": "dachshund",
+        "coat": 1,
+        "hat": "hat:witch"
+      },
+      "score": 36754,
+      "best_world": 5,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 15,
+      "player_id": "demo-14",
+      "name": "Pip",
+      "dog": {
+        "breed": "cockapoo",
+        "coat": 1
+      },
+      "score": 35473,
+      "best_world": 5,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 16,
+      "player_id": "demo-15",
+      "name": "Nala",
+      "dog": {
+        "breed": "golden",
+        "coat": 0,
+        "hat": "hat:flowers"
+      },
+      "score": 34055,
+      "best_world": 4,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 17,
+      "player_id": "demo-16",
+      "name": "Otis",
+      "dog": {
+        "breed": "frenchie",
+        "coat": 1
+      },
+      "score": 32500,
+      "best_world": 4,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 18,
+      "player_id": "demo-17",
+      "name": "Maple",
+      "dog": {
+        "breed": "cockapoo",
+        "coat": 0,
+        "hat": "hat:cap"
+      },
+      "score": 31508,
+      "best_world": 4,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 19,
+      "player_id": "demo-18",
+      "name": "Bruno",
+      "dog": {
+        "breed": "doberman",
+        "coat": 0,
+        "hat": "hat:tophat"
+      },
+      "score": 30379,
+      "best_world": 4,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 20,
+      "player_id": "demo-19",
+      "name": "Coco",
+      "dog": {
+        "breed": "lab",
+        "coat": 2
+      },
+      "score": 29113,
+      "best_world": 4,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 21,
+      "player_id": "demo-20",
+      "name": "Ruby",
+      "dog": {
+        "breed": "spaniel",
+        "coat": 1,
+        "hat": "hat:beanie"
+      },
+      "score": 27710,
+      "best_world": 3,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 22,
+      "player_id": "demo-21",
+      "name": "Archie",
+      "dog": {
+        "breed": "staffie",
+        "coat": 0
+      },
+      "score": 26170,
+      "best_world": 3,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 23,
+      "player_id": "demo-22",
+      "name": "Willow",
+      "dog": {
+        "breed": "dalmatian",
+        "coat": 0,
+        "hat": "hat:party"
+      },
+      "score": 25193,
+      "best_world": 3,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 24,
+      "player_id": "demo-23",
+      "name": "Scout",
+      "dog": {
+        "breed": "husky",
+        "coat": 0
+      },
+      "score": 24079,
+      "best_world": 3,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 25,
+      "player_id": "demo-24",
+      "name": "Rolo",
+      "dog": {
+        "breed": "corgi",
+        "coat": 0,
+        "hat": "hat:crown"
+      },
+      "score": 22828,
+      "best_world": 3,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 26,
+      "player_id": "demo-25",
+      "name": "Pickle",
+      "dog": {
+        "breed": "greyhound",
+        "coat": 1
+      },
+      "score": 21440,
+      "best_world": 2,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 27,
+      "player_id": "demo-26",
+      "name": "Bramble",
+      "dog": {
+        "breed": "jack",
+        "coat": 2,
+        "hat": "hat:bobble"
+      },
+      "score": 19915,
+      "best_world": 2,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 28,
+      "player_id": "demo-27",
+      "name": "Juno",
+      "dog": {
+        "breed": "collie",
+        "coat": 0
+      },
+      "score": 18953,
+      "best_world": 2,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 29,
+      "player_id": "demo-28",
+      "name": "Fudge",
+      "dog": {
+        "breed": "dachshund",
+        "coat": 1,
+        "hat": "hat:witch"
+      },
+      "score": 17854,
+      "best_world": 2,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    },
+    {
+      "rank": 30,
+      "player_id": "demo-29",
+      "name": "Pepper",
+      "dog": {
+        "breed": "cockapoo",
+        "coat": 1
+      },
+      "score": 16618,
+      "best_world": 2,
+      "me": false,
+      "tier": 2,
+      "size": 30
+    }
+  ]
+}

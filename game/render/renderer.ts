@@ -582,14 +582,18 @@ export class Renderer {
 
     if (this.snow) this.drawSnow(c, W, H, frameDt)
 
-    drawHud(c, run, best, run.cfg, this.sprites, {
-      W,
-      safeTop: V.safeTop,
-      insetLeft: V.insetLeft,
-    })
+    if (this.hud)
+      drawHud(c, run, best, run.cfg, this.sprites, {
+        W,
+        safeTop: V.safeTop,
+        insetLeft: V.insetLeft,
+      })
     if (this.banner) drawBanner(c, this.banner, W, GY)
     if (stats) this.drawStats(stats)
   }
+
+  /** Draw the score, meter and world pill (off for the screenshot montage, M8). */
+  hud = true
 
   /** Winter Walkies: snow falling over every world (render only). */
   snow = false
@@ -667,8 +671,7 @@ export class Renderer {
       kind = run.chaseEnded.boss
     } else return
     const frames = this.sprites.boss(kind)
-    const f = Math.floor(((t % BOSS_PERIOD) / BOSS_PERIOD) * BOSS_FRAMES) % BOSS_FRAMES
-    drawSprite(this.c, frames[f]!, x, this.view.GY)
+    drawSprite(this.c, frames[bossFrame(t)]!, x, this.view.GY)
   }
 
   /**
@@ -683,7 +686,7 @@ export class Renderer {
     const w = f.def.w
     const frames = this.sprites.boss(f.boss)
     const still = f.phase === 'tired' || f.phase === 'hurt'
-    const k = Math.floor((((still ? t * 0.4 : t) % BOSS_PERIOD) / BOSS_PERIOD) * BOSS_FRAMES)
+    const k = bossFrame(still ? t * 0.4 : t)
     c.save()
     c.translate(f.bx + w, GY)
     if (f.phase === 'beaten') {
@@ -694,7 +697,7 @@ export class Renderer {
     }
     c.scale(-1, 1)
     if (f.phase === 'hurt' && Math.floor(t * 20) % 2) c.globalAlpha = 0.45
-    drawSprite(c, frames[k % BOSS_FRAMES]!, 0, 0)
+    drawSprite(c, frames[k]!, 0, 0)
     c.restore()
 
     const cx = f.bx + (f.def.stomp.x0 + f.def.stomp.x1) / 2
@@ -910,4 +913,10 @@ export class Renderer {
     text(c, gap, x + 10, y + 34, 11, '#fff', o)
     text(c, work, x + 10, y + 50, 11, '#fff', o)
   }
+}
+
+/** Which baked boss frame to show at time t (the clock can dip below 0 after a reset). */
+export function bossFrame(t: number) {
+  const p = ((t % BOSS_PERIOD) + BOSS_PERIOD) % BOSS_PERIOD
+  return Math.floor((p / BOSS_PERIOD) * BOSS_FRAMES) % BOSS_FRAMES
 }

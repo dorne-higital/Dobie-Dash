@@ -13,7 +13,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "serve:lan": "node scripts/serve-lan.mjs",
-    "phone": "nuxt generate && node scripts/serve-lan.mjs",
+    "phone": "DOBIE_DEV_TOOLS=1 nuxt generate && node scripts/serve-lan.mjs",
     "lint": "eslint . && prettier --check .",
     "lint:fix": "eslint . --fix && prettier --write .",
     "format": "prettier --write .",
@@ -26,7 +26,8 @@
     "storekit": "node scripts/make-storekit.mjs",
     "icon": "node scripts/save-icon.mjs",
     "functions:build": "esbuild game/server.ts --bundle --format=esm --platform=neutral --target=es2022 --outfile=supabase/functions/_shared/game.js --log-level=warning",
-    "functions:deploy": "npm run functions:build && npx supabase functions deploy submit-run --use-api && npx supabase functions deploy profile --use-api"
+    "functions:deploy": "npm run functions:build && npx supabase functions deploy submit-run --use-api && npx supabase functions deploy profile --use-api",
+    "shots": "node scripts/shots.mjs"
   },
   "dependencies": {
     "@capacitor-community/admob": "8.3.0",
@@ -59,6 +60,7 @@
     "eslint": "^10.15.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.10.1",
+    "puppeteer-core": "25.16.0",
     "typescript": "^6.0.3",
     "vitest": "^5.1.1",
     "vue-tsc": "^3.3.14"

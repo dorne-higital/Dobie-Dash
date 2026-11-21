@@ -216,6 +216,19 @@ export class Engine {
     this.opts.tutorial = on
   }
 
+  /**
+   * Dev tools (screenshot and preview modes): runs the simulation ahead without drawing
+   * until `stop` says so (or `maxTicks` pass), handling events as usual.
+   */
+  warp(stop: (run: Run) => boolean, maxTicks = 60 * 120) {
+    const run = this.run
+    if (!run) return
+    for (let i = 0; i < maxTicks && run.state === 'running' && !stop(run); i++) {
+      run.update()
+      this.drain(run)
+    }
+  }
+
   /** Big Barks saved for the next start() (the save's count can change between runs). */
   setBigBarks(n: number) {
     this.opts.bigBarks = n

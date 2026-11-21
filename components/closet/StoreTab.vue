@@ -13,7 +13,7 @@ const { price, busy, message, loadPrices, buy, restore } = usePurchases()
 const native = Capacitor.isNativePlatform()
 const dev = import.meta.dev
 const got = ref<{ id: string; title: string; grants: ProductGrants } | null>(null)
-const id = (g: { id: string }) => g.id
+const gotId = (g: { id: string }) => g.id
 const { analytics } = useServices()
 const online = useOnline()
 watch(online, (now) => {
@@ -104,7 +104,7 @@ async function tap(id: string) {
             ? 'New breeds are ready in My dog.'
             : got.grants.items
               ? 'Find them in the Wardrobe.'
-              : id(got) === 'pass.s1'
+              : gotId(got) === 'pass.s1'
                 ? 'Premium rewards are ready in Missions → Pup Pass.'
                 : undefined
       "

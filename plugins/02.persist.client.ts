@@ -56,8 +56,10 @@ export default defineNuxtPlugin(async () => {
     settings: { ...settings.$state },
   })
   let queued = false
+  // Screenshot and preview modes (dev tools) use a demo save that must never be written.
+  const demo = useState('demo-save', () => false)
   const write = () => {
-    if (queued) return
+    if (queued || demo.value) return
     queued = true
     // Batch the many small changes at the end of a run into one write.
     queueMicrotask(() => {

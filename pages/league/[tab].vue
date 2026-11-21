@@ -6,6 +6,7 @@
  */
 import { Capacitor } from '@capacitor/core'
 import site from '~/content/site.json'
+import shots from '~/content/shots.json'
 import sb from '~/content/supabase.json'
 import { loadGameConfig } from '~/game/config'
 import { lookFromBoard } from '~/logic/look'
@@ -41,7 +42,14 @@ const cupInfo = ref<{ friday: string; seed: number; name: string; ends: number }
 const dashMode = ref<'daily' | 'cup'>('daily')
 const cupUsed = ref(0)
 
+// Dev tools (M8): `?shot=league` shows the demo board from content/shots.json.
+const demoBoard = useRuntimeConfig().public.devTools && route.query.shot === 'league'
+
 async function load() {
+  if (demoBoard) {
+    rows.value = shots.league as BoardRow[]
+    return
+  }
   loading.value = true
   failed.value = false
   if (!(await boards.signIn())) {
