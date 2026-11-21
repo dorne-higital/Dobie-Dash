@@ -23,15 +23,17 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-| Command             | What it does                                         |
-| ------------------- | ---------------------------------------------------- |
-| `npm run dev`       | Dev server with hot reload (FPS overlay always on)   |
-| `npm run generate`  | Static build into `.output/public`                   |
-| `npm run phone`     | Build, then serve it on your Wi-Fi (see below)       |
-| `npm test`          | Vitest unit tests                                    |
-| `npm run lint`      | ESLint + Prettier check (`npm run lint:fix` to fix)  |
-| `npm run typecheck` | `vue-tsc` via `nuxt typecheck`                       |
-| `npm run check`     | lint → typecheck → test → generate (run before a PR) |
+| Command             | What it does                                                         |
+| ------------------- | -------------------------------------------------------------------- |
+| `npm run dev`       | Dev server with hot reload (FPS overlay always on)                   |
+| `npm run generate`  | Static build into `.output/public`                                   |
+| `npm run phone`     | Build, then serve it on your Wi-Fi (see below)                       |
+| `npm test`          | Vitest unit tests                                                    |
+| `npm run lint`      | ESLint + Prettier check (`npm run lint:fix` to fix)                  |
+| `npm run typecheck` | `vue-tsc` via `nuxt typecheck`                                       |
+| `npm run check`     | lint → typecheck → test → generate (run before a PR)                 |
+| `npm run shots`     | App Store screenshots into `store/screenshots` (needs `npm run dev`) |
+| `npm run splash`    | iOS launch image from the loader (needs `npm run dev`)               |
 
 ### On your phone over Wi-Fi
 
@@ -52,6 +54,9 @@ slower.
 If the phone can't connect, allow incoming connections for `node` when macOS asks, or check
 **System Settings → Network → Firewall**. For quick UI work, `npm run dev:lan` exposes the
 dev server too.
+
+`npm run phone` builds with dev tools on, so these flags work there. The App Store build
+ignores them all, and has no frame-time setting.
 
 **Reading the overlay:** `fps` should sit at 60. `work` is the CPU time each frame spends
 simulating and drawing. Below ~8 ms average leaves comfortable headroom in the 16.7 ms
@@ -240,5 +245,7 @@ in `supabase/`:
 
 ## What's next
 
-**M7:** code done (see `docs/m7-phone-tests.md`). Then **M8 – Launch 1.0**: set the Pup Pass
-start to launch day, store listing, review, release.
+**M8 – Launch 1.0:** code done. Phone tests in `docs/m8-phone-tests.md` (they include the
+M7 ones). Everything for the App Store is in `/store`: listing, review notes, privacy policy
+and support text, App Privacy answers, launch posts, screenshots (`npm run shots`) and the
+preview video plan (`/preview`). Then App Store Connect, submit, and release by hand.

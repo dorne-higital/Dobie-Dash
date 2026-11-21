@@ -38,7 +38,15 @@ Plan: https://claude.ai/artifact/YZddbGmWVYAXZFiTbJv5hv (read it with the Artifa
   Cockapoo and Staffie, Big Bark, Party Pack (pack.party), Winter Walkies
   (`content/events.json`), Weekend Cups (Supabase), Wardrobe redesign (four icon tabs, Shop
   button, fixed dog preview). Waiting on Dan's phone tests (`docs/m7-phone-tests.md`), the
-  Supabase push (cups migration + functions) and the new App Store products. M8: not started.
+  Supabase push (cups migration + functions) and the new App Store products. Supabase and
+  products done 2026-11-20.
+- **M8 Launch 1.0**: code done (2026-11-21): screenshot mode (`/shots`, `npm run shots`),
+  preview video mode (`/preview`), store listing, review notes, privacy policy/support text
+  and App Privacy answers in `/store`, app privacy manifest, Profile redesign, "built by dh"
+  loader + launch image, version 1.0.0, dev flags off in release. Waiting on Dan: the M7 and
+  M8 phone tests (`docs/m8-phone-tests.md`), privacy/support pages on danhorne.co.uk, IAP
+  review screenshots, the preview recording, then App Store Connect and submit (manual
+  release). Supabase stays on the free plan for now (Dan's call).
 
 ## Commands
 
@@ -51,6 +59,8 @@ npm test             # vitest
 npm run phone        # build + serve on Wi-Fi for testing on an iPhone (add ?fps, ?bot)
 npm run cap:sync     # build + copy into the iOS project
 npm run icon         # then open /appicon and press Save: app icon + favicons
+npm run shots        # with `npm run dev` running: the five App Store screenshots → store/screenshots
+npm run splash       # with `npm run dev` running: the iOS launch image from /loader?still
 ```
 
 No local Xcode: iOS builds run on Codemagic (`codemagic.yaml`, steps in `ios/README.md`).
@@ -134,4 +144,18 @@ No local Xcode: iOS builds run on Codemagic (`codemagic.yaml`, steps in `ios/REA
   from airtime must include holding (`maxAirTime`).
 - **Services** (`services/types.ts`) have web fakes; native ones are swapped in by
   `plugins/01.services.client.ts` when `Capacitor.isNativePlatform()`.
+- **Dev tools** (`runtimeConfig.public.devTools`): on in `npm run dev` and `npm run phone`
+  (`DOBIE_DEV_TOOLS=1`), off in the App Store build. Every testing flag (`?bot`, `?world`,
+  `?power`, `?fps`, `?event`, `?bark`, `?shot`, `?sheet`), the frame-time setting and the
+  `/shots` and `/preview` pages must check it. `?shot=` and `/shots`, `/preview` play with the
+  demo save in `content/shots.json`, which is never written (`useState('demo-save')`).
+- **App Store assets** live in `/store` (listing, review notes, privacy, posts, screenshots).
+  Change screenshots by editing captions/paths in `content/shots.json`, then `npm run shots`.
+- **Loader**: `components/app/Loader.vue`, `spa-loading-template.html` and the iOS launch
+  image (`npm run splash`) all show the same first frame; sizes are % of screen height
+  (aspect-fill splash). Change `content/loader.json` and all three together.
+- **Privacy**: anything new that collects data needs `ios/App/App/PrivacyInfo.xcprivacy`,
+  `store/app-privacy.md` and `store/privacy-policy.md` updated together.
+- **Pup Pass start**: the build ships with a placeholder start (2099); the real one is set
+  in Remote Config (`overrides` → `pass.start`) on release day.
 - Small commits; lint, tests and `nuxi generate` must pass after each step.

@@ -87,10 +87,26 @@ npm run cap:sync   # nuxt generate + copy into the iOS project (Codemagic runs t
   `npm run functions:deploy` (Big Bark and events in replays, cups, attempt rules), at the
   same time as the TestFlight build goes out (older builds' scores are refused until updated).
 
+## M8 setup (launch)
+
+1. **Website:** publish `store/privacy-policy.md` at danhorne.co.uk/dobie-dash/privacy and
+   `store/support.md` at /dobie-dash/support (Settings in the app links to both).
+2. **Build:** `git push`, then start the `ios-release` workflow on Codemagic. Check the
+   `dobiedash` group has the real `ADMOB_APP_ID`, `ADMOB_REWARDED_ID` and
+   `ADMOB_INTERSTITIAL_ID` (otherwise the log says "building with Google's test ads").
+3. **In-app purchases:** add a review screenshot to each of the 24 (any Shop screenshot
+   showing it works; one per product).
+4. **App Store Connect → iOS App 1.0:** paste `store/listing.md` (subtitle, promo text,
+   keywords, description, URLs, copyright), upload the five screenshots (6.9-inch) and the
+   preview video, choose the build, add the in-app purchases to the version, App Review
+   notes from `store/review-notes.md` (no sign-in required), App Privacy from
+   `store/app-privacy.md`, age rating from `store/listing.md`, categories Casual + Arcade.
+5. **Version Release:** "Manually release this version". Then Add for Review → Submit.
+6. **On release day:** Remote Config `overrides` → `"pass": {"start": "YYYY-MM-DD"}` (that
+   day), press Release, post `store/launch-posts.md`.
+
 ## Still to do later
 
 - **Xcode 27 by April 2027** (Apple's ITMS-90725 warning on build uploads): builds made with
   the iOS 26.5 SDK upload fine until then. Once Codemagic offers Xcode 27, change `xcode:`
   in both workflows in `codemagic.yaml`.
-
-- App privacy details (AdMob identifiers and usage data) and review notes — M6.

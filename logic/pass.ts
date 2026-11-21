@@ -18,6 +18,8 @@ export interface PassFile {
   product: string
   /** UTC date the season starts (YYYY-MM-DD). Remote Config can move it (pass.start). */
   start: string
+  /** Further away than this, the Pass says the season starts "soon" instead of a date. */
+  soonDays: number
   weeks: number
   xpPerTier: number
   xp: {

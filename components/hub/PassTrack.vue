@@ -14,6 +14,7 @@ import {
   hasPremium,
   PASS,
   seasonPhase,
+  seasonStart,
   tierOf,
   tierProgress,
   type Track,
@@ -26,6 +27,8 @@ const purchases = usePurchases()
 const { analytics } = useServices()
 
 const phase = computed(() => seasonPhase(now.value))
+/** A real date only when it's near; the shipped placeholder start is years away. */
+const soon = computed(() => seasonStart() - now.value.getTime() < PASS.soonDays * 86_400_000)
 const tier = computed(() => tierOf(player))
 const bar = computed(() => tierProgress(player))
 const premium = computed(() => hasPremium(player))
@@ -83,7 +86,7 @@ async function buyPremium() {
         <span v-if="premium" class="prem">Premium</span>
       </div>
       <template v-if="phase === 'before'">
-        <p class="when">Season 1 starts on {{ startsOn }}.</p>
+        <p class="when">Season 1 starts {{ soon ? `on ${startsOn}` : 'soon' }}.</p>
       </template>
       <template v-else>
         <div class="tierline">

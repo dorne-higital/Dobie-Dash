@@ -3,8 +3,9 @@
   "id": "s1",
   "name": "Season 1: Fresh Paws",
   "product": "pass.s1",
-  "_dates": "start is a UTC date. Test date for TestFlight; set to launch day before release (Remote Config: pass.start).",
-  "start": "2026-11-19",
+  "_dates": "start is a UTC date. The build ships with a far-off placeholder; Dan sets the real start on release day in Remote Config (overrides → pass.start). Further than soonDays away, the Pass just says it starts soon.",
+  "soonDays": 60,
+  "start": "2099-01-01",
   "weeks": 6,
   "xpPerTier": 300,
   "xp": {
