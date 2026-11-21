@@ -24,7 +24,7 @@ bring it back, email me the date and what you bought.
 **I don't want ads.** Remove Ads (Shop) stops the ads between runs. Rewarded ads are always
 your choice.
 
-**Someone has a rude name on the leaderboard.** Tap ••• next to it and Report name. It's
+**Someone has a rude name on the leaderboard.** Tap ••• next to it and Report name. Once enough people report it, it's
 hidden until I've checked it.
 
 **How do I add a friend?** Your friend code is at the bottom of your Profile. Friends add it

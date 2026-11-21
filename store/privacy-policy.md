@@ -25,7 +25,7 @@ collects, why, and what you can do about it. I've kept it short and plain.
 your iCloud account (through Apple), so they move with you to a new phone. I can't see them.
 
 **Leaderboards.** When you play online the game creates an anonymous player ID on my server
-(Supabase, hosted in the EU). It stores your dog's name and look, your scores and the taps of
+(Supabase). It stores your dog's name and look, your scores and the taps of
 each scored run (so the server can replay the run and check it's real), your league, friends
 you add by code, and any names you report. Other players see your dog's name, look and scores.
 

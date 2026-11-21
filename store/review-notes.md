@@ -24,7 +24,7 @@ is checked by replaying the run on the server before it counts.
 USER-GENERATED CONTENT
 The only thing other players see is your dog's name and look. Names go through a word filter
 on the server, and any name on a board can be reported (tap ••• next to it → Report name).
-Reported names are hidden until reviewed.
+After enough reports a name is replaced with "Dog 1234" until it has been reviewed.
 
 GAME CENTER
 Used only for the 30 achievements (bronze, silver and gold medals for 10 trophies).
