@@ -19,7 +19,7 @@ LEADERBOARDS
 Leagues, the Daily Dash and Weekend Cups (League tab) run on our own server. Players join
 automatically with an anonymous ID; there is no login. "Keep your place" offers Sign in
 with Apple, which is optional and only keeps the same board name on a new phone. Each score
-is checked by replaying the run on the server before it counts.
+is checked by replaying the run on the server before it counts. Until 20 players have a score, the League tab shows a "Leagues open soon" card instead of the weekly table; that is expected.
 
 USER-GENERATED CONTENT
 The only thing other players see is your dog's name and look. Names go through a word filter
