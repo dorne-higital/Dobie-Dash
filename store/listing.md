@@ -87,9 +87,12 @@ https://danhorne.co.uk/dobie-dash/privacy
 
 ## Age rating
 
-Answer "None" to everything (no violence beyond cartoon bumps, no gambling, no user
-chat). Unrestricted web access: No. User-generated content: dog names appear on public
-boards, filtered and reportable. Expect 4+.
+Saved 2026-11-21: **13+** (Apple's calculation from honest answers, no override).
+Features: advertising Yes, user-generated content Yes (dog names on boards), everything else
+No. Mature themes, medical, sexuality: None. Violence: cartoon or fantasy Infrequent
+(stomping bosses), the rest None. Chance-based: contests Frequent (leagues, Daily Dash,
+Weekend Cups), loot boxes No (chests are free or opened with an ad), gambling None.
+Contests Frequent alone makes it 13+; cartoon violence alone makes it 9+.
 
 ## Screenshots (6.9-inch, in order)
 
