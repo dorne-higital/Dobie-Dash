@@ -1,0 +1,15 @@
+{
+  "_": "The app loader (M8): the 'dh' monogram flips over to the app icon, with a credit at the bottom. It starts identical to the iOS launch image (npm run splash makes that from /loader?still), so sizes are % of the screen height. Times in ms.",
+  "credit": "built by dh",
+  "bg": "#2A1530",
+  "fg": "#FFF8EE",
+  "accent": "#FF4FA0",
+  "markHeight": 9,
+  "creditBottom": 5,
+  "creditSize": 1.15,
+  "holdMs": 450,
+  "flipMs": 420,
+  "minMs": 1700,
+  "maxMs": 8000,
+  "fadeMs": 250
+}

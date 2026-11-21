@@ -1,0 +1,48 @@
+<!-- The web view's first paint, until the app mounts: the same frame as the iOS launch image
+     and components/app/Loader.vue (keep the three in step; sizes and colours from
+     content/loader.json: mark 9% of height, credit 5% up at 1.15%). -->
+<div style="position: fixed; inset: 0; background: #2a1530; display: grid; place-items: center">
+  <svg viewBox="0 0 100 100" style="width: 9vh; height: 9vh" aria-hidden="true">
+    <rect
+      x="3"
+      y="3"
+      width="94"
+      height="94"
+      rx="24"
+      fill="none"
+      stroke="#FFF8EE"
+      stroke-width="4"
+    />
+    <g
+      fill="none"
+      stroke="#FFF8EE"
+      stroke-width="8.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <circle cx="30.5" cy="60" r="12" />
+      <path d="M42.5 27v45.5M57.5 27v45.5M57.5 59q0-12.5 11-12.5t11 12.5v13.5" />
+    </g>
+  </svg>
+  <div
+    aria-hidden="true"
+    style="
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 5vh;
+      text-align: center;
+      font:
+        700 1.15vh/1 ui-monospace,
+        'SF Mono',
+        Menlo,
+        monospace;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #fff8ee;
+      opacity: 0.62;
+    "
+  >
+    built by <b style="color: #ff4fa0">dh</b>
+  </div>
+</div>

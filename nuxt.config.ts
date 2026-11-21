@@ -9,6 +9,8 @@ export default defineNuxtConfig({
 
   // Static single-page app: `nuxi generate` → .output/public, later wrapped by the iOS container.
   ssr: false,
+  // First paint while the app loads: the loader's first frame (see components/app/Loader.vue).
+  spaLoadingTemplate: fileURLToPath(new URL('./spa-loading-template.html', import.meta.url)),
 
   devtools: { enabled: false },
 

@@ -14,8 +14,11 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SplashScreen: {
+      // The web loader (components/app/Loader.vue) starts on an identical frame and hides
+      // this the moment it's on screen; this cap only matters if the web view never loads.
       launchAutoHide: true,
-      launchShowDuration: 800,
+      launchShowDuration: 3000,
+      launchFadeOutDuration: 0,
       backgroundColor: '#2A1530',
       showSpinner: false,
     },

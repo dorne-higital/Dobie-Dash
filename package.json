@@ -27,7 +27,8 @@
     "icon": "node scripts/save-icon.mjs",
     "functions:build": "esbuild game/server.ts --bundle --format=esm --platform=neutral --target=es2022 --outfile=supabase/functions/_shared/game.js --log-level=warning",
     "functions:deploy": "npm run functions:build && npx supabase functions deploy submit-run --use-api && npx supabase functions deploy profile --use-api",
-    "shots": "node scripts/shots.mjs"
+    "shots": "node scripts/shots.mjs",
+    "splash": "node scripts/splash.mjs"
   },
   "dependencies": {
     "@capacitor-community/admob": "8.3.0",
