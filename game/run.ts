@@ -1008,11 +1008,11 @@ export class Run {
       this.fightEmit('win')
       this.endChase()
       // Obstacles come back now, but the dog is still bouncing off the knock-out (a long
-      // float on the moon): nothing may arrive before it has landed.
+      // float on the moon): nothing may arrive before it has landed, plus a breather.
       const land = this.stepsToLand()
       const v = this.scrollSpeed
       this.spawner.holdUntil(
-        this.dist + this.cfg.view.dogX + (land * this.dt + 0.6) * v + 60,
+        this.dist + this.cfg.view.dogX + (land * this.dt + F.afterWinSeconds) * v + 60,
         this.step + land,
       )
     } else {

@@ -14,6 +14,16 @@ const native = Capacitor.isNativePlatform()
 const dev = import.meta.dev
 const got = ref<{ id: string; title: string; grants: ProductGrants } | null>(null)
 const gotId = (g: { id: string }) => g.id
+/** Biscuit and bone packs say exactly what you get (Dan's playtest), from what they grant. */
+function amount(id: string) {
+  const g = product(id)?.grants
+  if (!g || g.items || g.item || g.flag || g.breeds) return null
+  if (g.biscuits && !g.bones)
+    return { icon: 'biscuit', text: `${g.biscuits.toLocaleString()} biscuits` }
+  if (g.bones && !g.biscuits)
+    return { icon: 'bone', text: `${g.bones.toLocaleString()} Golden Bones` }
+  return null
+}
 const { analytics } = useServices()
 const online = useOnline()
 watch(online, (now) => {
@@ -72,6 +82,9 @@ async function tap(id: string) {
           <UiIcon :name="ICON[id] ?? 'gift'" class="ic" />
           <span class="txt">
             <b>{{ product(id)!.title }}</b>
+            <span v-if="amount(id)" class="amount"
+              ><UiIcon :name="amount(id)!.icon" /> {{ amount(id)!.text }}</span
+            >
             <small v-if="product(id)!.blurb">{{ product(id)!.blurb }}</small>
           </span>
           <span v-if="owned(id)" class="owned"><UiIcon name="check" /> Owned</span>
@@ -186,5 +199,13 @@ li.own {
   padding: 10px 12px;
   color: var(--fg);
   font-weight: 800;
+}
+.amount {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 900;
+  font-size: 15px;
+  color: var(--pink);
 }
 </style>

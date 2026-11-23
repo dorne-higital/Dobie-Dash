@@ -587,6 +587,36 @@ describe('boss fights (the mower)', () => {
     expect(jump).toBeGreaterThanOrEqual(c.fight.beatBonus + c.fight.flawlessBonus)
     expect(jump).toBeLessThan(c.fight.beatBonus + c.fight.flawlessBonus + 20)
   })
+
+  it('after a knock-out, the track stays clear until the dog has landed and caught its breath', () => {
+    const c = fightCfg()
+    const breath = c.fight.afterWinSeconds
+    expect(breath).toBeGreaterThanOrEqual(1)
+    for (let seed = 1; seed <= 4; seed++) {
+      const run = new Run(c, seed, W, { autoplay: true })
+      let won = false
+      let landedAt = -1
+      for (let i = 0; i < 240 * 60 && run.state === 'running'; i++) {
+        run.update()
+        for (const e of run.events.splice(0))
+          if (e.type === 'fight' && e.data.step === 'win') won = true
+        if (won && landedAt < 0 && run.dog.grounded) landedAt = run.time
+        if (landedAt >= 0) {
+          if (run.time > landedAt + breath) break
+          // Nothing reaches the dog during the breather.
+          const near = run.obstacles.filter(
+            (o) => !o.dead && Math.abs(o.wx - run.dist - c.view.dogX) < 40,
+          )
+          expect({ seed, t: +(run.time - landedAt).toFixed(2), near: near.length }).toEqual({
+            seed,
+            t: +(run.time - landedAt).toFixed(2),
+            near: 0,
+          })
+        }
+      }
+      expect({ seed, won }).toEqual({ seed, won: true })
+    }
+  }, 60_000)
 })
 
 describe('every boss fights', () => {

@@ -203,6 +203,8 @@ export interface FightConfig {
   hurtSeconds: number
   returnSeconds: number
   leaveSeconds: number
+  /** Empty track after a knock-out, from when the dog lands. */
+  afterWinSeconds: number
   /** Where the boss stands while attacking: this far from the right edge (its left edge). */
   frontFromRight: number
   /** The dog bounces off a stomp at this vertical speed. */

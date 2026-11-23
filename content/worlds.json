@@ -719,6 +719,8 @@
     "hurtSeconds": 0.5,
     "returnSeconds": 1.0,
     "leaveSeconds": 1.4,
+    "_afterWinSeconds": "Empty track after a knock-out, counted from when the dog lands (Dan's playtest: obstacles came too soon).",
+    "afterWinSeconds": 1.8,
     "frontFromRight": 150,
     "stompBounce": -640,
     "beatBonus": 250,

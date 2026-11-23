@@ -5,15 +5,17 @@
   Google UMP, Firebase, RevenueCat, Capacitor), and Xcode merges them into the privacy
   report. This covers what the app itself collects: the anonymous board ID, the dog's name
   and look on the boards (gameplay content), and the email Apple shares if a player uses
-  "Keep your place" (Sign in with Apple). Tracking is declared because AdMob may use the
-  advertising ID once the player allows it in the App Tracking Transparency prompt.
+  "Keep your place" (Sign in with Apple). NSPrivacyTracking is false: the app's own code
+  doesn't track. AdMob's manifest declares its own tracking and tracking domains (Apple
+  rejects a manifest that says true with no domains: "Invalid Binary"). The App Privacy
+  answers in App Store Connect still mark the AdMob data types as used for tracking.
   Our own Swift code uses no required-reason APIs (iCloud key-value storage isn't one).
   Keep in step with store/app-privacy.md.
 -->
 <plist version="1.0">
 <dict>
 	<key>NSPrivacyTracking</key>
-	<true/>
+	<false/>
 	<key>NSPrivacyTrackingDomains</key>
 	<array/>
 	<key>NSPrivacyCollectedDataTypes</key>
